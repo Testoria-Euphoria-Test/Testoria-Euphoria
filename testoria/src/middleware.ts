@@ -16,6 +16,14 @@ export async function middleware(request: Request) {
             return NextResponse.next();
         }
 
+        // Allow public GET requests for individual profile viewing (creators)
+        if (url.pathname.startsWith('/api/profiles/') && 
+            url.pathname !== '/api/profiles/me' && 
+            method === 'GET') {
+            console.log(`Allowing public access to ${method} ${url.pathname}`);
+            return NextResponse.next();
+        }
+
         // For all other protected routes, require authentication
         const cookieStore = await cookies();
         const authorization = cookieStore.get('Authorization');
@@ -45,6 +53,7 @@ export const config = {
     matcher: [
         '/api/users/:path*',
         '/api/categories/:path+',
-        '/api/categories'
+        '/api/categories',
+        '/api/profiles/:path*'
     ],
 }
