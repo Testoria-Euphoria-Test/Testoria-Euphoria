@@ -79,7 +79,7 @@ class ProfileModel {
 
             return profiles as unknown as ProfileType[];
         } catch (error) {
-            throw { message: "Failed to retrieve profiles", status: 500 };
+            throw { message: (error as Error).message || "Failed to retrieve profiles", status: 500 };
         }
     }
 
