@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  User,
   Package,
   FileText,
   Upload,
@@ -10,20 +9,10 @@ import {
   Edit,
   Trash2,
   Plus,
-  BarChart3,
   Users,
-  TrendingUp,
   DollarSign,
   Star,
-  Settings,
   Download,
-  FileUp,
-  Save,
-  X,
-  Check,
-  Activity,
-  Bell,
-  Menu,
 } from "lucide-react";
 
 // Types
@@ -72,7 +61,6 @@ export default function DashboardCreatorPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Mock data for creator profile
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile>({
@@ -228,8 +216,6 @@ export default function DashboardCreatorPage() {
   ];
 
   const navigationTabs = [
-    { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "profile", label: "Profile Info", icon: User },
     { id: "packages", label: "My Packages", icon: Package },
     { id: "uploads", label: "Upload Materials", icon: FileText },
   ];
@@ -281,39 +267,7 @@ export default function DashboardCreatorPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Creator Dashboard</h1>
-                <p className="text-sm text-gray-500 hidden sm:block">Welcome back, {creatorProfile.name}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
-                <Settings className="w-5 h-5" />
-              </button>
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {creatorProfile.name.split(' ').map(n => n[0]).join('')}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
@@ -367,204 +321,9 @@ export default function DashboardCreatorPage() {
 
           {/* Tab Content */}
           <div className="p-6 lg:p-8">
-            {/* Overview Tab */}
-            {activeTab === "overview" && (
-              <div className="space-y-8">
-                {/* Quick Actions */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <button className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-2">
-                    <Plus className="w-5 h-5" />
-                    <span className="font-medium">Create New Package</span>
-                  </button>
-                  <button className="p-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center space-x-2">
-                    <FileUp className="w-5 h-5" />
-                    <span className="font-medium">Upload Materials</span>
-                  </button>
-                  <button className="p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2">
-                    <BarChart3 className="w-5 h-5" />
-                    <span className="font-medium">View Analytics</span>
-                  </button>
-                </div>
 
-                <div className="grid lg:grid-cols-2 gap-8">
-                  {/* Recent Activity */}
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-                      <Activity className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-blue-100">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Package className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">New package created</p>
-                          <p className="text-sm text-gray-600">SNBT 2024 - Penalaran Matematika</p>
-                          <p className="text-xs text-gray-500 mt-1">2 days ago</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-green-100">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <Users className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">50+ new enrollments</p>
-                          <p className="text-sm text-gray-600">UTBK Saintek 2024 - Matematika Dasar</p>
-                          <p className="text-xs text-gray-500 mt-1">1 week ago</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-purple-100">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <DollarSign className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">Earnings milestone</p>
-                          <p className="text-sm text-gray-600">Reached Rp 125,000,000 total earnings</p>
-                          <p className="text-xs text-gray-500 mt-1">2 weeks ago</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Performance Overview */}
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900">Performance Overview</h3>
-                      <TrendingUp className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <div className="bg-white rounded-lg p-8 h-64 flex items-center justify-center border border-gray-200">
-                      <div className="text-center">
-                        <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500 font-medium">Performance Chart</p>
-                        <p className="text-sm text-gray-400">Analytics will be displayed here</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {/* Profile Info Tab */}
-            {activeTab === "profile" && (
-              <div className="space-y-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900">Profile Information</h3>
-                    <p className="text-gray-600 mt-1">Manage your personal information and credentials</p>
-                  </div>
-                  <button
-                    onClick={() => setIsEditingProfile(!isEditingProfile)}
-                    className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                      isEditingProfile 
-                        ? "text-red-600 hover:bg-red-50 border border-red-200" 
-                        : "text-blue-600 hover:bg-blue-50 border border-blue-200"
-                    }`}
-                  >
-                    {isEditingProfile ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-                    {isEditingProfile ? "Cancel Edit" : "Edit Profile"}
-                  </button>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-6 lg:p-8">
-                  <div className="grid lg:grid-cols-2 gap-8">
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">Full Name</label>
-                        {isEditingProfile ? (
-                          <input
-                            type="text"
-                            value={creatorProfile.name}
-                            onChange={(e) => setCreatorProfile({...creatorProfile, name: e.target.value})}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          />
-                        ) : (
-                          <p className="text-gray-900 font-medium bg-white p-4 rounded-lg border">{creatorProfile.name}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">Email Address</label>
-                        <p className="text-gray-900 font-medium bg-white p-4 rounded-lg border">{creatorProfile.email}</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">Education Background</label>
-                        {isEditingProfile ? (
-                          <input
-                            type="text"
-                            value={creatorProfile.education}
-                            onChange={(e) => setCreatorProfile({...creatorProfile, education: e.target.value})}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          />
-                        ) : (
-                          <p className="text-gray-900 font-medium bg-white p-4 rounded-lg border">{creatorProfile.education}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">Join Date</label>
-                        <p className="text-gray-900 font-medium bg-white p-4 rounded-lg border">
-                          {new Date(creatorProfile.joinDate).toLocaleDateString('id-ID', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">Professional Bio</label>
-                        {isEditingProfile ? (
-                          <textarea
-                            value={creatorProfile.bio}
-                            onChange={(e) => setCreatorProfile({...creatorProfile, bio: e.target.value})}
-                            rows={6}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
-                          />
-                        ) : (
-                          <p className="text-gray-900 font-medium bg-white p-4 rounded-lg border leading-relaxed">{creatorProfile.bio}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">Certificates & Credentials</label>
-                        <div className="space-y-3">
-                          {creatorProfile.certificates.map((cert, index) => (
-                            <div key={index} className="flex items-center space-x-3 bg-white p-3 rounded-lg border">
-                              <div className="p-1 bg-green-100 rounded-full">
-                                <Check className="w-4 h-4 text-green-600" />
-                              </div>
-                              <span className="text-gray-900 font-medium">{cert}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {isEditingProfile && (
-                    <div className="flex justify-end mt-8 space-x-4">
-                      <button
-                        onClick={() => setIsEditingProfile(false)}
-                        className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveProfile}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center font-medium transition-colors"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Created Packages Tab */}
             {activeTab === "packages" && (

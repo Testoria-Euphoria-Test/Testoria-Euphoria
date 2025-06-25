@@ -49,7 +49,6 @@ interface Package {
   description: string;
   createdAt: string;
   price: number;
-  students: number;
   rating: number;
   status: "published" | "pending";
   totalQuestions: number;
@@ -151,7 +150,6 @@ export default function DashboardAdminPage() {
         "Paket lengkap try out UTBK Saintek dengan soal-soal terbaru dan pembahasan detail",
       createdAt: "2024-01-10T10:00:00Z",
       price: 150000,
-      students: 1250,
       rating: 4.8,
       status: "published",
       totalQuestions: 100,
@@ -168,7 +166,6 @@ export default function DashboardAdminPage() {
         "Paket try out CPNS fokus Tes Wawasan Kebangsaan dengan materi terkini",
       createdAt: "2024-01-20T10:00:00Z",
       price: 100000,
-      students: 756,
       rating: 4.7,
       status: "published",
       totalQuestions: 35,
@@ -185,7 +182,6 @@ export default function DashboardAdminPage() {
         "Simulasi lengkap SNBT dengan format terbaru dan analisis hasil detail",
       createdAt: "2024-03-01T10:00:00Z",
       price: 200000,
-      students: 0,
       rating: 0,
       status: "published",
       totalQuestions: 120,
@@ -202,7 +198,6 @@ export default function DashboardAdminPage() {
         "Try out UTBK Soshum dengan soal prediksi dan strategi pengerjaan yang efektif",
       createdAt: "2024-02-15T10:00:00Z",
       price: 150000,
-      students: 980,
       rating: 4.9,
       status: "published",
       totalQuestions: 100,
@@ -219,7 +214,6 @@ export default function DashboardAdminPage() {
         "Paket try out untuk berbagai sekolah kedinasan dengan soal prediksi akurat",
       createdAt: "2024-02-28T10:00:00Z",
       price: 175000,
-      students: 834,
       rating: 4.8,
       status: "pending",
       totalQuestions: 80,
@@ -235,7 +229,6 @@ export default function DashboardAdminPage() {
       description: "Paket try out CPNS fokus Tes Karakteristik Pribadi",
       createdAt: "2024-03-05T10:00:00Z",
       price: 100000,
-      students: 0,
       rating: 0,
       status: "pending",
       totalQuestions: 35,
@@ -351,21 +344,6 @@ export default function DashboardAdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Admin Dashboard
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Kelola platform dan monitor aktivitas
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
@@ -588,9 +566,6 @@ export default function DashboardAdminPage() {
                           Price
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Students
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -622,16 +597,6 @@ export default function DashboardAdminPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {formatCurrency(pkg.price)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {pkg.students}
-                            </div>
-                            {pkg.rating > 0 && (
-                              <div className="text-sm text-gray-500">
-                                ⭐ {pkg.rating}
-                              </div>
-                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {editingPackageId === pkg._id ? (
