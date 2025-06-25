@@ -2,6 +2,7 @@ import { z } from "zod/v4";
 import { database } from "../config/mongodb";
 import { hashPassword } from "@/helpers/bcryptjs";
 import { UserType } from "@/types/user";
+import { ObjectId } from "mongodb";
 
 const UserSchema = z.object({
     name: z.string().min(4, "Name must be at least 4 characters long"),
@@ -40,6 +41,39 @@ class UserModel {
 
     static async findByEmail(email: string) {
         const user = await this.collection().findOne({ email });
+        return user;
+    }
+
+    static async getAllUsers() {
+        const users = await this.collection().find({}).toArray();
+        return users;
+    }
+
+    static async deleteUserById(userId: string) {
+        if (!ObjectId.isValid(userId)) {
+            throw { message: "Invalid user ID", status: 400 };
+        }
+
+        const result = await this.collection().deleteOne({ _id: new ObjectId(userId) });
+        
+        if (result.deletedCount === 0) {
+            throw { message: "User not found", status: 404 };
+        }
+
+        return { message: "User deleted successfully" };
+    }
+
+    static async findById(userId: string) {
+        if (!ObjectId.isValid(userId)) {
+            throw { message: "Invalid user ID", status: 400 };
+        }
+
+        const user = await this.collection().findOne({ _id: new ObjectId(userId) });
+        
+        if (!user) {
+            throw { message: "User not found", status: 404 };
+        }
+
         return user;
     }
 }
