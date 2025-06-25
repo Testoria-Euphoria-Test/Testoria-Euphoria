@@ -5,6 +5,18 @@ import { NextResponse } from "next/server";
 
 export async function middleware(request: Request) {
     try {
+        const url = new URL(request.url);
+        const method = request.method;
+
+        console.log(`Middleware triggered for: ${method} ${url.pathname}`);
+
+        // Allow public GET and POST requests for categories collection
+        if (url.pathname === '/api/categories' && (method === 'GET' || method === 'POST')) {
+            console.log(`Allowing public access to ${method} /api/categories`);
+            return NextResponse.next();
+        }
+
+        // For all other protected routes, require authentication
         const cookieStore = await cookies();
         const authorization = cookieStore.get('Authorization');
         if (!authorization) {
@@ -30,5 +42,9 @@ export async function middleware(request: Request) {
 }
 
 export const config = {
-    matcher: '/api/users/:path*',
+    matcher: [
+        '/api/users/:path*',
+        '/api/categories/:path+',
+        '/api/categories'
+    ],
 }
