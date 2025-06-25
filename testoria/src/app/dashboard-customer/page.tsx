@@ -12,9 +12,12 @@ import {
   List,
   CreditCard,
   FileText,
+  Bell,
+  Settings,
+  User,
+  LogOut,
 } from "lucide-react";
-
-
+import PackageCard from "@/components/PackageCard";
 
 interface Category {
   _id: string;
@@ -56,6 +59,15 @@ interface TryoutHistory {
   duration: number; // actual time taken in minutes
 }
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: "admin" | "customer" | "creator";
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function DashboardCustomerPage() {
   const [activeTab, setActiveTab] = useState("browse");
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,7 +75,15 @@ export default function DashboardCustomerPage() {
   const [viewMode, setViewMode] = useState("grid");
   const [sortBy, setSortBy] = useState("popular");
 
-
+  // Mock current user data
+  const currentUser: User = {
+    _id: "user123",
+    name: "John Doe",
+    email: "john@example.com",
+    role: "customer",
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-03-15T10:00:00Z",
+  };
 
   // Mock categories data
   const categories: Category[] = [
@@ -320,6 +340,10 @@ export default function DashboardCustomerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+
         {/* Main Content Area */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           {/* Tab Navigation */}
@@ -428,160 +452,33 @@ export default function DashboardCustomerPage() {
                     : "space-y-4"
                 }
               >
-                {sortedPackages.map((pkg) => (
-                  <div
-                    key={pkg._id}
-                    className={`bg-white rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${
-                      viewMode === "list"
-                        ? "flex items-center p-6"
-                        : "p-6 shadow-lg"
-                    }`}
-                  >
-                    {viewMode === "grid" ? (
-                      <>
-                        {/* Grid View */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-3">
-                              <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm">
-                                {pkg.categoryName}
-                              </span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
-                              {pkg.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-                              {pkg.description}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3 mb-6">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500 font-medium">
-                              Creator:
-                            </span>
-                            <span className="font-semibold text-gray-900">
-                              {pkg.creatorName}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500 font-medium">
-                              Duration:
-                            </span>
-                            <span className="font-semibold text-gray-900 flex items-center">
-                              <Clock className="w-4 h-4 mr-1 text-gray-400" />
-                              {pkg.duration} minutes
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500 font-medium">
-                              Created:
-                            </span>
-                            <span className="font-semibold text-gray-900">
-                              {formatDate(pkg.createdAt)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-100">
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="text-lg font-bold text-gray-900">
-                              {pkg.categoryName} Package
-                            </span>
-                            {pkg.isOwned && (
-                              <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm">
-                                Owned
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex space-x-3">
-                            <button
-                              onClick={() => handleViewDetail(pkg._id)}
-                              className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 flex items-center justify-center shadow-sm"
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Detail
-                            </button>
-                            {!pkg.isOwned && (
-                              <button
-                                onClick={() => handleBuyPackage(pkg._id)}
-                                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center shadow-lg"
-                              >
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                Buy Now
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        {/* List View */}
-                        <div className="flex-1 flex items-center space-x-6">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-                                {pkg.categoryName}
-                              </span>
-                              {pkg.isOwned && (
-                                <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white">
-                                  Owned
-                                </span>
-                              )}
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-1">
-                              {pkg.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-2 font-medium">
-                              by {pkg.creatorName}
-                            </p>
-                            <p className="text-sm text-gray-500 leading-relaxed">
-                              {pkg.description}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center space-x-6 text-sm text-gray-600">
-                            <div className="flex items-center">
-                              <Clock className="w-4 h-4 mr-1 text-gray-400" />
-                              <span className="font-medium">
-                                {pkg.duration}m
-                              </span>
-                            </div>
-                            <div className="flex items-center">
-                              <BookOpen className="w-4 h-4 mr-1 text-gray-400" />
-                              <span className="font-medium">
-                                {formatDate(pkg.createdAt)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-gray-900 mb-3">
-                              {pkg.categoryName} Package
-                            </p>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleViewDetail(pkg._id)}
-                                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-all duration-200"
-                              >
-                                View Detail
-                              </button>
-                              {!pkg.isOwned && (
-                                <button
-                                  onClick={() => handleBuyPackage(pkg._id)}
-                                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md"
-                                >
-                                  Enroll
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
+                {sortedPackages.length > 0 ? (
+                  sortedPackages.map((packageItem) => (
+                    <PackageCard
+                      key={packageItem._id}
+                      package={packageItem}
+                      userRole={currentUser.role}
+                      onEdit={handleViewDetail}
+                      onDelete={handleViewDetail}
+                      onBuy={handleBuyPackage}
+                      onView={handleViewDetail}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-16">
+                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <Package className="w-12 h-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                      No packages found
+                    </h3>
+                    <p className="text-gray-600 text-lg max-w-md mx-auto">
+                      {activeTab === "my-packages"
+                        ? "You haven't purchased any packages yet. Browse available packages to get started."
+                        : "Try adjusting your search or filter criteria to find the perfect test package."}
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             )}
 
@@ -723,58 +620,9 @@ export default function DashboardCustomerPage() {
                 ))}
               </div>
             )}
-
-            {/* Empty State */}
-            {sortedPackages.length === 0 &&
-              (activeTab === "browse" || activeTab === "my-packages") && (
-                <div className="text-center py-16">
-                  <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Package className="w-12 h-12 text-gray-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    No packages found
-                  </h3>
-                  <p className="text-gray-600 text-lg max-w-md mx-auto">
-                    {activeTab === "my-packages"
-                      ? "You haven't purchased any packages yet. Browse available packages to get started."
-                      : "Try adjusting your search or filter criteria to find the perfect test package."}
-                  </p>
-                </div>
-              )}
-
-            {/* Empty State for Payment History */}
-            {paymentHistory.length === 0 && activeTab === "payment-history" && (
-              <div className="text-center py-16">
-                <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <CreditCard className="w-12 h-12 text-gray-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                  No payment history
-                </h3>
-                <p className="text-gray-600 text-lg max-w-md mx-auto">
-                  You haven't made any payments yet. Purchase a package to see
-                  your payment history here.
-                </p>
-              </div>
-            )}
-
-            {/* Empty State for Tryout History */}
-            {tryoutHistory.length === 0 && activeTab === "tryout-history" && (
-              <div className="text-center py-16">
-                <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <FileText className="w-12 h-12 text-gray-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                  No tryout history
-                </h3>
-                <p className="text-gray-600 text-lg max-w-md mx-auto">
-                  You haven't taken any tryouts yet. Start with your purchased
-                  packages to see your results here.
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
+    </div>
   );
 }
