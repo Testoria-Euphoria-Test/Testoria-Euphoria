@@ -9,7 +9,6 @@ export async function middleware(request: Request) {
         const method = request.method;
 
         console.log(`Middleware triggered for: ${method} ${url.pathname}`);
-
         // Allow public GET requests for published packages
         if (url.pathname === '/api/packages' && method === 'GET') {
             console.log(`Allowing public access to GET /api/packages`);
@@ -26,14 +25,12 @@ export async function middleware(request: Request) {
         if (url.pathname === '/api/categories' && (method === 'GET' || method === 'POST')) {
             console.log(`Allowing public access to ${method} /api/categories`);
             return NextResponse.next();
-        }
-
+   
         // Allow public GET requests for individual category viewing
         if (url.pathname.startsWith('/api/categories/') && method === 'GET') {
             console.log(`Allowing public access to ${method} ${url.pathname}`);
             return NextResponse.next();
         }
-
         // Allow public GET requests for individual profile viewing (creators)
         if (url.pathname.startsWith('/api/profiles/') && 
             url.pathname !== '/api/profiles/me' && 
@@ -47,7 +44,6 @@ export async function middleware(request: Request) {
             console.log(`Allowing access to AI testing endpoint`);
             return NextResponse.next();
         }
-
         // For all other protected routes, require authentication
         const cookieStore = await cookies();
         const authorization = cookieStore.get('Authorization');
@@ -77,6 +73,7 @@ export const config = {
     matcher: [
         '/api/users/:path*',
         '/api/categories/:path*',
+        '/api/categories',
         '/api/profiles/:path*',
         '/api/packages/:path*',
         '/api/test-ai/:path*'
