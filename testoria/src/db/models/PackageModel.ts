@@ -44,6 +44,7 @@ class PackageModel {
                 categoryId: new ObjectId(validatedData.categoryId),
                 creatorId: new ObjectId(validatedData.creatorId),
                 duration: validatedData.duration,
+                price: validatedData.price,
                 description: validatedData.description || "",
                 isPublished: validatedData.isPublished || false, // Default to false
                 createdAt: new Date(),

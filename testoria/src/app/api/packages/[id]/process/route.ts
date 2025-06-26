@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { database } from "@/db/config/mongodb";
 import { parseImageToQuestions } from "@/helpers/parseImageToQuestions";
-import { convertPdfToPngUrls } from "@/helpers/pdfToImages";
+import { regeneratePdfImageUrls, getPdfPageCount } from "@/helpers/processPdfForPackage";
 import { v2 as cloudinary } from 'cloudinary';
 import errorHandler from "@/helpers/errorHandler";
 
@@ -70,90 +70,26 @@ export async function PATCH(
             try {
                 // Get the first PDF URL (assuming single PDF for now)
                 const pdfUrl = pkg.sourcePdf[0];
-                console.log("Attempting to download PDF from:", pdfUrl);
+                console.log("Processing PDF URL:", pdfUrl);
                 
-                let pdfBuffer: Buffer;
-                
-                // Try different methods to fetch the PDF
-                try {
-                    // Method 1: Try direct fetch first (works for newer uploads)
-                    const response = await fetch(pdfUrl);
-                    if (response.ok) {
-                        pdfBuffer = Buffer.from(await response.arrayBuffer());
-                        console.log("✅ PDF downloaded successfully via direct fetch");
-                    } else {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                } catch (fetchError) {
-                    console.log("❌ Direct fetch failed:", fetchError);
-                    console.log("🔄 Trying alternative methods...");
-                    
-                    // Method 2: If URL has /image/upload/, try converting to /raw/upload/
-                    if (pdfUrl.includes('/image/upload/')) {
-                        try {
-                            const correctedUrl = pdfUrl.replace('/image/upload/', '/raw/upload/');
-                            console.log("Trying corrected URL (raw instead of image):", correctedUrl);
-                            
-                            const correctedResponse = await fetch(correctedUrl);
-                            if (correctedResponse.ok) {
-                                pdfBuffer = Buffer.from(await correctedResponse.arrayBuffer());
-                                console.log("✅ PDF downloaded successfully via corrected URL");
-                            } else {
-                                throw new Error(`Corrected URL failed: ${correctedResponse.status}`);
-                            }
-                        } catch (correctedError) {
-                            console.log("❌ Corrected URL method failed:", correctedError);
-                            throw correctedError;
-                        }
-                    } else {
-                        // Method 3: Try to extract public_id from URL and use Cloudinary API                    } else {
-                        // Method 3: Try to extract public_id from URL and use Cloudinary API
-                        try {
-                            // Extract public_id from Cloudinary URL (handle both /image/upload/ and /raw/upload/)
-                            const urlMatch = pdfUrl.match(/\/(?:image|raw)\/upload\/v\d+\/(.+?)\.pdf$/);
-                            if (urlMatch) {
-                                const publicId = urlMatch[1];
-                                console.log("Extracted public_id:", publicId);
-                                
-                                // Determine if this is a raw or image resource based on URL
-                                const isRawResource = pdfUrl.includes('/raw/upload/');
-                                const resourceType = isRawResource ? 'raw' : 'image';
-                                console.log(`Using resource_type: ${resourceType}`);
-                                
-                                // Get resource info from Cloudinary
-                                const resourceInfo = await cloudinary.api.resource(publicId, { resource_type: resourceType });
-                                const authenticatedUrl = cloudinary.url(publicId, { 
-                                    resource_type: resourceType,
-                                    secure: true,
-                                    sign_url: true,
-                                    auth_token: {
-                                        duration: 3600 // 1 hour
-                                    }
-                                });
-                                
-                                console.log("Trying authenticated Cloudinary URL...");
-                                const authResponse = await fetch(authenticatedUrl);
-                                if (authResponse.ok) {
-                                    pdfBuffer = Buffer.from(await authResponse.arrayBuffer());
-                                    console.log("✅ PDF downloaded successfully via authenticated Cloudinary URL");
-                                } else {
-                                    throw new Error(`Authenticated fetch failed: ${authResponse.status}`);
-                                }
-                            } else {
-                                throw new Error("Could not extract public_id from Cloudinary URL");
-                            }
-                        } catch (cloudinaryError) {
-                            console.log("❌ Cloudinary method failed:", cloudinaryError);
-                            throw new Error(`All download methods failed. Original error: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
-                        }
-                    }
+                // Try to fetch PDF and get page count
+                const response = await fetch(pdfUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
                 }
                 
-                imagesToProcess = await convertPdfToPngUrls(pdfBuffer, `package_${packageId}`);
+                const pdfBuffer = Buffer.from(await response.arrayBuffer());
+                console.log("✅ PDF downloaded successfully");
                 
-                console.log(`Generated ${imagesToProcess.length} images from PDF`);
+                // Get page count and generate image URLs
+                const pageCount = await getPdfPageCount(pdfBuffer);
+                console.log(`PDF has ${pageCount} pages`);
                 
-                // Update package with generated images
+                // Generate image URLs using Cloudinary transformations
+                imagesToProcess = regeneratePdfImageUrls(pdfUrl, pageCount);
+                console.log(`Generated ${imagesToProcess.length} image URLs from PDF`);
+                
+                // Update package with generated image URLs
                 if (imagesToProcess.length > 0) {
                     await database.collection("packages").updateOne(
                         { _id: new ObjectId(packageId) },
@@ -164,18 +100,20 @@ export async function PATCH(
                             } 
                         }
                     );
+                    console.log("✅ Package updated with generated image URLs");
                 }
+                
             } catch (imageGenerationError) {
                 console.error("Failed to generate images from PDF:", imageGenerationError);
                 return NextResponse.json({ 
                     success: false,
-                    message: "Failed to generate images from PDF",
+                    message: "Failed to process PDF for image generation",
                     error: imageGenerationError instanceof Error ? imageGenerationError.message : 'Unknown error',
                     troubleshooting: {
                         pdfUrl: pkg.sourcePdf[0],
                         suggestions: [
                             "The PDF URL might be expired or have restricted access",
-                            "Try creating a new package with the same PDF file",
+                            "Try re-uploading the PDF using the reupload endpoint",
                             "Ensure your Cloudinary credentials are properly configured",
                             "Check if the PDF file is still accessible"
                         ]
@@ -250,7 +188,7 @@ export async function PATCH(
             const imageUrl = imagesToProcess[i];
             
             try {
-                console.log(`Processing image ${i + 1}/${pkg.pdfImages.length}: ${imageUrl}`);
+                console.log(`Processing image ${i + 1}/${imagesToProcess.length}: ${imageUrl}`);
                 
                 const parsed = await parseImageToQuestions(imageUrl);
                 

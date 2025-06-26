@@ -26,15 +26,15 @@ export async function middleware(request: Request) {
             console.log(`Allowing public access to ${method} /api/categories`);
             return NextResponse.next();
         }
-   
+      
         // Allow public GET requests for individual category viewing
         if (url.pathname.startsWith('/api/categories/') && method === 'GET') {
             console.log(`Allowing public access to ${method} ${url.pathname}`);
             return NextResponse.next();
         }
         // Allow public GET requests for individual profile viewing (creators)
-        if (url.pathname.startsWith('/api/profiles/') && 
-            url.pathname !== '/api/profiles/me' && 
+        if (url.pathname.startsWith('/api/profiles/') &&
+            url.pathname !== '/api/profiles/me' &&
             method === 'GET') {
             console.log(`Allowing public access to ${method} ${url.pathname}`);
             return NextResponse.next();

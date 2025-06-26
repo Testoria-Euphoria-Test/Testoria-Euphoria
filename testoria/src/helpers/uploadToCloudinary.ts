@@ -9,9 +9,10 @@ cloudinary.config({
 
 export async function uploadToCloudinary(fileBuffer: Buffer, fileName: string): Promise<string> {
     try {
-        // Determine resource type based on file extension
+        // For PDFs, use 'image' resource type to get accessible URLs with .pdf extension
+        // For other files, use 'auto' to let Cloudinary determine the type
         const fileExtension = fileName.toLowerCase().split('.').pop();
-        const resourceType = fileExtension === 'pdf' ? 'raw' : 'auto';
+        const resourceType = fileExtension === 'pdf' ? 'image' : 'auto';
         
         console.log(`Uploading ${fileName} as ${resourceType} resource type`);
         
@@ -19,13 +20,14 @@ export async function uploadToCloudinary(fileBuffer: Buffer, fileName: string): 
         const uploadResult = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(
                 {
-                    resource_type: resourceType, // Use 'raw' for PDFs, 'auto' for images
+                    resource_type: resourceType, // Use 'image' for PDFs to get accessible URLs
                     folder: "testoria/packages", // Organize files in folders
                     public_id: `${Date.now()}_${fileName.replace(/\.[^/.]+$/, "")}`, // Remove extension and add timestamp
                     access_mode: "public", // Ensure public access
                     secure: true, // Use HTTPS URLs
                     use_filename: true, // Preserve original filename
                     unique_filename: false, // Use our custom public_id
+                    format: fileExtension === 'pdf' ? 'pdf' : undefined, // Ensure PDF extension is preserved
                 },
                 (error, result) => {
                     if (error) {
