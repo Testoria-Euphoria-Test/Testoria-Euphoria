@@ -1,5 +1,6 @@
-import { LogOut, User, Settings } from "lucide-react";
+import {  User, Settings } from "lucide-react";
 import Link from "next/link";
+import ButtonLogout from "./ButtonLogout";
 
 export default function Navbar() {
   return (
@@ -18,10 +19,7 @@ export default function Navbar() {
             <Link href="" className="p-2 rounded-lg hover:bg-gray-100">
               <User className="w-5 h-5" />
             </Link>
-            <button className="flex items-center space-x-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
+            <ButtonLogout />
           </div>
         </div>
       </div>
