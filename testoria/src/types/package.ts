@@ -30,10 +30,11 @@ export const PackageSchema = z.object({
     title: z.string().trim().min(5, "Title must be at least 5 characters"),
     sourcePdf: z.array(z.url("Invalid PDF URL")).min(1, "At least one PDF required"),
     pdfImages: z.array(z.url("Invalid image URL")).default([]), // Allow empty array, images generated from PDF
-    contents: z.array(z.any()).min(1, "Content is required"),
+    contents: z.array(z.any()).default([]), // Allow empty array - content can be added via AI processing later
     categoryId: z.string().min(1, "Category is required"),
     creatorId: z.string().min(1, "Creator is required"),
     duration: z.number().min(1, "Duration must be at least 1 minute"),
+    price: z.number().min(0, "Price must be non-negative"),
     description: z.string().optional(),
     isPublished: z.boolean().default(false),
 });
@@ -42,9 +43,10 @@ export const PackageUpdateSchema = z.object({
     title: z.string().trim().min(5, "Title must be at least 5 characters").optional(),
     sourcePdf: z.array(z.url("Invalid PDF URL")).min(1, "At least one PDF required").optional(),
     pdfImages: z.array(z.url("Invalid image URL")).optional(), // Allow empty array for updates
-    contents: z.array(z.any()).min(1, "Content is required").optional(),
+    contents: z.array(z.any()).optional(), // Allow empty array - content can be updated via AI processing
     categoryId: z.string().min(1, "Category is required").optional(),
     duration: z.number().min(1, "Duration must be at least 1 minute").optional(),
+    price: z.number().min(0, "Price must be non-negative").optional(),
     description: z.string().optional(),
     isPublished: z.boolean().optional(),
 });
@@ -56,10 +58,11 @@ export interface PackageCreateInput {
     title: string;
     sourcePdf: string[];
     pdfImages: string[];
-    contents: any[];
+    contents: any[]; // Can be empty array initially
     categoryId: string;
     creatorId: string;
     duration: number;
+    price: number;
     description?: string;
     isPublished?: boolean; // Default will be false
 }
@@ -73,6 +76,7 @@ export interface PackageResponse {
     categoryId: string;
     creatorId: string;
     duration: number;
+    price: number;
     description: string;
     isPublished: boolean;
     createdAt: Date;

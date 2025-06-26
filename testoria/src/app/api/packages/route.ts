@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { uploadToCloudinary } from "@/helpers/uploadToCloudinary";
-import { convertPdfToPngUrls } from "@/helpers/pdfToImages";
+import { processPdfForPackage } from "@/helpers/processPdfForPackage";
 import { parseImageToQuestions } from "@/helpers/parseImageToQuestions";
 import PackageModel from "@/db/models/PackageModel";
 import errorHandler from "@/helpers/errorHandler";
@@ -80,6 +79,7 @@ export async function POST(req: Request) {
     const title = formData.get("title")?.toString();
     const categoryId = formData.get("categoryId")?.toString();
     const duration = formData.get("duration")?.toString();
+    const price = formData.get("price")?.toString();
     const description = formData.get("description")?.toString() || "";
     const contents = formData.get("contents")?.toString();
     const pdfImages = formData.get("pdfImages")?.toString();
@@ -97,39 +97,39 @@ export async function POST(req: Request) {
     if (!duration) {
       throw { message: "Duration is required", status: 400 };
     }
+    if (!price) {
+      throw { message: "Price is required", status: 400 };
+    }
 
     // Validate file type (PDF only)
     if (file.type !== 'application/pdf') {
       throw { message: "Only PDF files are allowed", status: 400 };
     }
 
-    // Upload PDF to Cloudinary
+    // Process PDF file
     const buffer = Buffer.from(await file.arrayBuffer());
-    const pdfUrl = await uploadToCloudinary(buffer, file.name);
+    const { pdfUrl, pdfImages: generatedPdfImages, pageCount } = await processPdfForPackage(buffer, file.name);
+    console.log(`PDF processed: ${pageCount} pages, ${generatedPdfImages.length} image URLs generated`);
 
-    // Convert PDF to images and upload to Cloudinary
-    let generatedPdfImages: string[] = [];
-    try {
-      generatedPdfImages = await convertPdfToPngUrls(buffer, file.name);
-      console.log(`Generated ${generatedPdfImages.length} images from PDF`);
-    } catch (imageError) {
-      console.warn("Failed to convert PDF to images, continuing without images:", imageError);
-      // Continue without images if conversion fails
-    }
-
-    // Process images with AI to extract questions (simple approach)
+    // Process images with AI to extract questions
     let allQuestions: any[] = [];
     const enableAIProcessing = process.env.ENABLE_AI_PROCESSING === 'true';
     
+    console.log(`AI Processing Status:
+      - ENABLE_AI_PROCESSING: ${process.env.ENABLE_AI_PROCESSING}
+      - OPENAI_API_KEY exists: ${!!process.env.OPENAI_API_KEY}
+      - Generated images count: ${generatedPdfImages.length}
+      - AI enabled: ${enableAIProcessing}`);
+    
     if (enableAIProcessing && process.env.OPENAI_API_KEY && generatedPdfImages.length > 0) {
       try {
-        console.log("Starting AI question extraction...");
+        console.log("🚀 Starting AI question extraction...");
         
         for (let i = 0; i < generatedPdfImages.length; i++) {
           const imageUrl = generatedPdfImages[i];
           
           try {
-            console.log(`Processing image ${i + 1}/${generatedPdfImages.length}: ${imageUrl}`);
+            console.log(`🔍 Processing image ${i + 1}/${generatedPdfImages.length}: ${imageUrl}`);
             
             const parsed = await parseImageToQuestions(imageUrl);
             
@@ -145,11 +145,13 @@ export async function POST(req: Request) {
               
               allQuestions.push(...questionsWithMetadata);
               console.log(`✅ Found ${parsed.questions.length} questions in image ${i + 1}`);
+            } else {
+              console.log(`⚠️ No questions found in image ${i + 1} - parsed result:`, parsed);
             }
 
             // Add delay to respect OpenAI rate limits
             if (i < generatedPdfImages.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+              await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay for better rate limiting
             }
 
           } catch (imageError) {
@@ -157,12 +159,16 @@ export async function POST(req: Request) {
           }
         }
         
-        console.log(`AI processing complete: Found ${allQuestions.length} total questions`);
+        console.log(`🎉 AI processing complete: Found ${allQuestions.length} total questions from ${generatedPdfImages.length} images`);
       } catch (aiError) {
-        console.warn("AI processing failed, continuing without processed questions:", aiError);
+        console.error("❌ AI processing failed:", aiError);
+        console.warn("Continuing package creation without AI-processed questions");
       }
     } else {
-      console.log("AI processing disabled or not configured");
+      console.log(`⏭️ AI processing skipped - Reason:
+        - AI enabled: ${enableAIProcessing}
+        - OpenAI key configured: ${!!process.env.OPENAI_API_KEY}
+        - Images available: ${generatedPdfImages.length > 0} (${generatedPdfImages.length} images)`);
     }
 
     // Parse optional JSON fields
@@ -186,15 +192,22 @@ export async function POST(req: Request) {
       categoryId,
       creatorId: userId,
       duration: parseInt(duration),
+      price: parseFloat(price),
       description,
       sourcePdf: [pdfUrl],
       // Use generated images if available, otherwise use provided images, or fallback to empty array
       pdfImages: generatedPdfImages.length > 0 ? generatedPdfImages : 
                  parsedPdfImages.length > 0 ? parsedPdfImages : [],
-      // Use AI-processed questions if available, otherwise use provided content, or create basic content
+      // Use AI-processed questions if available, otherwise use provided content, or placeholder for pending processing
       contents: allQuestions.length > 0 ? allQuestions :
                 parsedContents.length > 0 ? parsedContents : 
-                [{ type: "pdf", url: pdfUrl, timestamp: new Date().toISOString() }],
+                [{ 
+                  type: "processing_pending", 
+                  message: "Content will be generated via AI processing",
+                  status: "pending",
+                  pdfImages: generatedPdfImages.length,
+                  timestamp: new Date().toISOString() 
+                }], // Informative placeholder instead of empty array
       isPublished: false // Default to unpublished (draft)
     };
 

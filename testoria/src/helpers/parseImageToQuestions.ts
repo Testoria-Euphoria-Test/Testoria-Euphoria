@@ -49,7 +49,7 @@ export async function parseImageToQuestions(imageUrl: string): Promise<QuestionP
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "gpt-4-vision-preview",
+                model: "gpt-4o", // Updated to latest vision model
                 messages: [
                     {
                         role: "user",

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { database } from "@/db/config/mongodb";
-import { uploadToCloudinary } from "@/helpers/uploadToCloudinary";
+import { processPdfForPackage } from "@/helpers/processPdfForPackage";
 import errorHandler from "@/helpers/errorHandler";
 
 export const config = {
@@ -57,19 +57,19 @@ export async function PATCH(
 
         console.log(`Re-uploading PDF for package ${packageId}...`);
 
-        // Upload new PDF to Cloudinary
+        // Process new PDF (upload and generate page URLs)
         const buffer = Buffer.from(await file.arrayBuffer());
-        const newPdfUrl = await uploadToCloudinary(buffer, file.name);
+        const { pdfUrl: newPdfUrl, pdfImages: newPdfImages, pageCount } = await processPdfForPackage(buffer, file.name);
 
-        console.log(`✅ New PDF uploaded: ${newPdfUrl}`);
+        console.log(`✅ New PDF processed: ${newPdfUrl}, ${pageCount} pages, ${newPdfImages.length} image URLs`);
 
-        // Update package with new PDF URL
+        // Update package with new PDF URL and images
         const updateResult = await database.collection("packages").updateOne(
             { _id: new ObjectId(packageId) },
             { 
                 $set: { 
                     sourcePdf: [newPdfUrl],
-                    pdfImages: [], // Reset images so they can be regenerated
+                    pdfImages: newPdfImages, // Set new page image URLs
                     updatedAt: new Date()
                 } 
             }
@@ -81,15 +81,17 @@ export async function PATCH(
 
         return NextResponse.json({
             success: true,
-            message: "PDF re-uploaded successfully. You can now process the package.",
+            message: "PDF re-uploaded and processed successfully",
             data: {
                 packageId: packageId,
                 newPdfUrl: newPdfUrl,
                 oldPdfUrl: pkg.sourcePdf[0],
+                pageCount: pageCount,
+                pdfImagesGenerated: newPdfImages.length,
                 nextSteps: [
                     "The PDF has been re-uploaded with proper access permissions",
-                    "Images have been reset and will be regenerated during processing",
-                    "You can now call PATCH /api/packages/{id}/process to extract questions"
+                    `${newPdfImages.length} page image URLs have been generated using Cloudinary transformations`,
+                    "You can now call PATCH /api/packages/{id}/process to extract questions from the images"
                 ]
             }
         });

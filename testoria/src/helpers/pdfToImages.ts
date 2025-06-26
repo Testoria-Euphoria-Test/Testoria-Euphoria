@@ -1,8 +1,50 @@
 import { PDFDocument } from 'pdf-lib';
 import { uploadToCloudinary } from "./uploadToCloudinary";
 
+/**
+ * Generate pdfImages URLs based on the uploaded PDF URL and page count
+ * Format: /upload/pg_${index+1}/...jpg for each page
+ */
+export function generatePdfImageUrls(pdfUrl: string, pageCount: number): string[] {
+    const imageUrls: string[] = [];
+    
+    // Extract the public_id from the Cloudinary URL
+    // Example: https://res.cloudinary.com/your-cloud/image/upload/v1234/folder/filename.pdf
+    // We want to transform this to: https://res.cloudinary.com/your-cloud/image/upload/pg_1/v1234/folder/filename.jpg
+    
+    try {
+        const urlParts = pdfUrl.split('/');
+        const uploadIndex = urlParts.indexOf('upload');
+        
+        if (uploadIndex === -1) {
+            console.warn('Invalid Cloudinary URL format:', pdfUrl);
+            return [];
+        }
+        
+        // Get base URL (everything before 'upload')
+        const baseUrl = urlParts.slice(0, uploadIndex + 1).join('/'); // https://res.cloudinary.com/your-cloud/image/upload
+        
+        // Get the version and path parts after 'upload'
+        const pathParts = urlParts.slice(uploadIndex + 1);
+        
+        // Generate URLs for each page
+        for (let i = 1; i <= pageCount; i++) {
+            // Add page transformation and change extension to jpg
+            const imageUrl = baseUrl + `/pg_${i}/` + pathParts.join('/').replace('.pdf', '.jpg');
+            imageUrls.push(imageUrl);
+        }
+        
+        console.log(`📄 Generated ${pageCount} PDF image URLs using Cloudinary transformations`);
+        return imageUrls;
+        
+    } catch (error) {
+        console.error('Error generating PDF image URLs:', error);
+        return [];
+    }
+}
+
 // Fallback function when poppler is not available
-export async function convertPdfToPngUrlsSimple(fileBuffer: Buffer, fileName: string): Promise<string[]> {
+export async function convertPdfToPngUrlsSimple(fileBuffer: Buffer, fileName: string, pdfUrl?: string): Promise<string[]> {
     try {
         console.log("🔄 Starting simple PDF processing (no image conversion)...");
 
@@ -12,8 +54,18 @@ export async function convertPdfToPngUrlsSimple(fileBuffer: Buffer, fileName: st
 
         console.log(`📄 PDF loaded successfully: ${pageCount} pages`);
         console.log("⚠️ PDF to image conversion not available - poppler not installed");
+        
+        // If we have a PDF URL from Cloudinary, generate image URLs using transformations
+        if (pdfUrl) {
+            console.log("🔄 Generating PDF image URLs using Cloudinary transformations...");
+            const imageUrls = generatePdfImageUrls(pdfUrl, pageCount);
+            if (imageUrls.length > 0) {
+                console.log(`✅ Generated ${imageUrls.length} PDF image URLs`);
+                return imageUrls;
+            }
+        }
+        
         console.log("📋 Package will be created without images - AI processing will be skipped");
-
         return [];
 
     } catch (error) {
@@ -22,7 +74,7 @@ export async function convertPdfToPngUrlsSimple(fileBuffer: Buffer, fileName: st
     }
 }
 
-export async function convertPdfToPngUrls(fileBuffer: Buffer, fileName: string): Promise<string[]> {
+export async function convertPdfToPngUrls(fileBuffer: Buffer, fileName: string, pdfUrl?: string): Promise<string[]> {
     try {
         console.log("� Attempting PDF to image conversion...");
 
@@ -105,7 +157,7 @@ export async function convertPdfToPngUrls(fileBuffer: Buffer, fileName: string):
                 conversionError.message.includes('PDF conversion test failed'))) {
 
             console.log("🔄 Poppler not available, falling back to simple PDF processing...");
-            return await convertPdfToPngUrlsSimple(fileBuffer, fileName);
+            return await convertPdfToPngUrlsSimple(fileBuffer, fileName, pdfUrl);
         }
 
         // For other errors, re-throw
