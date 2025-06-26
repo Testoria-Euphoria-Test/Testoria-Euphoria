@@ -1,245 +1,256 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { User, Mail, Lock, UserCircle, Eye, EyeOff } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import toast, { Toaster } from 'react-hot-toast'
+import { useState } from "react";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  GraduationCap,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function RegisterPage() {
+
+    // jika user sudah login, redirect ke halaman dashboard
+    if (typeof window !== "undefined") {
+      const userRole = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("x-user-role="))
+        ?.split("=")[1];
+      if (userRole) {
+        if (userRole === "admin") {
+          window.location.href = "/dashboard-admin";
+        } else if (userRole === "creator") {
+          window.location.href = "/dashboard-creator";
+        } else if (userRole === "customer") {
+          window.location.href = "/dashboard-customer";
+        }
+      }
+    }
+
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        role: 'customer' as 'customer' | 'creator'
-    })
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
-    const router = useRouter()
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        role: "customer"
+    });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
-        })
-    }
+            [e.target.name]: e.target.value,
+        });
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsLoading(true)
-
-        // Validate password confirmation
+        e.preventDefault();
+        
         if (formData.password !== formData.confirmPassword) {
-            toast.error('Passwords do not match')
-            setIsLoading(false)
-            return
+            toast.error("Passwords do not match");
+            return;
         }
 
+        setIsLoading(true);
+
         try {
-            const response = await fetch('/api/register', {
-                method: 'POST',
+            const response = await fetch("/api/register", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    name: formData.name,
+                    username: formData.username,
                     email: formData.email,
                     password: formData.password,
                     role: formData.role
                 }),
-            })
+            });
 
-            const data = await response.json()
+            const data = await response.json();
 
             if (response.ok) {
-                toast.success(data.message || 'Registration successful!')
+                toast.success(data.message || "Registration successful!");
                 setFormData({
-                    name: '',
-                    email: '',
-                    password: '',
-                    confirmPassword: '',
-                    role: 'customer'
-                })
-                // Navigate to login page after successful registration
+                    username: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                    role: "customer"
+                });
                 setTimeout(() => {
-                    router.push('/login')
-                }, 1500) // Give time for toast to show
+                    router.push("/login");
+                }, 1500);
             } else {
-                toast.error(data.message || 'Registration failed')
+                toast.error(data.message || "Registration failed");
             }
         } catch (error) {
-            toast.error('An error occurred. Please try again.')
+            toast.error((error as Error).message || "Registration failed");
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
 
     return (
-        <div className="min-h-screen bg-[#f9fafb] pt-16">
-            <div className="flex items-center justify-center px-4 py-12">
-                <div className="w-full max-w-md">
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <div className="flex justify-center mb-4">
-                            <div className="w-16 h-16 bg-[#3b82f6] rounded-full flex items-center justify-center">
-                                <UserCircle className="w-8 h-8 text-white" />
-                            </div>
-                        </div>
-                        <h2 className="text-3xl font-bold text-[#374151]">Create Account</h2>
-                        <p className="text-[#4b5563] mt-2">Join Testoria today</p>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <GraduationCap className="w-8 h-8 text-white" />
                     </div>
-                    {/* Form */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Name Field */}
-                            <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Full Name
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <User className="h-5 w-5 text-[#9ca3af]" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Enter your full name"
-                                    />
-                                </div>
-                            </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Register Account</h1>
+                </div>
 
-                            {/* Email Field */}
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Email Address
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Mail className="h-5 w-5 text-[#9ca3af]" />
-                                    </div>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Enter your email"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Role Field */}
-                            <div>
-                                <label htmlFor="role" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Account Type
-                                </label>
-                                <select
-                                    id="role"
-                                    name="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] bg-white"
-                                >
-                                    <option value="customer">Customer</option>
-                                    <option value="creator">Creator</option>
-                                </select>
-                            </div>
-
-                            {/* Password Field */}
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Password
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Lock className="h-5 w-5 text-[#9ca3af]" />
-                                    </div>
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        id="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Enter your password"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-5 w-5 text-[#9ca3af] hover:text-[#374151]" />
-                                        ) : (
-                                            <Eye className="h-5 w-5 text-[#9ca3af] hover:text-[#374151]" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Confirm Password Field */}
-                            <div>
-                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Confirm Password
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Lock className="h-5 w-5 text-[#9ca3af]" />
-                                    </div>
-                                    <input
-                                        type={showConfirmPassword ? "text" : "password"}
-                                        id="confirmPassword"
-                                        name="confirmPassword"
-                                        value={formData.confirmPassword}
-                                        onChange={handleChange}
-                                        className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Confirm your password"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    >
-                                        {showConfirmPassword ? (
-                                            <EyeOff className="h-5 w-5 text-[#9ca3af] hover:text-[#374151]" />
-                                        ) : (
-                                            <Eye className="h-5 w-5 text-[#9ca3af] hover:text-[#374151]" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full bg-[#3b82f6] text-white py-3 px-4 rounded-md hover:bg-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 transition duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? 'Creating Account...' : 'Create Account'}
-                            </button>
-                        </form>
-                        {/* Login Link */}
-                        <div className="mt-6 text-center">
-                            <p className="text-sm text-[#4b5563]">
-                                Already have an account?{' '}
-                                <Link
-                                    href="/login"
-                                    className="font-medium text-[#3b82f6] hover:text-[#2563eb] transition"
-                                >
-                                    Sign in
-                                </Link>
-                            </p>
+                {/* Form */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Username */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Username
+                            </label>
+                            <input
+                                type="text"
+                                name="username"
+                                value={formData.username}
+                                onChange={handleChange}
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter username"
+                            />
                         </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Email
+                            </label>
+                            <div className="relative">
+                                <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter email"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Password */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-2.5"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="w-5 h-5 text-gray-400" />
+                                    ) : (
+                                        <Eye className="w-5 h-5 text-gray-400" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Confirm Password
+                            </label>
+                            <div className="relative">
+                                <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Confirm password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-2.5"
+                                >
+                                    {showConfirmPassword ? (
+                                        <EyeOff className="w-5 h-5 text-gray-400" />
+                                    ) : (
+                                        <Eye className="w-5 h-5 text-gray-400" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Role Selection */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Account Type
+                            </label>
+                            <select
+                                name="role"
+                                value={formData.role}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="customer">Customer</option>
+                                <option value="creator">Digital Creator</option>
+                            </select>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 font-medium mt-6"
+                        >
+                            {isLoading ? (
+                                <div className="flex items-center justify-center">
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    Creating Account...
+                                </div>
+                            ) : (
+                                "Create Account"
+                            )}
+                        </button>
+                    </form>
+
+                    {/* Login Link */}
+                    <div className="text-center mt-6 pt-6 border-t border-gray-200">
+                        <p className="text-gray-600">
+                            Already have an account?{" "}
+                            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                                Sign in
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
