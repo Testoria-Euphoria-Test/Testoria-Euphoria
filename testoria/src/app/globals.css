@@ -1,15 +1,38 @@
 @import "tailwindcss";
 
 :root {
+  /* Primary Colors - Blue Theme */
+  --primary-dark: #1e293b;
+  --primary-blue: #3b82f6;
+  --primary-light: #60a5fa;
+  --primary-accent: #93c5fd;
+  
+  /* Background Colors */
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background-dark: #0f172a;
+  --background-gradient-start: #1e293b;
+  --background-gradient-end: #3730a3;
+  
+  /* Text Colors */
+  --foreground: #1f2937;
+  --foreground-light: #6b7280;
+  --foreground-dark: #f8fafc;
+  
+  /* Component Colors */
+  --card-background: #ffffff;
+  --card-border: #e5e7eb;
+  --button-primary: #3b82f6;
+  --button-secondary: rgba(59, 130, 246, 0.1);
+  
+  /* Interactive Colors */
+  --hover-primary: #2563eb;
+  --hover-secondary: rgba(59, 130, 246, 0.2);
+  
+  /* Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #06b6d4;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,3 +47,37 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-blue);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hover-primary);
+}
+
+
+
