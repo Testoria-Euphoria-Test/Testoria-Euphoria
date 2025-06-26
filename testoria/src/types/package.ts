@@ -1,0 +1,80 @@
+import { z } from "zod/v4";
+
+// Question-related types for AI processing
+export interface QuestionOption {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+    E?: string;
+}
+
+export interface ProcessedQuestion {
+    questionId: string;
+    questionText: string;
+    options: QuestionOption;
+    correctAnswer: keyof QuestionOption;
+    explanation: string;
+    pageNumber: number;
+    imageUrl: string;
+}
+
+export interface PackageContentItem {
+    type: "summary" | "page" | "question";
+    data?: any;
+    pageNumber?: number;
+    questions?: any[];
+}
+
+export const PackageSchema = z.object({
+    title: z.string().trim().min(5, "Title must be at least 5 characters"),
+    sourcePdf: z.array(z.url("Invalid PDF URL")).min(1, "At least one PDF required"),
+    pdfImages: z.array(z.url("Invalid image URL")).default([]), // Allow empty array, images generated from PDF
+    contents: z.array(z.any()).min(1, "Content is required"),
+    categoryId: z.string().min(1, "Category is required"),
+    creatorId: z.string().min(1, "Creator is required"),
+    duration: z.number().min(1, "Duration must be at least 1 minute"),
+    description: z.string().optional(),
+    isPublished: z.boolean().default(false),
+});
+
+export const PackageUpdateSchema = z.object({
+    title: z.string().trim().min(5, "Title must be at least 5 characters").optional(),
+    sourcePdf: z.array(z.url("Invalid PDF URL")).min(1, "At least one PDF required").optional(),
+    pdfImages: z.array(z.url("Invalid image URL")).optional(), // Allow empty array for updates
+    contents: z.array(z.any()).min(1, "Content is required").optional(),
+    categoryId: z.string().min(1, "Category is required").optional(),
+    duration: z.number().min(1, "Duration must be at least 1 minute").optional(),
+    description: z.string().optional(),
+    isPublished: z.boolean().optional(),
+});
+
+export type PackageType = z.infer<typeof PackageSchema>;
+export type PackageUpdateType = z.infer<typeof PackageUpdateSchema>;
+
+export interface PackageCreateInput {
+    title: string;
+    sourcePdf: string[];
+    pdfImages: string[];
+    contents: any[];
+    categoryId: string;
+    creatorId: string;
+    duration: number;
+    description?: string;
+    isPublished?: boolean; // Default will be false
+}
+
+export interface PackageResponse {
+    _id: string;
+    title: string;
+    sourcePdf: string[];
+    pdfImages: string[];
+    contents: any[];
+    categoryId: string;
+    creatorId: string;
+    duration: number;
+    description: string;
+    isPublished: boolean;
+    createdAt: Date;
+    updatedAt?: Date;
+}
