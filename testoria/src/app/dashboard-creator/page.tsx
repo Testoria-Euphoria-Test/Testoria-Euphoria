@@ -14,6 +14,7 @@ import {
   Star,
   Download,
 } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 // Types
 interface CreatorProfile {
@@ -266,205 +267,164 @@ export default function DashboardCreatorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <div
-                key={index}
-                className={`bg-white rounded-xl shadow-sm p-6 border ${stat.borderColor} hover:shadow-md transition-shadow duration-200`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600 mb-2">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                    <p className="text-xs text-gray-500">{stat.change}</p>
-                  </div>
-                  <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.borderColor} border`}>
-                    <IconComponent className={`w-6 h-6 ${stat.color}`} />
+    <div>
+      <Navbar />
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, index) => {
+              const IconComponent = stat.icon;
+              return (
+                <div
+                  key={index}
+                  className={`bg-white rounded-xl shadow-sm p-6 border ${stat.borderColor} hover:shadow-md transition-shadow duration-200`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-600 mb-2">
+                        {stat.label}
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 mb-1">
+                        {stat.value}
+                      </p>
+                      <p className="text-xs text-gray-500">{stat.change}</p>
+                    </div>
+                    <div
+                      className={`p-3 rounded-xl ${stat.bgColor} ${stat.borderColor} border`}
+                    >
+                      <IconComponent className={`w-6 h-6 ${stat.color}`} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Main Content Area */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-0 overflow-x-auto">
-              {navigationTabs.map((tab) => {
-                const IconComponent = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap transition-colors ${
-                      activeTab === tab.id
-                        ? "border-blue-600 text-blue-600 bg-blue-50"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <IconComponent className="w-4 h-4 mr-2" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </nav>
+              );
+            })}
           </div>
 
-          {/* Tab Content */}
-          <div className="p-6 lg:p-8">
+          {/* Main Content Area */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200">
+              <nav className="flex space-x-0 overflow-x-auto">
+                {navigationTabs.map((tab) => {
+                  const IconComponent = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap transition-colors ${
+                        activeTab === tab.id
+                          ? "border-blue-600 text-blue-600 bg-blue-50"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      <IconComponent className="w-4 h-4 mr-2" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
 
-
-
-
-            {/* Created Packages Tab */}
-            {activeTab === "packages" && (
-              <div className="space-y-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900">My Packages</h3>
-                    <p className="text-gray-600 mt-1">Manage and monitor your educational packages</p>
-                  </div>
-                  <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 flex items-center transition-colors">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New Package
-                  </button>
-                </div>
-
-                <div className="grid gap-6">
-                  {packages.map((pkg) => (
-                    <div key={pkg._id} className="bg-gray-50 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-3">
-                            <h4 className="text-lg font-semibold text-gray-900">{pkg.title}</h4>
-                            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(pkg.status)}`}>
-                              {pkg.status}
-                            </span>
-                          </div>
-                          <p className="text-gray-600 mb-4 leading-relaxed">{pkg.description}</p>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-white p-3 rounded-lg border">
-                              <span className="text-xs text-gray-500 block mb-1">Category</span>
-                              <p className="font-semibold text-gray-900">{pkg.category}</p>
-                            </div>
-                            <div className="bg-white p-3 rounded-lg border">
-                              <span className="text-xs text-gray-500 block mb-1">Price</span>
-                              <p className="font-semibold text-gray-900">{(pkg.price)}</p>
-                            </div>
-                            <div className="bg-white p-3 rounded-lg border">
-                              <span className="text-xs text-gray-500 block mb-1">Students</span>
-                              <p className="font-semibold text-gray-900">{pkg.students.toLocaleString()}</p>
-                            </div>
-                            <div className="bg-white p-3 rounded-lg border">
-                              <span className="text-xs text-gray-500 block mb-1">Rating</span>
-                              <p className="font-semibold text-gray-900 flex items-center">
-                                <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                {pkg.rating > 0 ? pkg.rating : "No ratings"}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2 ml-6">
-                          <button className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors" title="View Details">
-                            <Eye className="w-5 h-5" />
-                          </button>
-                          <button className="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors" title="Edit Package">
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Delete Package">
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
+            {/* Tab Content */}
+            <div className="p-6 lg:p-8">
+              {/* Created Packages Tab */}
+              {activeTab === "packages" && (
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        My Packages
+                      </h3>
+                      <p className="text-gray-600 mt-1">
+                        Manage and monitor your educational packages
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Upload PDF Tab */}
-            {activeTab === "uploads" && (
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Learning Materials</h3>
-                  <p className="text-gray-600">Upload PDF files to enhance your packages with additional materials</p>
-                </div>
-                
-                {/* Upload Area */}
-                <div className="bg-gray-50 rounded-xl p-8">
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="pdf-upload"
-                    />
-                    <label htmlFor="pdf-upload" className="cursor-pointer">
-                      <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-xl font-semibold text-gray-900 mb-2">Upload PDF Files</p>
-                      <p className="text-gray-600 mb-2">Drag and drop your PDF files here, or click to browse</p>
-                      <p className="text-sm text-gray-500">Maximum file size: 10MB • Supported format: PDF</p>
-                    </label>
+                    <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 flex items-center transition-colors">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create New Package
+                    </button>
                   </div>
 
-                  {/* Upload Progress */}
-                  {selectedFile && uploadProgress > 0 && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-semibold text-blue-900">Uploading: {selectedFile.name}</span>
-                        <span className="text-sm font-semibold text-blue-600">{uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-blue-200 rounded-full h-3">
-                        <div 
-                          className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Uploaded Files List */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Uploaded Materials</h4>
-                  <div className="space-y-4">
-                    {uploadedPDFs.map((pdf) => (
-                      <div key={pdf._id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="p-3 bg-red-100 rounded-lg">
-                              <FileText className="w-6 h-6 text-red-600" />
+                  <div className="grid gap-6">
+                    {packages.map((pkg) => (
+                      <div
+                        key={pkg._id}
+                        className="bg-gray-50 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <h4 className="text-lg font-semibold text-gray-900">
+                                {pkg.title}
+                              </h4>
+                              <span
+                                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
+                                  pkg.status
+                                )}`}
+                              >
+                                {pkg.status}
+                              </span>
                             </div>
-                            <div>
-                              <h5 className="font-semibold text-gray-900">{pdf.fileName}</h5>
-                              <p className="text-sm text-gray-600">{pdf.fileSize} • Uploaded {new Date(pdf.uploadDate).toLocaleDateString('id-ID')}</p>
-                              {pdf.packageTitle && (
-                                <p className="text-sm text-blue-600 font-medium">📎 Linked to: {pdf.packageTitle}</p>
-                              )}
+                            <p className="text-gray-600 mb-4 leading-relaxed">
+                              {pkg.description}
+                            </p>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="bg-white p-3 rounded-lg border">
+                                <span className="text-xs text-gray-500 block mb-1">
+                                  Category
+                                </span>
+                                <p className="font-semibold text-gray-900">
+                                  {pkg.category}
+                                </p>
+                              </div>
+                              <div className="bg-white p-3 rounded-lg border">
+                                <span className="text-xs text-gray-500 block mb-1">
+                                  Price
+                                </span>
+                                <p className="font-semibold text-gray-900">
+                                  {pkg.price}
+                                </p>
+                              </div>
+                              <div className="bg-white p-3 rounded-lg border">
+                                <span className="text-xs text-gray-500 block mb-1">
+                                  Students
+                                </span>
+                                <p className="font-semibold text-gray-900">
+                                  {pkg.students.toLocaleString()}
+                                </p>
+                              </div>
+                              <div className="bg-white p-3 rounded-lg border">
+                                <span className="text-xs text-gray-500 block mb-1">
+                                  Rating
+                                </span>
+                                <p className="font-semibold text-gray-900 flex items-center">
+                                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                  {pkg.rating > 0 ? pkg.rating : "No ratings"}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                          
-                          <div className="flex items-center space-x-3">
-                            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(pdf.status)}`}>
-                              {pdf.status}
-                            </span>
-                            <button className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Download">
-                              <Download className="w-4 h-4" />
+
+                          <div className="flex items-center space-x-2 ml-6">
+                            <button
+                              className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="w-5 h-5" />
                             </button>
-                            <button className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                              <Trash2 className="w-4 h-4" />
+                            <button
+                              className="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Edit Package"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete Package"
+                            >
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
                         </div>
@@ -472,8 +432,129 @@ export default function DashboardCreatorPage() {
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Upload PDF Tab */}
+              {activeTab === "uploads" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      Upload Learning Materials
+                    </h3>
+                    <p className="text-gray-600">
+                      Upload PDF files to enhance your packages with additional
+                      materials
+                    </p>
+                  </div>
+
+                  {/* Upload Area */}
+                  <div className="bg-gray-50 rounded-xl p-8">
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="pdf-upload"
+                      />
+                      <label htmlFor="pdf-upload" className="cursor-pointer">
+                        <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-xl font-semibold text-gray-900 mb-2">
+                          Upload PDF Files
+                        </p>
+                        <p className="text-gray-600 mb-2">
+                          Drag and drop your PDF files here, or click to browse
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Maximum file size: 10MB • Supported format: PDF
+                        </p>
+                      </label>
+                    </div>
+
+                    {/* Upload Progress */}
+                    {selectedFile && uploadProgress > 0 && (
+                      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-semibold text-blue-900">
+                            Uploading: {selectedFile.name}
+                          </span>
+                          <span className="text-sm font-semibold text-blue-600">
+                            {uploadProgress}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-blue-200 rounded-full h-3">
+                          <div
+                            className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Uploaded Files List */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                      Uploaded Materials
+                    </h4>
+                    <div className="space-y-4">
+                      {uploadedPDFs.map((pdf) => (
+                        <div
+                          key={pdf._id}
+                          className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="p-3 bg-red-100 rounded-lg">
+                                <FileText className="w-6 h-6 text-red-600" />
+                              </div>
+                              <div>
+                                <h5 className="font-semibold text-gray-900">
+                                  {pdf.fileName}
+                                </h5>
+                                <p className="text-sm text-gray-600">
+                                  {pdf.fileSize} • Uploaded{" "}
+                                  {new Date(pdf.uploadDate).toLocaleDateString(
+                                    "id-ID"
+                                  )}
+                                </p>
+                                {pdf.packageTitle && (
+                                  <p className="text-sm text-blue-600 font-medium">
+                                    📎 Linked to: {pdf.packageTitle}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center space-x-3">
+                              <span
+                                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
+                                  pdf.status
+                                )}`}
+                              >
+                                {pdf.status}
+                              </span>
+                              <button
+                                className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Download"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

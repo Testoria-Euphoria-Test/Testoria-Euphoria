@@ -37,6 +37,8 @@ export async function POST(request: Request) {
 
         const cookieStore = await cookies();
         cookieStore.set("Authorization", `Bearer ${token}`);
+        cookieStore.set("x-user-id", user._id.toString());
+        cookieStore.set("x-user-role", user.role );
 
         return Response.json({
             message: "Login successful",

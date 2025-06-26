@@ -16,6 +16,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 // Types based on database schema
 interface User {
@@ -343,391 +344,397 @@ export default function DashboardAdminPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <div
-                key={index}
-                className="bg-white rounded-lg shadow-sm p-6 border border-gray-200"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stat.value}
-                    </p>
-                    <p className="text-sm text-green-600 font-medium">
-                      {stat.change}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-gray-50">
-                    <IconComponent className={`w-6 h-6 ${stat.color}`} />
+    <div>
+      <Navbar/>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, index) => {
+              const IconComponent = stat.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-lg shadow-sm p-6 border border-gray-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {stat.value}
+                      </p>
+                      <p className="text-sm text-green-600 font-medium">
+                        {stat.change}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-gray-50">
+                      <IconComponent className={`w-6 h-6 ${stat.color}`} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
-              {[
-                { id: "users", label: "Users Management" },
-                { id: "packages", label: "Package Management" },
-                { id: "categories", label: "Categories" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
+              );
+            })}
           </div>
 
-          <div className="p-6">
-
-            {/* Users Management Tab */}
-            {activeTab === "users" && (
-              <div className="space-y-6">
-                {/* Search and Filter */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative">
-                      <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search users..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                      <Filter className="w-4 h-4 mr-2" />
-                      Filter
-                    </button>
-                  </div>
-                </div>
-
-                {/* Users Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          User
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Join Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Activity
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredUsers.map((user) => (
-                        <tr key={user._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.name}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {user.email}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadge(
-                                user.role
-                              )}`}
-                            >
-                              {user.role}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {new Date(user.createdAt).toLocaleDateString(
-                              "id-ID"
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {user.role === "customer" &&
-                            user.packagesOwned &&
-                            user.totalSpent
-                              ? `${
-                                  user.packagesOwned
-                                } packages • ${formatCurrency(user.totalSpent)}`
-                              : user.role === "creator" &&
-                                user.packagesCreated &&
-                                user.totalEarnings
-                              ? `${
-                                  user.packagesCreated
-                                } packages • ${formatCurrency(
-                                  user.totalEarnings
-                                )}`
-                              : user.role === "admin"
-                              ? "System Administrator"
-                              : "No activity"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2">
-                              <button className="text-blue-600 hover:text-blue-900">
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button className="text-green-600 hover:text-green-900">
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button className="text-red-600 hover:text-red-900">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                              <button className="text-gray-600 hover:text-gray-900">
-                                <MoreVertical className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Package Management Tab */}
-            {activeTab === "packages" && (
-              <div className="space-y-6">
-                {/* Search and Filter */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative">
-                      <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search packages..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                      <Filter className="w-4 h-4 mr-2" />
-                      Filter
-                    </button>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">
-                      Pending:{" "}
-                      {packages.filter((p) => p.status === "pending").length}
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      Published:{" "}
-                      {packages.filter((p) => p.status === "published").length}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Packages Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Package
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Creator
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Category
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Price
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredPackages.map((pkg) => (
-                        <tr key={pkg._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {pkg.title}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {pkg.totalQuestions} questions • {pkg.duration}{" "}
-                                minutes
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {pkg.creatorName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                              {pkg.categoryName}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatCurrency(pkg.price)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {editingPackageId === pkg._id ? (
-                              <div className="flex items-center space-x-2">
-                                <select
-                                  value={selectedStatus}
-                                  onChange={(e) =>
-                                    setSelectedStatus(e.target.value)
-                                  }
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="published">Published</option>
-                                </select>
-                                <button
-                                  onClick={() => handleSaveStatus(pkg._id)}
-                                  className="text-green-600 hover:text-green-900"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={handleCancelEdit}
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center space-x-2">
-                                <span
-                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                                    pkg.status
-                                  )}`}
-                                >
-                                  {pkg.status}
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    handleEditStatus(pkg._id, pkg.status)
-                                  }
-                                  className="text-blue-600 hover:text-blue-900"
-                                  title="Edit Status"
-                                >
-                                  <Edit className="w-3 h-3" />
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                className="text-blue-600 hover:text-blue-900"
-                                title="View Details"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button
-                                className="text-green-600 hover:text-green-900"
-                                title="Edit Package"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                className="text-red-600 hover:text-red-900"
-                                title="Delete Package"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                className="text-gray-600 hover:text-gray-900"
-                                title="More Options"
-                              >
-                                <MoreVertical className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Categories Tab */}
-            {activeTab === "categories" && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Categories Management
-                  </h3>
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Category
+          {/* Tabs */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="border-b border-gray-200">
+              <nav className="flex space-x-8 px-6">
+                {[
+                  { id: "users", label: "Users Management" },
+                  { id: "packages", label: "Package Management" },
+                  { id: "categories", label: "Categories" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                      activeTab === tab.id
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    {tab.label}
                   </button>
-                </div>
+                ))}
+              </nav>
+            </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categories.map((category) => (
-                    <div
-                      key={category._id}
-                      className="bg-white border border-gray-200 rounded-lg p-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium text-gray-900">
-                            {category.name}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {
-                              packages.filter(
-                                (p) => p.categoryId === category._id
-                              ).length
-                            }{" "}
-                            packages
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button className="text-green-600 hover:text-green-900">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="text-red-600 hover:text-red-900">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+            <div className="p-6">
+              {/* Users Management Tab */}
+              {activeTab === "users" && (
+                <div className="space-y-6">
+                  {/* Search and Filter */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative">
+                        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search users..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Users Table */}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            User
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Role
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Join Date
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Activity
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredUsers.map((user) => (
+                          <tr key={user._id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {user.name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {user.email}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadge(
+                                  user.role
+                                )}`}
+                              >
+                                {user.role}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {new Date(user.createdAt).toLocaleDateString(
+                                "id-ID"
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {user.role === "customer" &&
+                              user.packagesOwned &&
+                              user.totalSpent
+                                ? `${
+                                    user.packagesOwned
+                                  } packages • ${formatCurrency(
+                                    user.totalSpent
+                                  )}`
+                                : user.role === "creator" &&
+                                  user.packagesCreated &&
+                                  user.totalEarnings
+                                ? `${
+                                    user.packagesCreated
+                                  } packages • ${formatCurrency(
+                                    user.totalEarnings
+                                  )}`
+                                : user.role === "admin"
+                                ? "System Administrator"
+                                : "No activity"}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-2">
+                                <button className="text-blue-600 hover:text-blue-900">
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button className="text-green-600 hover:text-green-900">
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button className="text-red-600 hover:text-red-900">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                                <button className="text-gray-600 hover:text-gray-900">
+                                  <MoreVertical className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Package Management Tab */}
+              {activeTab === "packages" && (
+                <div className="space-y-6">
+                  {/* Search and Filter */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative">
+                        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search packages..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                      </button>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">
+                        Pending:{" "}
+                        {packages.filter((p) => p.status === "pending").length}
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        Published:{" "}
+                        {
+                          packages.filter((p) => p.status === "published")
+                            .length
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Packages Table */}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Package
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Creator
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Price
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredPackages.map((pkg) => (
+                          <tr key={pkg._id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {pkg.title}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {pkg.totalQuestions} questions •{" "}
+                                  {pkg.duration} minutes
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {pkg.creatorName}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                {pkg.categoryName}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatCurrency(pkg.price)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {editingPackageId === pkg._id ? (
+                                <div className="flex items-center space-x-2">
+                                  <select
+                                    value={selectedStatus}
+                                    onChange={(e) =>
+                                      setSelectedStatus(e.target.value)
+                                    }
+                                    className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="published">Published</option>
+                                  </select>
+                                  <button
+                                    onClick={() => handleSaveStatus(pkg._id)}
+                                    className="text-green-600 hover:text-green-900"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEdit}
+                                    className="text-red-600 hover:text-red-900"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center space-x-2">
+                                  <span
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                                      pkg.status
+                                    )}`}
+                                  >
+                                    {pkg.status}
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      handleEditStatus(pkg._id, pkg.status)
+                                    }
+                                    className="text-blue-600 hover:text-blue-900"
+                                    title="Edit Status"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  className="text-blue-600 hover:text-blue-900"
+                                  title="View Details"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  className="text-green-600 hover:text-green-900"
+                                  title="Edit Package"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  className="text-red-600 hover:text-red-900"
+                                  title="Delete Package"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  className="text-gray-600 hover:text-gray-900"
+                                  title="More Options"
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Categories Tab */}
+              {activeTab === "categories" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Categories Management
+                    </h3>
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Category
+                    </button>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categories.map((category) => (
+                      <div
+                        key={category._id}
+                        className="bg-white border border-gray-200 rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">
+                              {category.name}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              {
+                                packages.filter(
+                                  (p) => p.categoryId === category._id
+                                ).length
+                              }{" "}
+                              packages
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button className="text-green-600 hover:text-green-900">
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button className="text-red-600 hover:text-red-900">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -26,7 +26,7 @@ export async function middleware(request: Request) {
             console.log(`Allowing public access to ${method} /api/categories`);
             return NextResponse.next();
         }
-
+      
         // Allow public GET requests for individual category viewing
         if (url.pathname.startsWith('/api/categories/') && method === 'GET') {
             console.log(`Allowing public access to ${method} ${url.pathname}`);
@@ -69,6 +69,7 @@ export async function middleware(request: Request) {
         return errorHandler(error);
     }
 }
+
 
 export const config = {
     matcher: [
