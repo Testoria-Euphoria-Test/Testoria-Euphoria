@@ -1,25 +1,7 @@
 import Link from "next/link";
-import { Clock, Award, BookOpen } from "lucide-react";
+import { Clock, BookOpen } from "lucide-react";
 
-interface PackageType {
-  _id: string;
-  title: string;
-  description: string;
-  duration: number;
-  price: number;
-  categoryId: string;
-  creatorId: string;
-  sourcePdf: string[];
-  pdfImages: string[];
-  contents: any[];
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
-  categoryName?: string;
-  creatorName?: string;
-}
-
-export default function PackageCard({ package: pkg }: { package: PackageType }) {
+export default function PackageCard({ package: pkg }: { package: PackageResponse }) {
   const formatPrice = (price: number) => {
     if (price === 0) return "GRATIS";
     return new Intl.NumberFormat("id-ID", {
@@ -39,9 +21,7 @@ export default function PackageCard({ package: pkg }: { package: PackageType }) 
     return `${duration}m`;
   };
 
-  // Gunakan data statis atau dari data asli
-  const rating = 4.5;
-  const participantCount = 150; // Static value
+  // Gunakan data statis atau dari data asli// Static value
   const questionCount = pkg.contents?.length || 50; // Static fallback
 
   return (
@@ -90,18 +70,12 @@ export default function PackageCard({ package: pkg }: { package: PackageType }) 
             <Clock className="w-3 h-3" />
             <span>{formatDuration(pkg.duration)}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Award className="w-3 h-3" />
-            <span>{participantCount} peserta</span>
-          </div>
+
         </div>
 
         <div className="flex items-center justify-between mb-3">
           <div className="text-lg font-bold text-blue-600">
             {formatPrice(pkg.price)}
-          </div>
-          <div className="text-xs text-gray-500">
-            ⭐ {rating} ({participantCount} ulasan)
           </div>
         </div>
 
@@ -109,6 +83,11 @@ export default function PackageCard({ package: pkg }: { package: PackageType }) 
           <Link href="/login" className="flex-1">
             <button className="w-full bg-blue-600 text-white text-sm font-medium py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
               {pkg.price === 0 ? "Mulai Gratis" : "Beli Sekarang"}
+            </button>
+          </Link>
+          <Link href={`/packages/${pkg._id}`} className="flex-1">
+            <button className="w-full bg-blue-400 text-white text-sm font-medium py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+              Detail Paket
             </button>
           </Link>
         </div>

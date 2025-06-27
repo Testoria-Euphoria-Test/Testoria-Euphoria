@@ -159,6 +159,7 @@ class PackageModel {
                         title: 1,
                         sourcePdf: 1,
                         pdfImages: 1,
+                        price: 1,
                         contents: 1,
                         duration: 1,
                         description: 1,
@@ -240,6 +241,7 @@ class PackageModel {
                         pdfImages: 1,
                         contents: 1,
                         duration: 1,
+                        price: 1,
                         description: 1,
                         isPublished: 1,
                         createdAt: 1,
@@ -247,6 +249,7 @@ class PackageModel {
                         "category._id": 1,
                         "category.name": 1,
                         "creator._id": 1,
+                        "creator.name": 1,
                         "creator.email": 1,
                         "creator.role": 1
                     }
