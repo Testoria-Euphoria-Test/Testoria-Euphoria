@@ -1,6 +1,6 @@
 "use client";
 
-import { GraduationCap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function NavbarLanding() {
@@ -9,14 +9,14 @@ export default function NavbarLanding() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-gray-900">Testoria</h1>
-            </div>
-          </div>
+            <div className="flex items-center space-x-3">
+                      <Image 
+                      src="/testoria.svg"
+                      alt="Testoria Logo"
+                      width={80}
+                      height={80}
+                      />
+                    </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8"></div>
