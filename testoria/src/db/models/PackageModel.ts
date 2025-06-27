@@ -214,46 +214,73 @@ class PackageModel {
             this.validateObjectId(packageId);
 
             const pipeline = [
-                { $match: { _id: new ObjectId(packageId) } },
-                {
-                    $lookup: {
-                        from: "categories",
-                        localField: "categoryId",
-                        foreignField: "_id",
-                        as: "category"
-                    }
+              { $match: { _id: new ObjectId(packageId) } },
+              {
+                $lookup: {
+                  from: "categories",
+                  localField: "categoryId",
+                  foreignField: "_id",
+                  as: "category",
                 },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "creatorId",
-                        foreignField: "_id",
-                        as: "creator"
-                    }
+              },
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "creatorId",
+                  foreignField: "_id",
+                  as: "creator",
                 },
-                { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-                { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        _id: 1,
-                        title: 1,
-                        sourcePdf: 1,
-                        pdfImages: 1,
-                        contents: 1,
-                        duration: 1,
-                        price: 1,
-                        description: 1,
-                        isPublished: 1,
-                        createdAt: 1,
-                        updatedAt: 1,
-                        "category._id": 1,
-                        "category.name": 1,
-                        "creator._id": 1,
-                        "creator.name": 1,
-                        "creator.email": 1,
-                        "creator.role": 1
-                    }
-                }
+              },
+              {
+                $unwind: {
+                  path: "$category",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $unwind: { path: "$creator", preserveNullAndEmptyArrays: true },
+              },
+              // ✅ Tambahkan lookup ke profiles berdasarkan creator._id
+              {
+                $lookup: {
+                  from: "profiles",
+                  localField: "creator._id", // Dari users._id
+                  foreignField: "userId", // Ke profiles.userId
+                  as: "creatorProfile",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$creatorProfile",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  sourcePdf: 1,
+                  pdfImages: 1,
+                  contents: 1,
+                  duration: 1,
+                  price: 1,
+                  description: 1,
+                  isPublished: 1,
+                  createdAt: 1,
+                  updatedAt: 1,
+                  "category._id": 1,
+                  "category.name": 1,
+                  "creator._id": 1,
+                  "creator.name": 1,
+                  "creator.email": 1,
+                  "creator.role": 1,
+                  "creatorProfile._id": 1,
+                  "creatorProfile.photoUrl": 1,
+                  "creatorProfile.education": 1,
+                  "creatorProfile.certificates": 1,
+                  "creatorProfile.bio": 1,
+                },
+              },
             ];
 
             const result = await this.collection().aggregate(pipeline).toArray();

@@ -13,7 +13,6 @@ import Link from "next/link";
 import { PackageResponse } from "@/types/package";
 import Navbar from "@/components/Navbar";
 
-
 export default async function PackagePageDetail({
   params,
 }: {
@@ -194,9 +193,15 @@ export default async function PackagePageDetail({
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     {packageData.price === 0 ? "Start Free" : "Enroll Now"}
                   </button>
-                  
+                  <Link
+                    href={`/profile/${packageData.creatorProfile._id}`}
+                    className="w-full bg-gray-100 text-gray-800 py-3 px-4 rounded-lg font-semibold text-sm hover:bg-gray-200 transition-all duration-200 flex items-center justify-center"
+                  >
+                    <User className="w-4 h-4 mr-2 mb-2" />
+                    View Creator
+                  </Link>
 
-                  <div className="border-t border-gray-200 pt-4">
+                  <div className="border-t border-gray-200 pt-4 mt-2">
                     <h4 className="font-semibold text-gray-900 mb-3">
                       Package Details
                     </h4>
