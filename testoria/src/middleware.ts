@@ -46,6 +46,12 @@ export async function middleware(request: Request) {
             return NextResponse.next();
         }
 
+        // Allow public GET requests for questions (for users who purchased packages)
+        if (url.pathname === '/api/questions' && method === 'GET') {
+            console.log(`Allowing public access to GET /api/questions`);
+            return NextResponse.next();
+        }
+
         // Allow public access to Midtrans notification endpoint
         if (url.pathname === '/api/payments/notify' && method === 'POST') {
             console.log(`Allowing public access to Midtrans notification endpoint`);
@@ -86,6 +92,7 @@ export const config = {
         '/api/profiles/:path*',
         '/api/packages/:path*',
         '/api/payments/:path*',
+        '/api/questions/:path*',
         '/api/test-ai/:path*'
     ],
 }
