@@ -118,13 +118,18 @@ export default function Home() {
         }}></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div className="text-white">
               <div className="inline-flex items-center px-4 py-2 bg-blue-600/20 backdrop-blur-sm rounded-full border border-blue-400/30 mb-6">
-                <span className="text-blue-300 text-sm font-medium">🚀 Join Now</span>
+              <Image
+                width={80}
+                height={40}
+                src="/testoria.svg"
+                alt="Testoria Logo"
+                className="object-contain"
+              />
               </div>
-              
               <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 Build your skills
                 <br />
@@ -164,33 +169,33 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Content continues with matching dark theme */}
-      <div className="min-h-screen bg-slate-900">
+      {/* Content continues with white background */}
+      <div className="min-h-screen bg-gray-50">
         <main className="pt-12 pb-12">
           {/* Stats Section */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-md p-6 text-center">
-                <div className="text-3xl font-bold text-blue-400 mb-2">6</div>
-                <div className="text-gray-300">Paket Try Out</div>
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <div className="text-3xl font-bold text-blue-600 mb-2">6</div>
+                <div className="text-gray-600">Paket Try Out</div>
               </div>
-              <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-md p-6 text-center">
-                <div className="text-3xl font-bold text-green-400 mb-2">
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <div className="text-3xl font-bold text-green-600 mb-2">
                   1,250+
                 </div>
-                <div className="text-gray-300">Peserta Aktif</div>
+                <div className="text-gray-600">Peserta Aktif</div>
               </div>
-              <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-md p-6 text-center">
-                <div className="text-3xl font-bold text-purple-400 mb-2">
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <div className="text-3xl font-bold text-purple-600 mb-2">
                   98%
                 </div>
-                <div className="text-gray-300">Tingkat Kepuasan</div>
+                <div className="text-gray-600">Tingkat Kepuasan</div>
               </div>
-              <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-md p-6 text-center">
-                <div className="text-3xl font-bold text-orange-400 mb-2">
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <div className="text-3xl font-bold text-orange-600 mb-2">
                   4.8/5
                 </div>
-                <div className="text-gray-300">Rating Rata-rata</div>
+                <div className="text-gray-600">Rating Rata-rata</div>
               </div>
             </div>
           </div>
@@ -198,10 +203,10 @@ export default function Home() {
           {/* Packages Grid */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Paket Try Out Tersedia
               </h2>
-              <p className="text-gray-300">
+              <p className="text-gray-600">
                 Pilih paket try out sesuai dengan kebutuhan persiapan ujian Anda
               </p>
             </div>
@@ -210,11 +215,11 @@ export default function Home() {
               {packages.map((pkg) => (
                 <div
                   key={pkg._id}
-                  className="bg-slate-800 border border-slate-700 rounded-lg shadow-lg overflow-hidden hover:shadow-xl hover:border-slate-600 transition-all duration-300"
+                  className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
                 >
                   {/* Card Header */}
                   <div className="relative">
-                    <div className="h-48 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                    <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                       <div className="text-white text-center">
                         <div className="text-4xl font-bold mb-2">
                           {pkg.category}
@@ -238,20 +243,20 @@ export default function Home() {
                   {/* Card Body */}
                   <div className="p-6">
                     <div className="mb-4">
-                      <h3 className="text-xl font-bold text-white mb-2">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">
                         {pkg.title}
                       </h3>
-                      <p className="text-gray-300 text-sm mb-3">
+                      <p className="text-gray-600 text-sm mb-3">
                         {pkg.description}
                       </p>
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-gray-500">
                         <span className="font-medium">Pembuat:</span>{" "}
                         {pkg.creator}
                       </div>
                     </div>
 
                     {/* Package Info */}
-                    <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                       <div className="flex items-center">
                         <svg
                           className="w-4 h-4 mr-1"
@@ -289,7 +294,7 @@ export default function Home() {
                     {/* Price and Action */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-2xl font-bold text-gray-900">
                           {formatPrice(pkg.price)}
                         </div>
                       </div>
