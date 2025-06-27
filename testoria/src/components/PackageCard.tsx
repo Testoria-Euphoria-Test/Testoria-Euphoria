@@ -1,157 +1,118 @@
-"use client";
+import Link from "next/link";
+import { Clock, Award, BookOpen } from "lucide-react";
 
-import { Clock, Eye, ShoppingCart, Award } from "lucide-react";
-import { memo, useCallback } from "react";
-import type { FC } from "react";
-
-interface Package {
+interface PackageType {
   _id: string;
   title: string;
   description: string;
   duration: number;
+  price: number;
+  categoryId: string;
+  creatorId: string;
+  sourcePdf: string[];
+  pdfImages: string[];
+  contents: any[];
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
   categoryName?: string;
   creatorName?: string;
-  isOwned?: boolean;
-  price?: number;
-  level?: "Beginner" | "Intermediate" | "Advanced";
 }
 
-interface PackageCardProps {
-  package: Package;
-  userRole: "admin" | "creator" | "customer";
-  onBuy?: (id: string) => void;
-  onView?: (id: string) => void;
-  viewMode?: "grid" | "list";
-}
+export default function PackageCard({ package: pkg }: { package: PackageType }) {
+  const formatPrice = (price: number) => {
+    if (price === 0) return "GRATIS";
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
 
-const PackageCard: FC<PackageCardProps> = memo(
-  ({ package: pkg, userRole, onBuy, onView = "grid" }) => {
-    // Memoized price formatter
-    const formatPrice = useCallback((price?: number): string => {
-      if (!price) return "Free";
+  const formatDuration = (duration: number) => {
+    if (duration >= 60) {
+      const hours = Math.floor(duration / 60);
+      const minutes = duration % 60;
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    }
+    return `${duration}m`;
+  };
 
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-      }).format(price);
-    }, []);
+  // Gunakan data statis atau dari data asli
+  const rating = 4.5;
+  const participantCount = 150; // Static value
+  const questionCount = pkg.contents?.length || 50; // Static fallback
 
-    // Memoized event handlers
-    const handleView = useCallback(() => {
-      onView?.(pkg._id);
-    }, [onView, pkg._id]);
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 max-w-sm">
+      <div className="relative">
+        <div className="absolute top-3 left-3 z-10">
+          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium">
+            {pkg.categoryName || "Try Out"}
+          </span>
+        </div>
 
-    const handleBuy = useCallback(() => {
-      onBuy?.(pkg._id);
-    }, [onBuy, pkg._id]);
-
-    return (
-      <article
-        className="group bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col gap-4"
-        role="article"
-        aria-labelledby={`package-title-${pkg._id}`}
-      >
-        {/* Header */}
-        <header className="flex items-center justify-between">
-          {pkg.categoryName && (
-            <span
-              className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 font-semibold"
-              aria-label={`Category: ${pkg.categoryName}`}
-            >
-              {pkg.categoryName}
+        <div className="absolute top-3 right-3 z-10">
+          {pkg.price === 0 && (
+            <span className="bg-green-500 text-white text-xs px-2 py-1 rounded font-medium">
+              GRATIS
             </span>
           )}
-          {pkg.isOwned && (
-            <span
-              className="text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-600 font-semibold flex items-center gap-1"
-              aria-label="Package owned"
-            >
-              <Award className="w-4 h-4" aria-hidden="true" />
-              Owned
-            </span>
-          )}
-        </header>
+        </div>
 
-        {/* Title */}
-        <h3
-          id={`package-title-${pkg._id}`}
-          className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors"
-        >
+        <div className="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 rounded-t-lg overflow-hidden relative">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <BookOpen className="w-12 h-12 text-blue-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-blue-600">{questionCount}</div>
+              <div className="text-xs text-gray-600">Soal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <div className="text-sm font-semibold text-blue-600 mb-1">
+          {pkg.creatorName || "Testoria"}
+        </div>
+
+        <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
           {pkg.title}
         </h3>
 
-        {/* Description */}
-        <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">
+        <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
           {pkg.description}
         </p>
 
-        {/* Info */}
-        <div className="flex items-center justify-between text-xs text-gray-400">
-          <div
-            className="flex items-center gap-1"
-            aria-label={`Duration: ${pkg.duration} minutes`}
-          >
-            <Clock className="w-4 h-4" aria-hidden="true" />
-            <span>{pkg.duration} min</span>
+        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            <span>{formatDuration(pkg.duration)}</span>
           </div>
-          {pkg.creatorName && (
-            <span
-              className="font-medium text-gray-500"
-              aria-label={`Creator: ${pkg.creatorName}`}
-            >
-              {pkg.creatorName}
-            </span>
-          )}
+          <div className="flex items-center gap-1">
+            <Award className="w-3 h-3" />
+            <span>{participantCount} peserta</span>
+          </div>
         </div>
 
-        {/* Price */}
-        <div
-          className="text-lg font-bold text-blue-600"
-          aria-label={`Price: ${formatPrice(pkg.price)}`}
-        >
-          {formatPrice(pkg.price)}
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-lg font-bold text-blue-600">
+            {formatPrice(pkg.price)}
+          </div>
+          <div className="text-xs text-gray-500">
+            ⭐ {rating} ({participantCount} ulasan)
+          </div>
         </div>
 
-        {/* Actions */}
-        <footer className="flex gap-2 mt-auto">
-          <button
-            onClick={handleView}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-            aria-label={`View details for ${pkg.title}`}
-          >
-            <Eye className="w-4 h-4" aria-hidden="true" />
-            Detail
-          </button>
-
-          {userRole === "customer" && !pkg.isOwned && (
-            <button
-              onClick={handleBuy}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-semibold"
-              aria-label={`Enroll in ${pkg.title}`}
-            >
-              <ShoppingCart className="w-4 h-4" aria-hidden="true" />
-              Enroll
+        <div className="flex gap-2">
+          <Link href="/login" className="flex-1">
+            <button className="w-full bg-blue-600 text-white text-sm font-medium py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+              {pkg.price === 0 ? "Mulai Gratis" : "Beli Sekarang"}
             </button>
-          )}
-
-          {userRole === "customer" && pkg.isOwned && (
-            <button
-              onClick={handleView}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all font-semibold"
-              aria-label={`Start learning ${pkg.title}`}
-            >
-              <Award className="w-4 h-4" aria-hidden="true" />
-              Learn
-            </button>
-          )}
-        </footer>
-      </article>
-    );
-  }
-);
-
-PackageCard.displayName = "PackageCard";
-
-export default PackageCard;
-export type { PackageCardProps, Package };
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

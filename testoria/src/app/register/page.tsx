@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { User, Mail, Lock, UserCircle, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -70,6 +70,7 @@ export default function RegisterPage() {
                 toast.error(data.message || 'Registration failed')
             }
         } catch (error) {
+            console.log('Registration error:', error);
             toast.error('An error occurred. Please try again.')
         } finally {
             setIsLoading(false)

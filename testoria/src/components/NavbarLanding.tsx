@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function NavbarLanding() {
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+   <nav className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 shadow-xl border-b border-blue-800/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -25,7 +25,7 @@ export default function NavbarLanding() {
           <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/login"
-              className="px-4 py-2 text-gray-600 hover:text-blue-600 font-medium transition-colors duration-200"
+              className="px-4 py-2 text-white hover:text-blue-600 font-medium transition-colors duration-200"
             >
               Login
             </Link>

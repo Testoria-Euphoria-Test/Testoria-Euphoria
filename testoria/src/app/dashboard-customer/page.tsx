@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Package,
   Search,
@@ -24,10 +24,15 @@ interface Package {
   title: string;
   categoryId: string;
   creatorId: string;
-  duration: number; // in minutes
+  duration: number;
+  price: number;
   description: string;
+  sourcePdf: string[];
+  pdfImages: string[];
+  contents: any[];
+  isPublished: boolean;
   createdAt: string;
-  // Additional fields for display purposes (would come from joins/calculations)
+  updatedAt: string;
   categoryName?: string;
   creatorName?: string;
   isOwned?: boolean;
@@ -51,7 +56,7 @@ interface TryoutHistory {
   totalQuestions: number;
   correctAnswers: number;
   completedAt: string;
-  duration: number; // actual time taken in minutes
+  duration: number;
 }
 
 interface User {
@@ -70,6 +75,12 @@ export default function DashboardCustomerPage() {
   const [viewMode, setViewMode] = useState("grid");
   const [sortBy, setSortBy] = useState("popular");
 
+  // State untuk data dari API
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Mock current user data
   const currentUser: User = {
     _id: "user123",
@@ -80,97 +91,53 @@ export default function DashboardCustomerPage() {
     updatedAt: "2024-03-15T10:00:00Z",
   };
 
-  // Mock categories data
-  const categories: Category[] = [
-    { _id: "all", name: "All Categories" },
-    { _id: "cat1", name: "UTBK" },
-    { _id: "cat2", name: "CPNS" },
-    { _id: "cat3", name: "SNBT" },
-    { _id: "cat4", name: "Kedinasan" },
-    { _id: "cat5", name: "Olimpiade" },
-  ];
+  // Fetch packages dari API
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        setLoading(true);
 
-  // Mock packages data
-  const packages: Package[] = [
-    {
-      _id: "pkg1",
-      title: "UTBK Saintek 2024 - Matematika Dasar",
-      categoryId: "cat1",
-      creatorId: "creator1",
-      duration: 180,
-      description:
-        "Paket lengkap persiapan UTBK Saintek dengan fokus pada matematika dasar dan penalaran logika",
-      createdAt: "2024-01-10T10:00:00Z",
-      categoryName: "UTBK",
-      creatorName: "Dr. Ahmad Susanto",
-      isOwned: false,
-    },
-    {
-      _id: "pkg2",
-      title: "CPNS 2024 - Tes Wawasan Kebangsaan",
-      categoryId: "cat2",
-      creatorId: "creator2",
-      duration: 90,
-      description:
-        "Persiapan komprehensif CPNS dengan fokus pada TWK dan materi terbaru sesuai kisi-kisi",
-      createdAt: "2024-02-15T10:00:00Z",
-      categoryName: "CPNS",
-      creatorName: "Drs. Bambang Wijaya",
-      isOwned: true,
-    },
-    {
-      _id: "pkg3",
-      title: "SNBT 2024 - Penalaran Matematika",
-      categoryId: "cat3",
-      creatorId: "creator3",
-      duration: 195,
-      description:
-        "Simulasi lengkap SNBT dengan format terbaru dan analisis hasil yang mendalam",
-      createdAt: "2024-03-01T10:00:00Z",
-      categoryName: "SNBT",
-      creatorName: "Prof. Siti Nurhaliza",
-      isOwned: false,
-    },
-    {
-      _id: "pkg4",
-      title: "Try Out Kedinasan 2024",
-      categoryId: "cat4",
-      creatorId: "creator3",
-      duration: 120,
-      description:
-        "Paket persiapan untuk berbagai sekolah kedinasan dengan prediksi soal yang akurat",
-      createdAt: "2024-02-28T10:00:00Z",
-      categoryName: "Kedinasan",
-      creatorName: "Prof. Siti Nurhaliza",
-      isOwned: false,
-    },
-    {
-      _id: "pkg5",
-      title: "Olimpiade Matematika SMA",
-      categoryId: "cat5",
-      creatorId: "creator1",
-      duration: 240,
-      description:
-        "Persiapan olimpiade matematika tingkat SMA dengan soal-soal challenging dan pembahasan detail",
-      createdAt: "2024-03-10T10:00:00Z",
-      categoryName: "Olimpiade",
-      creatorName: "Dr. Ahmad Susanto",
-      isOwned: true,
-    },
-    {
-      _id: "pkg6",
-      title: "UTBK Soshum 2024 - Ekonomi & Geografi",
-      categoryId: "cat1",
-      creatorId: "creator1",
-      duration: 180,
-      description:
-        "Try out UTBK Soshum dengan strategi khusus untuk ekonomi dan geografi",
-      createdAt: "2024-01-20T10:00:00Z",
-      categoryName: "UTBK",
-      creatorName: "Dr. Ahmad Susanto",
-      isOwned: false,
-    },
-  ];
+        const response = await fetch("/api/packages", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch packages");
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setPackages(data.data || []);
+        } else {
+          throw new Error(data.message || "Failed to load packages");
+        }
+      } catch (err) {
+        console.error("Error fetching packages:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPackages();
+  }, []);
+
+  // Static categories untuk sekarang
+  useEffect(() => {
+    setCategories([
+      { _id: "all", name: "All Categories" },
+      { _id: "cat1", name: "UTBK" },
+      { _id: "cat2", name: "CPNS" },
+      { _id: "cat3", name: "SNBT" },
+      { _id: "cat4", name: "Kedinasan" },
+      { _id: "cat5", name: "Olimpiade" },
+    ]);
+  }, []);
 
   // Mock payment history data
   const paymentHistory: PaymentHistory[] = [
@@ -244,8 +211,6 @@ export default function DashboardCustomerPage() {
     { id: "tryout-history", label: "Tryout History", icon: FileText },
   ];
 
-
-
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
       year: "numeric",
@@ -270,8 +235,17 @@ export default function DashboardCustomerPage() {
       (pkg.creatorName &&
         pkg.creatorName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       pkg.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesCategory =
-      selectedCategory === "all" || pkg.categoryId === selectedCategory;
+      selectedCategory === "all" ||
+      pkg.categoryId === selectedCategory ||
+      pkg.categoryName
+        ?.toLowerCase()
+        .includes(
+          categories
+            .find((c) => c._id === selectedCategory)
+            ?.name.toLowerCase() || ""
+        );
 
     if (activeTab === "my-packages") {
       return pkg.isOwned && matchesSearch && matchesCategory;
@@ -280,7 +254,6 @@ export default function DashboardCustomerPage() {
     return matchesSearch && matchesCategory;
   });
 
-  // Add sorting logic to ensure proper display
   const sortedPackages = [...filteredPackages].sort((a, b) => {
     switch (sortBy) {
       case "newest":
@@ -293,19 +266,23 @@ export default function DashboardCustomerPage() {
         );
       case "title":
         return a.title.localeCompare(b.title);
+      case "price-low":
+        return (a.price || 0) - (b.price || 0);
+      case "price-high":
+        return (b.price || 0) - (a.price || 0);
       default:
-        return 0; // Keep original order for "popular"
+        return 0;
     }
   });
 
   const handleBuyPackage = (packageId: string) => {
-    // Handle buy package logic
     console.log("Buying package:", packageId);
+    // Implement buy logic here
   };
 
   const handleViewDetail = (packageId: string) => {
-    // Handle view detail logic
     console.log("Viewing package detail:", packageId);
+    // Implement view detail logic here
   };
 
   const getStatusBadge = (status: string) => {
@@ -327,11 +304,55 @@ export default function DashboardCustomerPage() {
     return "text-red-600";
   };
 
+  if (loading) {
+    return (
+      <div>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading packages...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Dashboard Customer
+            </h1>
+            <p className="text-gray-600">
+              Welcome back! Manage your packages and track your progress.
+            </p>
+          </div>
+
           {/* Main Content Area */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             {/* Tab Navigation */}
@@ -399,6 +420,8 @@ export default function DashboardCustomerPage() {
                       <option value="newest">Newest</option>
                       <option value="oldest">Oldest</option>
                       <option value="title">Title A-Z</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
                     </select>
 
                     {/* View Mode */}
@@ -426,6 +449,20 @@ export default function DashboardCustomerPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Results Summary */}
+                <div className="mt-4 text-sm text-gray-600">
+                  Showing {sortedPackages.length} of {packages.length} packages
+                  {selectedCategory !== "all" && (
+                    <span className="ml-1">
+                      in{" "}
+                      {categories.find((c) => c._id === selectedCategory)?.name}
+                    </span>
+                  )}
+                  {searchTerm && (
+                    <span className="ml-1">matching "{searchTerm}"</span>
+                  )}
+                </div>
               </div>
             )}
 
@@ -444,16 +481,27 @@ export default function DashboardCustomerPage() {
                     sortedPackages.map((packageItem) => (
                       <PackageCard
                         key={packageItem._id}
-                        package={packageItem}
-                        userRole={currentUser.role}
-                        onEdit={handleViewDetail}
-                        onDelete={handleViewDetail}
-                        onBuy={handleBuyPackage}
-                        onView={handleViewDetail}
+                        package={{
+                          _id: packageItem._id,
+                          title: packageItem.title,
+                          description: packageItem.description,
+                          duration: packageItem.duration,
+                          price: packageItem.price,
+                          categoryId: packageItem.categoryId,
+                          creatorId: packageItem.creatorId,
+                          sourcePdf: packageItem.sourcePdf,
+                          pdfImages: packageItem.pdfImages,
+                          contents: packageItem.contents,
+                          isPublished: packageItem.isPublished,
+                          createdAt: packageItem.createdAt,
+                          updatedAt: packageItem.updatedAt,
+                          categoryName: packageItem.categoryName,
+                          creatorName: packageItem.creatorName,
+                        }}
                       />
                     ))
                   ) : (
-                    <div className="text-center py-16">
+                    <div className="col-span-full text-center py-16">
                       <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
                         <Package className="w-12 h-12 text-gray-400" />
                       </div>
@@ -465,6 +513,14 @@ export default function DashboardCustomerPage() {
                           ? "You haven't purchased any packages yet. Browse available packages to get started."
                           : "Try adjusting your search or filter criteria to find the perfect test package."}
                       </p>
+                      {activeTab === "my-packages" && (
+                        <button
+                          onClick={() => setActiveTab("browse")}
+                          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Browse Packages
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
