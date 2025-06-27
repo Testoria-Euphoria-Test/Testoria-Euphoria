@@ -194,6 +194,7 @@ export default async function PackagePageDetail({
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     {packageData.price === 0 ? "Start Free" : "Enroll Now"}
                   </button>
+                  
 
                   <div className="border-t border-gray-200 pt-4">
                     <h4 className="font-semibold text-gray-900 mb-3">
