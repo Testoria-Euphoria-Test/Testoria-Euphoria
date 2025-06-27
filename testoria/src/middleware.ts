@@ -45,6 +45,13 @@ export async function middleware(request: Request) {
             console.log(`Allowing access to AI testing endpoint`);
             return NextResponse.next();
         }
+
+        // Allow public access to Midtrans notification endpoint
+        if (url.pathname === '/api/payments/notify' && method === 'POST') {
+            console.log(`Allowing public access to Midtrans notification endpoint`);
+            return NextResponse.next();
+        }
+
         // For all other protected routes, require authentication
         const cookieStore = await cookies();
         const authorization = cookieStore.get('Authorization');
@@ -78,6 +85,7 @@ export const config = {
         '/api/categories',
         '/api/profiles/:path*',
         '/api/packages/:path*',
+        '/api/payments/:path*',
         '/api/test-ai/:path*'
     ],
 }
