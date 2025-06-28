@@ -2,33 +2,13 @@ import NavbarLanding from "@/components/NavbarLanding";
 import Image from "next/image";
 import Link from "next/link";
 import PackageCard from "@/components/PackageCard";
+import { PackageResponse } from "@/types/package";
 
 export const dynamic = "force-dynamic";
 
-interface PackageResponse {
-  _id: string;
-  title: string;
-  description: string;
-  duration: number;
-  price: number;
-  categoryId: string;
-  creatorId: string;
-  sourcePdf: string[];
-  pdfImages: string[];
-  contents: any[];
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
-  categoryName?: string;
-  creatorName?: string;
-}
 
 export default async function Home() {
-  const data = await fetch(
-    `${
-      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    }/api/packages`
-  );
+  const data = await fetch("http://localhost:3000/api/packages")
   const response = await data.json();
   const packages = response.data as PackageResponse[];
 
