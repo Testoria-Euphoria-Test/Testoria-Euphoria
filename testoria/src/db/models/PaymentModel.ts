@@ -7,41 +7,76 @@ class PaymentModel {
     return database.collection("payments");
   }
 
-  static async create(data: Omit<PaymentType, '_id'> & { midtransOrderId: string }) {
+  static async create(
+    data: Omit<PaymentType, "_id"> & { midtransOrderId: string }
+  ) {
     const payment = {
-        userId: new ObjectId(data.userId),
-        packageId: new ObjectId(data.packageId),
-        amount: data.amount,
-        status: data.status as PaymentType['status'],
-        paymentDate: data.paymentDate,
-        midtransOrderId: data.midtransOrderId,
-        createdAt: new Date().toISOString(),
+      userId: new ObjectId(data.userId),
+      packageId: new ObjectId(data.packageId),
+      amount: data.amount,
+      status: "paid" as PaymentStatus,
+      paymentDate: new Date().toISOString(),
+      midtransOrderId: data.midtransOrderId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     const result = await this.collection().insertOne(payment);
     return result.insertedId;
-}
+  }
+
   static async updateStatus(
     orderId: string,
     status: PaymentStatus,
-    paymentDate: string
+    paymentDate?: string
   ) {
+    const updateData: any = {
+      status,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // ✅ Set paymentDate only when payment is successful
+    if (status === "paid" && paymentDate) {
+      updateData.paymentDate = paymentDate;
+    } else if (status === "paid" && !paymentDate) {
+      // ✅ Fallback to current time if not provided
+      updateData.paymentDate = new Date().toISOString();
+    }
+
     const result = await this.collection().updateOne(
       { midtransOrderId: orderId },
-      {
-        $set: {
-          status,
-          paymentDate,
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      { $set: updateData }
     );
+
     return result.modifiedCount > 0;
   }
 
   static async getByUserId(userId: string) {
-    return this.collection()
-      .find({ userId: new ObjectId(userId) })
+    const payments = await this.collection()
+      .aggregate([
+        {
+          $match: { userId: new ObjectId(userId) },
+        },
+        {
+          $lookup: {
+            from: "packages",
+            localField: "packageId",
+            foreignField: "_id",
+            as: "package",
+          },
+        },
+        {
+          $unwind: {
+            path: "$package",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ])
       .toArray();
+
+    return payments;
   }
 
   static async getById(paymentId: string) {
@@ -57,6 +92,17 @@ class PaymentModel {
   static async getByStatus(status: PaymentStatus) {
     return this.collection().find({ status }).toArray();
   }
+
+  static async findPaidPayment(userId: string, packageId: string) {
+    const payment = await this.collection().findOne({
+      userId: new ObjectId(userId),
+      packageId: new ObjectId(packageId),
+      status: "paid", 
+    });
+
+    return payment;
+  }
 }
+
 
 export default PaymentModel;
