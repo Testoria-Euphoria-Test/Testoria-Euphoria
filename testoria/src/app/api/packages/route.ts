@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     const creatorId = searchParams.get('creatorId');
     const search = searchParams.get('search');
     const published = searchParams.get('published');
+    const status = searchParams.get('status'); // New status filter: 'published', 'draft', or 'all'
     const withDetails = searchParams.get('withDetails') === 'true';
 
     // Build filters object
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
     if (categoryId) filters.categoryId = categoryId;
     if (creatorId) filters.creatorId = creatorId;
     if (search) filters.search = search;
+    if (status && status !== 'all') filters.status = status;
 
     let packages;
 

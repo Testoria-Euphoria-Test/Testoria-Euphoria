@@ -72,7 +72,7 @@ class PackageModel {
     /**
      * Gets all packages with optional filtering
      */
-    static async findAll(filters?: { categoryId?: string; creatorId?: string; search?: string }) {
+    static async findAll(filters?: { categoryId?: string; creatorId?: string; search?: string; status?: string }) {
         try {
             const query: any = {};
 
@@ -94,6 +94,15 @@ class PackageModel {
                 ];
             }
 
+            // Add status filter
+            if (filters?.status) {
+                if (filters.status === 'published') {
+                    query.isPublished = true;
+                } else if (filters.status === 'draft') {
+                    query.isPublished = false;
+                }
+            }
+
             const packages = await this.collection()
                 .find(query)
                 .sort({ createdAt: -1 })
@@ -111,7 +120,7 @@ class PackageModel {
     /**
      * Gets packages with populated category and creator info
      */
-    static async findAllWithDetails(filters?: { categoryId?: string; creatorId?: string; search?: string }) {
+    static async findAllWithDetails(filters?: { categoryId?: string; creatorId?: string; search?: string; status?: string }) {
         try {
             const matchQuery: any = {};
 
@@ -126,14 +135,16 @@ class PackageModel {
                 matchQuery.creatorId = new ObjectId(filters.creatorId);
             }
 
-            if (filters?.search) {
-                matchQuery.$or = [
-                    { title: { $regex: filters.search, $options: 'i' } },
-                    { description: { $regex: filters.search, $options: 'i' } }
-                ];
+            // Add status filter
+            if (filters?.status) {
+                if (filters.status === 'published') {
+                    matchQuery.isPublished = true;
+                } else if (filters.status === 'draft') {
+                    matchQuery.isPublished = false;
+                }
             }
 
-            const pipeline = [
+            const pipeline: any[] = [
                 { $match: matchQuery },
                 {
                     $lookup: {
@@ -152,7 +163,24 @@ class PackageModel {
                     }
                 },
                 { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-                { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } }
+            ];
+
+            // Add search filter after lookups to search creator names
+            if (filters?.search) {
+                pipeline.push({
+                    $match: {
+                        $or: [
+                            { title: { $regex: filters.search, $options: 'i' } },
+                            { description: { $regex: filters.search, $options: 'i' } },
+                            { "creator.name": { $regex: filters.search, $options: 'i' } },
+                            { "creator.email": { $regex: filters.search, $options: 'i' } }
+                        ]
+                    }
+                });
+            }
+
+            pipeline.push(
                 {
                     $project: {
                         _id: 1,
@@ -166,13 +194,16 @@ class PackageModel {
                         isPublished: 1,
                         createdAt: 1,
                         updatedAt: 1,
+                        categoryId: 1,
+                        creatorId: 1,
                         "category.name": 1,
+                        "creator.name": 1,
                         "creator.email": 1,
                         "creator.role": 1
                     }
                 },
                 { $sort: { createdAt: -1 } }
-            ];
+            );
 
             const packages = await this.collection().aggregate(pipeline).toArray();
             return packages;

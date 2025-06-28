@@ -6,15 +6,26 @@ import { useEffect, useState } from "react";
 
 export default function ButtonProfile() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get userId from cookies on client side
+    // Get userId and userRole from cookies on client side
     const cookies = document.cookie.split("; ");
     const userIdCookie = cookies.find((row) => row.startsWith("x-user-id="));
+    const userRoleCookie = cookies.find((row) => row.startsWith("x-user-role="));
+    
     if (userIdCookie) {
       setUserId(userIdCookie.split("=")[1]);
     }
+    if (userRoleCookie) {
+      setUserRole(userRoleCookie.split("=")[1]);
+    }
   }, []);
+
+  // Don't render profile icon for admin users
+  if (userRole === "admin") {
+    return null;
+  }
 
   return (
     <Link

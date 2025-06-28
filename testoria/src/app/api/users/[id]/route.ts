@@ -106,9 +106,14 @@ export async function PUT(
             }
         }
 
-        // Only admin can update role
-        if (body.role && currentUser.role === 'admin') {
-            updateData.role = body.role;
+        // Only admin can update role and status
+        if (currentUser.role === 'admin') {
+            if (body.role) {
+                updateData.role = body.role;
+            }
+            if (body.status) {
+                updateData.status = body.status;
+            }
         }
 
         // Add updatedAt timestamp
