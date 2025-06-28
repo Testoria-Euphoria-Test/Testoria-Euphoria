@@ -9,64 +9,17 @@ import {
   List,
   CreditCard,
   FileText,
-  User,
+  ExternalLink,
 } from "lucide-react";
 import PackageCard from "@/components/PackageCard";
 import Navbar from "@/components/Navbar";
+import PackageResponse from "@/types/PackageResponse";
 
 interface Category {
   _id: string;
   name: string;
 }
 
-interface Package {
-  _id: string;
-  title: string;
-  categoryId: string;
-  creatorId: string;
-  duration: number;
-  price: number;
-  description: string;
-  sourcePdf: string[];
-  pdfImages: string[];
-  contents: any[];
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
-  categoryName?: string;
-  creatorName?: string;
-  isOwned?: boolean;
-}
-
-interface PaymentHistory {
-  _id: string;
-  packageId: string;
-  packageTitle: string;
-  amount: number;
-  status: "completed" | "pending" | "failed";
-  paymentDate: string;
-  paymentMethod: string;
-}
-
-interface TryoutHistory {
-  _id: string;
-  packageId: string;
-  packageTitle: string;
-  score: number;
-  totalQuestions: number;
-  correctAnswers: number;
-  completedAt: string;
-  duration: number;
-}
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: "admin" | "customer" | "creator";
-  createdAt: string;
-  updatedAt: string;
-}
 
 export default function DashboardCustomerPage() {
   const [activeTab, setActiveTab] = useState("browse");
@@ -76,20 +29,11 @@ export default function DashboardCustomerPage() {
   const [sortBy, setSortBy] = useState("popular");
 
   // State untuk data dari API
-  const [packages, setPackages] = useState<Package[]>([]);
+  const [packages, setPackages] = useState<PackageResponse[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock current user data
-  const currentUser: User = {
-    _id: "user123",
-    name: "John Doe",
-    email: "john@example.com",
-    role: "customer",
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-03-15T10:00:00Z",
-  };
 
   // Fetch packages dari API
   useEffect(() => {
@@ -139,95 +83,36 @@ export default function DashboardCustomerPage() {
     ]);
   }, []);
 
-  // Mock payment history data
-  const paymentHistory: PaymentHistory[] = [
+
+  const navigationItems = [
     {
-      _id: "pay1",
-      packageId: "pkg2",
-      packageTitle: "CPNS 2024 - Tes Wawasan Kebangsaan",
-      amount: 150000,
-      status: "completed",
-      paymentDate: "2024-02-15T14:30:00Z",
-      paymentMethod: "Credit Card",
+      id: "browse",
+      label: "Browse Packages",
+      icon: Package,
+      type: "tab", // Stays as tab
     },
     {
-      _id: "pay2",
-      packageId: "pkg5",
-      packageTitle: "Olimpiade Matematika SMA",
-      amount: 200000,
-      status: "completed",
-      paymentDate: "2024-03-10T09:15:00Z",
-      paymentMethod: "Bank Transfer",
+      id: "my-packages",
+      label: "My Packages",
+      icon: BookOpen,
+      type: "button", // Changed to button
+      href: "/my-package",
     },
     {
-      _id: "pay3",
-      packageId: "pkg1",
-      packageTitle: "UTBK Saintek 2024 - Matematika Dasar",
-      amount: 175000,
-      status: "pending",
-      paymentDate: "2024-03-25T16:45:00Z",
-      paymentMethod: "E-Wallet",
+      id: "payment-history",
+      label: "Payment History",
+      icon: CreditCard,
+      type: "button", // Changed to button
+      href: "/payment-history",
+    },
+    {
+      id: "tryout-history",
+      label: "Tryout History",
+      icon: FileText,
+      type: "button", // Changed to button
+      href: "/tryout-history",
     },
   ];
-
-  // Mock tryout history data
-  const tryoutHistory: TryoutHistory[] = [
-    {
-      _id: "try1",
-      packageId: "pkg2",
-      packageTitle: "CPNS 2024 - Tes Wawasan Kebangsaan",
-      score: 85,
-      totalQuestions: 100,
-      correctAnswers: 85,
-      completedAt: "2024-02-20T10:30:00Z",
-      duration: 85,
-    },
-    {
-      _id: "try2",
-      packageId: "pkg5",
-      packageTitle: "Olimpiade Matematika SMA",
-      score: 72,
-      totalQuestions: 50,
-      correctAnswers: 36,
-      completedAt: "2024-03-15T14:20:00Z",
-      duration: 220,
-    },
-    {
-      _id: "try3",
-      packageId: "pkg2",
-      packageTitle: "CPNS 2024 - Tes Wawasan Kebangsaan",
-      score: 91,
-      totalQuestions: 100,
-      correctAnswers: 91,
-      completedAt: "2024-03-22T11:45:00Z",
-      duration: 78,
-    },
-  ];
-
-  const navigationTabs = [
-    { id: "browse", label: "Browse Packages", icon: Package },
-    { id: "my-packages", label: "My Packages", icon: BookOpen },
-    { id: "payment-history", label: "Payment History", icon: CreditCard },
-    { id: "tryout-history", label: "Tryout History", icon: FileText },
-  ];
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
@@ -246,10 +131,6 @@ export default function DashboardCustomerPage() {
             .find((c) => c._id === selectedCategory)
             ?.name.toLowerCase() || ""
         );
-
-    if (activeTab === "my-packages") {
-      return pkg.isOwned && matchesSearch && matchesCategory;
-    }
 
     return matchesSearch && matchesCategory;
   });
@@ -275,33 +156,13 @@ export default function DashboardCustomerPage() {
     }
   });
 
-  const handleBuyPackage = (packageId: string) => {
-    console.log("Buying package:", packageId);
-    // Implement buy logic here
-  };
 
-  const handleViewDetail = (packageId: string) => {
-    console.log("Viewing package detail:", packageId);
-    // Implement view detail logic here
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-gradient-to-r from-green-500 to-green-600 text-white";
-      case "pending":
-        return "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white";
-      case "failed":
-        return "bg-gradient-to-r from-red-500 to-red-600 text-white";
-      default:
-        return "bg-gradient-to-r from-gray-500 to-gray-600 text-white";
+  const handleNavigation = (item: (typeof navigationItems)[0]) => {
+    if (item.type === "tab") {
+      setActiveTab(item.id);
+    } else if (item.type === "button" && item.href) {
+      window.location.href = item.href;
     }
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
   };
 
   if (loading) {
@@ -355,31 +216,38 @@ export default function DashboardCustomerPage() {
 
           {/* Main Content Area */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            {/* Tab Navigation */}
+            {/* ✅ Updated Navigation - Mix of tabs and buttons */}
             <div className="border-b border-gray-100 bg-gray-50/50">
               <nav className="flex space-x-0 overflow-x-auto px-6">
-                {navigationTabs.map((tab) => {
-                  const IconComponent = tab.icon;
+                {navigationItems.map((item) => {
+                  const IconComponent = item.icon;
+                  const isActive = activeTab === item.id && item.type === "tab";
+
                   return (
                     <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
+                      key={item.id}
+                      onClick={() => handleNavigation(item)}
                       className={`py-4 px-6 border-b-3 font-semibold text-sm flex items-center whitespace-nowrap transition-all duration-200 ${
-                        activeTab === tab.id
+                        isActive
                           ? "border-blue-600 text-blue-600 bg-white rounded-t-xl -mb-px"
+                          : item.type === "button"
+                          ? "border-transparent text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-t-xl"
                           : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-white/50 rounded-t-xl"
                       }`}
                     >
                       <IconComponent className="w-5 h-5 mr-2" />
-                      {tab.label}
+                      {item.label}
+                      {item.type === "button" && (
+                        <ExternalLink className="w-4 h-4 ml-2 opacity-60" />
+                      )}
                     </button>
                   );
                 })}
               </nav>
             </div>
 
-            {/* Filters and Search */}
-            {(activeTab === "browse" || activeTab === "my-packages") && (
+            {/* ✅ Only show filters for browse tab */}
+            {activeTab === "browse" && (
               <div className="p-6 border-b border-gray-100 bg-gray-50/30">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                   <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
@@ -466,10 +334,10 @@ export default function DashboardCustomerPage() {
               </div>
             )}
 
-            {/* Content */}
+            {/* ✅ Content - Only Browse Packages */}
             <div className="p-6">
-              {/* Package Browse/My Packages Content */}
-              {(activeTab === "browse" || activeTab === "my-packages") && (
+              {/* Browse Packages Content */}
+              {activeTab === "browse" && (
                 <div
                   className={
                     viewMode === "grid"
@@ -509,159 +377,11 @@ export default function DashboardCustomerPage() {
                         No packages found
                       </h3>
                       <p className="text-gray-600 text-lg max-w-md mx-auto">
-                        {activeTab === "my-packages"
-                          ? "You haven't purchased any packages yet. Browse available packages to get started."
-                          : "Try adjusting your search or filter criteria to find the perfect test package."}
+                        Try adjusting your search or filter criteria to find the
+                        perfect test package.
                       </p>
-                      {activeTab === "my-packages" && (
-                        <button
-                          onClick={() => setActiveTab("browse")}
-                          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Browse Packages
-                        </button>
-                      )}
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Payment History Content */}
-              {activeTab === "payment-history" && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900">
-                      Payment History
-                    </h3>
-                    <span className="text-sm text-gray-500">
-                      {paymentHistory.length} transactions
-                    </span>
-                  </div>
-                  {paymentHistory.map((payment) => (
-                    <div
-                      key={payment._id}
-                      className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <CreditCard className="w-5 h-5 text-gray-400" />
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              {payment.packageTitle}
-                            </h4>
-                            <span
-                              className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${getStatusBadge(
-                                payment.status
-                              )}`}
-                            >
-                              {payment.status.charAt(0).toUpperCase() +
-                                payment.status.slice(1)}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Amount:
-                              </span>
-                              <p className="font-bold text-gray-900">
-                                {formatCurrency(payment.amount)}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Payment Method:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {payment.paymentMethod}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Date:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {formatDateTime(payment.paymentDate)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Tryout History Content */}
-              {activeTab === "tryout-history" && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900">
-                      Tryout History
-                    </h3>
-                    <span className="text-sm text-gray-500">
-                      {tryoutHistory.length} attempts
-                    </span>
-                  </div>
-                  {tryoutHistory.map((tryout) => (
-                    <div
-                      key={tryout._id}
-                      className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              {tryout.packageTitle}
-                            </h4>
-                            <span
-                              className={`inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white`}
-                            >
-                              Score: {tryout.score}%
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Score:
-                              </span>
-                              <p
-                                className={`font-bold text-2xl ${getScoreColor(
-                                  tryout.score
-                                )}`}
-                              >
-                                {tryout.score}%
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Correct Answers:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {tryout.correctAnswers}/{tryout.totalQuestions}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Duration:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {tryout.duration} minutes
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Completed:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {formatDateTime(tryout.completedAt)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               )}
             </div>

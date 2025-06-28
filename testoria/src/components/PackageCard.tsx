@@ -85,6 +85,7 @@ export default function PackageCard({ package: pkg }: { package: PackageResponse
         <div className="flex gap-2">
           <ButtonPayment
             packageId={pkg._id}
+            packagePrice={pkg.price} // Optional: to show "Free" for price 0
           />
           <Link href={`/packages/${pkg._id}`} className="flex-1">
             <button className="w-full bg-blue-400 text-white text-sm font-medium py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
