@@ -20,7 +20,6 @@ interface Category {
   name: string;
 }
 
-
 export default function DashboardCustomerPage() {
   const [activeTab, setActiveTab] = useState("browse");
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +32,6 @@ export default function DashboardCustomerPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
 
   // Fetch packages dari API
   useEffect(() => {
@@ -71,49 +69,89 @@ export default function DashboardCustomerPage() {
     fetchPackages();
   }, []);
 
-  // Static categories untuk sekarang
   useEffect(() => {
-    setCategories([
-      { _id: "all", name: "All Categories" },
-      { _id: "cat1", name: "UTBK" },
-      { _id: "cat2", name: "CPNS" },
-      { _id: "cat3", name: "SNBT" },
-      { _id: "cat4", name: "Kedinasan" },
-      { _id: "cat5", name: "Olimpiade" },
-    ]);
-  }, []);
+    const fetchCategories = async () => {
+      const fallbackCategories = [
+        { _id: "all", name: "All Categories" },
+        { _id: "685baa87dc36f1fa426c9831", name: "CPNS" },
+        { _id: "685f64151ead9f4f152b2197", name: "SKD Kedinasan" },
+        { _id: "685f6fcc1ead9f4f152b2198", name: "SNBT" },
+        { _id: "685baa14dc36f1fa426c982f", name: "TOEFL" },
+      ];
 
+      try {
+        const response = await fetch("/api/categories", {
+          credentials: "include",
+        });
+
+        const data = await response.json();
+        console.log("Categories response:", data);
+
+        // ✅ Safe extraction with multiple fallbacks
+        let categories = [];
+
+        if (data?.success && Array.isArray(data?.data)) {
+          categories = data.data;
+        } else if (Array.isArray(data?.data)) {
+          categories = data.data;
+        } else if (Array.isArray(data)) {
+          categories = data;
+        }
+
+        // ✅ Validate and filter valid categories
+        const validCategories = categories
+          .filter(Boolean) // Remove null/undefined
+          .filter((cat) => cat._id && cat.name) // Must have _id and name
+          .map((cat) => ({ _id: String(cat._id), name: String(cat.name) })); // Ensure strings
+
+        if (validCategories.length > 0) {
+          setCategories([
+            { _id: "all", name: "All Categories" },
+            ...validCategories,
+          ]);
+        } else {
+          throw new Error("No valid categories");
+        }
+      } catch (error) {
+        console.log("Using fallback categories due to:", error);
+        setCategories(fallbackCategories);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const navigationItems = [
     {
       id: "browse",
       label: "Browse Packages",
       icon: Package,
-      type: "tab", // Stays as tab
+      type: "tab",
     },
     {
       id: "my-packages",
       label: "My Packages",
       icon: BookOpen,
-      type: "button", // Changed to button
+      type: "button",
       href: "/my-package",
     },
     {
       id: "payment-history",
       label: "Payment History",
       icon: CreditCard,
-      type: "button", // Changed to button
+      type: "button",
       href: "/payment-history",
     },
     {
       id: "tryout-history",
       label: "Tryout History",
       icon: FileText,
-      type: "button", // Changed to button
+      type: "button",
       href: "/tryout-history",
     },
   ];
 
+  // ✅ Improved category filtering logic
   const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
       pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -121,16 +159,33 @@ export default function DashboardCustomerPage() {
         pkg.creatorName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       pkg.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory =
-      selectedCategory === "all" ||
-      pkg.categoryId === selectedCategory ||
-      pkg.categoryName
-        ?.toLowerCase()
-        .includes(
-          categories
-            .find((c) => c._id === selectedCategory)
-            ?.name.toLowerCase() || ""
-        );
+    const matchesCategory = (() => {
+      // If "all" is selected, show all packages
+      if (selectedCategory === "all") {
+        return true;
+      }
+
+      // Check if package categoryId matches selected category
+      if (pkg.categoryId === selectedCategory) {
+        return true;
+      }
+
+      // Fallback: check if categoryName matches (case insensitive)
+      if (pkg.categoryName) {
+        const selectedCategoryName = categories
+          .find((c) => c._id === selectedCategory)
+          ?.name?.toLowerCase();
+
+        if (
+          selectedCategoryName &&
+          pkg.categoryName.toLowerCase().includes(selectedCategoryName)
+        ) {
+          return true;
+        }
+      }
+
+      return false;
+    })();
 
     return matchesSearch && matchesCategory;
   });
@@ -156,13 +211,18 @@ export default function DashboardCustomerPage() {
     }
   });
 
-
   const handleNavigation = (item: (typeof navigationItems)[0]) => {
     if (item.type === "tab") {
       setActiveTab(item.id);
     } else if (item.type === "button" && item.href) {
       window.location.href = item.href;
     }
+  };
+
+  // ✅ Helper function to get category name for display
+  const getSelectedCategoryName = () => {
+    if (selectedCategory === "all") return null;
+    return categories.find((c) => c._id === selectedCategory)?.name;
   };
 
   if (loading) {
@@ -209,9 +269,6 @@ export default function DashboardCustomerPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Dashboard Customer
             </h1>
-            <p className="text-gray-600">
-              Welcome back! Manage your packages and track your progress.
-            </p>
           </div>
 
           {/* Main Content Area */}
@@ -263,11 +320,11 @@ export default function DashboardCustomerPage() {
                       />
                     </div>
 
-                    {/* Category Filter */}
+                    {/* ✅ Improved Category Filter */}
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium"
+                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium min-w-[200px]"
                     >
                       {categories.map((category) => (
                         <option key={category._id} value={category._id}>
@@ -318,19 +375,6 @@ export default function DashboardCustomerPage() {
                   </div>
                 </div>
 
-                {/* Results Summary */}
-                <div className="mt-4 text-sm text-gray-600">
-                  Showing {sortedPackages.length} of {packages.length} packages
-                  {selectedCategory !== "all" && (
-                    <span className="ml-1">
-                      in{" "}
-                      {categories.find((c) => c._id === selectedCategory)?.name}
-                    </span>
-                  )}
-                  {searchTerm && (
-                    <span className="ml-1">matching "{searchTerm}"</span>
-                  )}
-                </div>
               </div>
             )}
 
@@ -374,12 +418,26 @@ export default function DashboardCustomerPage() {
                         <Package className="w-12 h-12 text-gray-400" />
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                        No packages found
+                        {searchTerm || selectedCategory !== "all"
+                          ? "No packages found"
+                          : "No packages available"}
                       </h3>
-                      <p className="text-gray-600 text-lg max-w-md mx-auto">
-                        Try adjusting your search or filter criteria to find the
-                        perfect test package.
+                      <p className="text-gray-600 text-lg max-w-md mx-auto mb-4">
+                        {searchTerm || selectedCategory !== "all"
+                          ? "Try adjusting your search or filter criteria to find the perfect test package."
+                          : "There are no packages available at the moment. Please check back later."}
                       </p>
+                      {(searchTerm || selectedCategory !== "all") && (
+                        <button
+                          onClick={() => {
+                            setSelectedCategory("all");
+                            setSearchTerm("");
+                          }}
+                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Clear Filters
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
