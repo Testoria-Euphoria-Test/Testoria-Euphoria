@@ -24,13 +24,15 @@ export async function POST(req: NextRequest) {
         if (!pkg.price || pkg.price <= 0) {
             return NextResponse.json({ error: "Invalid package price" }, { status: 400 });
         }
-
+        const midtransOrderId = `ORDER-${Date.now()}`;
         const amount = pkg.price;
-        const paymentId = await PaymentModel.create({ 
-            userId, 
-            packageId, 
-            amount, 
-            status: "pending" 
+        
+        const paymentId = await PaymentModel.create({
+          userId,
+          packageId,
+          amount,
+          status: "pending",
+          midtransOrderId,
         });
         
         return NextResponse.json({ 

@@ -13,7 +13,7 @@ export function verifyMidtransSignature({
     signature_key: string;
     serverKey: string;
 }) {
-    const rawSignature = order_id + status_code + gross_amount + serverKey;
+    const rawSignature = order_id + status_code + gross_amount + serverKey ;
     const expectedSignature = crypto.createHash("sha512").update(rawSignature).digest("hex");
     return expectedSignature === signature_key;
 }

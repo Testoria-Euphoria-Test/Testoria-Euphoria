@@ -3,7 +3,6 @@ import PaymentModel from "@/db/models/PaymentModel";
 import { verifyMidtransSignature } from "@/helpers/midtrans";
 
 const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY!;
-
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -26,11 +25,11 @@ export async function POST(req: NextRequest) {
         
         if (!isDevelopment) {
             const isValid = verifyMidtransSignature({
-                order_id,
-                status_code,
-                gross_amount,
-                signature_key,
-                serverKey: MIDTRANS_SERVER_KEY,
+              order_id,
+              status_code,
+              gross_amount,
+              signature_key,
+              serverKey: MIDTRANS_SERVER_KEY,
             });
 
             if (!isValid) {
