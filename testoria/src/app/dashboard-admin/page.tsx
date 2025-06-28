@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   Package,
@@ -12,11 +12,11 @@ import {
   Edit,
   Trash2,
   Plus,
-  MoreVertical,
   Check,
   X,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import toast, { Toaster } from 'react-hot-toast';
 
 // Types based on database schema
 interface User {
@@ -25,8 +25,8 @@ interface User {
   email: string;
   role: "admin" | "customer" | "creator";
   createdAt: string;
-  updatedAt: string;
-  status: "active" | "inactive";
+  updatedAt?: string;
+  status?: "active" | "inactive";
   // Additional fields for display
   packagesOwned?: number;
   totalSpent?: number;
@@ -37,237 +37,670 @@ interface User {
 interface Category {
   _id: string;
   name: string;
+  description?: string;
+  packageCount?: number;
 }
 
 interface Package {
   _id: string;
   title: string;
   categoryId: string;
-  categoryName: string;
+  categoryName?: string;
   creatorId: string;
-  creatorName: string;
+  creatorName?: string;
   duration: number;
   description: string;
   createdAt: string;
   price: number;
-  rating: number;
-  status: "published" | "pending";
-  totalQuestions: number;
+  rating?: number;
+  isPublished: boolean;
+  totalQuestions?: number;
+  totalStudents?: number;
+}
+
+interface AdminStats {
+  totalUsers: number;
+  totalPackages: number;
+  totalCategories: number;
+  activeCreators: number;
+  publishedPackages: number;
+  pendingPackages: number;
+  totalRevenue: number;
+  users: User[];
+  packages: Package[];
+  categories: Category[];
 }
 
 export default function DashboardAdminPage() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for categories
-  const categories: Category[] = [
-    { _id: "cat1", name: "UTBK" },
-    { _id: "cat2", name: "CPNS" },
-    { _id: "cat3", name: "SNBT" },
-    { _id: "cat4", name: "Kedinasan" },
-  ];
+  // State for real data
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  // Mock data for users based on database schema
-  const users: User[] = [
-    {
-      _id: "user1",
-      name: "John Doe",
-      email: "john@example.com",
-      role: "customer",
-      createdAt: "2024-01-15T10:00:00Z",
-      updatedAt: "2024-01-15T10:00:00Z",
-      status: "active",
-      packagesOwned: 3,
-      totalSpent: 450000,
-    },
-    {
-      _id: "user2",
-      name: "Dr. Ahmad Susanto",
-      email: "ahmad@example.com",
-      role: "creator",
-      createdAt: "2023-12-01T10:00:00Z",
-      updatedAt: "2023-12-01T10:00:00Z",
-      status: "active",
-      packagesCreated: 5,
-      totalEarnings: 2500000,
-    },
-    {
-      _id: "user3",
-      name: "Maria Silva",
-      email: "maria@example.com",
-      role: "customer",
-      createdAt: "2024-02-10T10:00:00Z",
-      updatedAt: "2024-02-10T10:00:00Z",
-      status: "active",
-      packagesOwned: 2,
-      totalSpent: 300000,
-    },
-    {
-      _id: "user4",
-      name: "Prof. Siti Nurhaliza",
-      email: "siti@example.com",
-      role: "creator",
-      createdAt: "2023-11-15T10:00:00Z",
-      updatedAt: "2023-11-15T10:00:00Z",
-      status: "active",
-      packagesCreated: 3,
-      totalEarnings: 1800000,
-    },
-    {
-      _id: "user5",
-      name: "Admin User",
-      email: "admin@testoria.com",
-      role: "admin",
-      createdAt: "2023-10-01T10:00:00Z",
-      updatedAt: "2023-10-01T10:00:00Z",
-      status: "active",
-    },
-    {
-      _id: "user6",
-      name: "Drs. Bambang Wijaya",
-      email: "bambang@example.com",
-      role: "creator",
-      createdAt: "2023-12-15T10:00:00Z",
-      updatedAt: "2023-12-15T10:00:00Z",
-      status: "active",
-      packagesCreated: 2,
-      totalEarnings: 1200000,
-    },
-  ];
+  // New category form state
+  const [newCategory, setNewCategory] = useState({ name: "", description: "", icon: "" });
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
 
-  // Mock data for packages based on database schema - using state to allow updates
-  const [packages, setPackages] = useState<Package[]>([
-    {
-      _id: "pkg1",
-      title: "UTBK Saintek 2024",
-      categoryId: "cat1",
-      categoryName: "UTBK",
-      creatorId: "user2",
-      creatorName: "Dr. Ahmad Susanto",
-      duration: 180,
-      description:
-        "Paket lengkap try out UTBK Saintek dengan soal-soal terbaru dan pembahasan detail",
-      createdAt: "2024-01-10T10:00:00Z",
-      price: 150000,
-      rating: 4.8,
-      status: "published",
-      totalQuestions: 100,
-    },
-    {
-      _id: "pkg2",
-      title: "CPNS 2024 - TWK",
-      categoryId: "cat2",
-      categoryName: "CPNS",
-      creatorId: "user6",
-      creatorName: "Drs. Bambang Wijaya",
-      duration: 90,
-      description:
-        "Paket try out CPNS fokus Tes Wawasan Kebangsaan dengan materi terkini",
-      createdAt: "2024-01-20T10:00:00Z",
-      price: 100000,
-      rating: 4.7,
-      status: "published",
-      totalQuestions: 35,
-    },
-    {
-      _id: "pkg3",
-      title: "SNBT 2024 Draft",
-      categoryId: "cat3",
-      categoryName: "SNBT",
-      creatorId: "user4",
-      creatorName: "Prof. Siti Nurhaliza",
-      duration: 195,
-      description:
-        "Simulasi lengkap SNBT dengan format terbaru dan analisis hasil detail",
-      createdAt: "2024-03-01T10:00:00Z",
-      price: 200000,
-      rating: 0,
-      status: "published",
-      totalQuestions: 120,
-    },
-    {
-      _id: "pkg4",
-      title: "UTBK Soshum 2024",
-      categoryId: "cat1",
-      categoryName: "UTBK",
-      creatorId: "user2",
-      creatorName: "Dr. Ahmad Susanto",
-      duration: 180,
-      description:
-        "Try out UTBK Soshum dengan soal prediksi dan strategi pengerjaan yang efektif",
-      createdAt: "2024-02-15T10:00:00Z",
-      price: 150000,
-      rating: 4.9,
-      status: "published",
-      totalQuestions: 100,
-    },
-    {
-      _id: "pkg5",
-      title: "Try Out Kedinasan 2024",
-      categoryId: "cat4",
-      categoryName: "Kedinasan",
-      creatorId: "user4",
-      creatorName: "Prof. Siti Nurhaliza",
-      duration: 120,
-      description:
-        "Paket try out untuk berbagai sekolah kedinasan dengan soal prediksi akurat",
-      createdAt: "2024-02-28T10:00:00Z",
-      price: 175000,
-      rating: 4.8,
-      status: "pending",
-      totalQuestions: 80,
-    },
-    {
-      _id: "pkg6",
-      title: "CPNS 2024 - TKP",
-      categoryId: "cat2",
-      categoryName: "CPNS",
-      creatorId: "user6",
-      creatorName: "Drs. Bambang Wijaya",
-      duration: 90,
-      description: "Paket try out CPNS fokus Tes Karakteristik Pribadi",
-      createdAt: "2024-03-05T10:00:00Z",
-      price: 100000,
-      rating: 0,
-      status: "pending",
-      totalQuestions: 35,
-    },
-  ]);
+  // Edit category state
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryForm, setEditCategoryForm] = useState<{ name: string; description: string }>({
+    name: "", description: ""
+  });
+  const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
 
-  const stats = [
+  // User management state
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isViewingUser, setIsViewingUser] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editUserForm, setEditUserForm] = useState<{ name: string; email: string; role: "admin" | "customer" | "creator"; status: "active" | "inactive" }>({
+    name: "", email: "", role: "customer", status: "active"
+  });
+
+  // Filter state for users
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Filter state for packages
+  const [packageCategoryFilter, setPackageCategoryFilter] = useState<string>("all");
+  const [packageStatusFilter, setPackageStatusFilter] = useState<string>("all");
+
+  // Delete confirmation state
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    type: 'user' | 'category' | 'package' | null;
+    id: string;
+    name: string;
+  }>({
+    isOpen: false,
+    type: null,
+    id: '',
+    name: ''
+  });
+
+  // Load data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch data directly from API endpoints
+      const [usersResponse, packagesResponse, categoriesResponse] = await Promise.all([
+        fetch('/api/users', { credentials: 'include' }),
+        fetch('/api/packages?withDetails=true', { credentials: 'include' }),
+        fetch('/api/categories', { credentials: 'include' })
+      ]);
+
+      if (!usersResponse.ok || !packagesResponse.ok || !categoriesResponse.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const usersData = await usersResponse.json();
+      const packagesData = await packagesResponse.json();
+      const categoriesData = await categoriesResponse.json();
+
+      const users = usersData.data || [];
+      const rawPackages = packagesData.data || [];
+      const categories = categoriesData.data || [];
+
+      // Enrich users with default status if not present
+      const enrichedUsers = users.map((user: any) => ({
+        ...user,
+        status: user.status || 'active' // Default to active if status not present
+      }));
+
+      // Enrich packages with creator and category names
+      const packages = rawPackages.map((pkg: any) => {
+        return {
+          _id: pkg._id,
+          title: pkg.title,
+          categoryId: pkg.categoryId,
+          categoryName: pkg.category?.name || 'Unknown Category',
+          creatorId: pkg.creatorId,
+          creatorName: pkg.creator?.name || pkg.creator?.email || 'Unknown Creator', // Prefer name, fallback to email
+          duration: pkg.duration,
+          description: pkg.description,
+          createdAt: pkg.createdAt,
+          price: pkg.price,
+          rating: pkg.rating || 0,
+          isPublished: pkg.isPublished,
+          totalQuestions: pkg.contents?.length || 0,
+          totalStudents: pkg.totalStudents || 0
+        };
+      });
+
+      // Calculate stats
+      const statsData = {
+        totalUsers: enrichedUsers.length,
+        totalPackages: packages.length,
+        totalCategories: categories.length,
+        activeCreators: enrichedUsers.filter((u: any) => u.role === 'creator' && u.status === 'active').length,
+        publishedPackages: packages.filter((p: any) => p.isPublished).length,
+        pendingPackages: packages.filter((p: any) => !p.isPublished).length,
+        totalRevenue: packages.reduce((sum: number, p: any) => sum + (p.price * (p.totalStudents || 0)), 0),
+        users: enrichedUsers,
+        packages,
+        categories
+      };
+
+      setStats(statsData);
+      setUsers(enrichedUsers);
+      setPackages(packages);
+      setCategories(categories);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      console.error('Error loading dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load packages with current filters
+  const loadPackagesWithFilters = async () => {
+    try {
+      // Build query parameters for API
+      const queryParams = new URLSearchParams();
+      queryParams.append('withDetails', 'true');
+
+      if (searchTerm) queryParams.append('search', searchTerm);
+      if (packageCategoryFilter && packageCategoryFilter !== 'all') {
+        queryParams.append('categoryId', packageCategoryFilter);
+      }
+      if (packageStatusFilter && packageStatusFilter !== 'all') {
+        queryParams.append('status', packageStatusFilter);
+      }
+
+      const response = await fetch(`/api/packages?${queryParams.toString()}`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch packages');
+      }
+
+      const packagesData = await response.json();
+      const rawPackages = packagesData.data || [];
+
+      // Enrich packages with creator and category names
+      const packages = rawPackages.map((pkg: any) => {
+        return {
+          _id: pkg._id,
+          title: pkg.title,
+          categoryId: pkg.categoryId,
+          categoryName: pkg.category?.name || 'Unknown Category',
+          creatorId: pkg.creatorId,
+          creatorName: pkg.creator?.name || pkg.creator?.email || 'Unknown Creator',
+          duration: pkg.duration,
+          description: pkg.description,
+          createdAt: pkg.createdAt,
+          price: pkg.price,
+          rating: pkg.rating || 0,
+          isPublished: pkg.isPublished,
+          totalQuestions: pkg.contents?.length || 0,
+          totalStudents: pkg.totalStudents || 0
+        };
+      });
+
+      setPackages(packages);
+
+      // Update stats if needed
+      if (stats) {
+        setStats({
+          ...stats,
+          totalPackages: packages.length,
+          publishedPackages: packages.filter((p: any) => p.isPublished).length,
+          pendingPackages: packages.filter((p: any) => !p.isPublished).length,
+          packages
+        });
+      }
+    } catch (err) {
+      console.error('Error loading packages:', err);
+      toast.error('Failed to load packages');
+    }
+  };
+
+  // Debounced search effect for packages
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (activeTab === 'packages') {
+        loadPackagesWithFilters();
+      }
+    }, 500); // 500ms delay for search
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, packageCategoryFilter, packageStatusFilter, activeTab]);
+
+  // Handle package status update
+  const handleUpdatePackageStatus = async (packageId: string, isPublished: boolean) => {
+    try {
+      // Use the publish API endpoint for status updates
+      const response = await fetch(`/api/packages/${packageId}/publish`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ isPublished })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update package status');
+      }
+
+      // Update local state
+      setPackages(prev => prev.map(pkg =>
+        pkg._id === packageId ? { ...pkg, isPublished } : pkg
+      ));
+
+      setEditingPackageId(null);
+    } catch (err) {
+      console.error('Error updating package status:', err);
+      toast.error('Failed to update package status');
+    }
+  };
+
+  // Handle user role/status update
+  const handleUpdateUser = async (userId: string, updates: { role?: "admin" | "customer" | "creator"; status?: "active" | "inactive" }) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user');
+      }
+
+      // Update local state
+      setUsers(prev => prev.map(user =>
+        user._id === userId ? { ...user, ...updates } : user
+      ));
+    } catch (err) {
+      console.error('Error updating user:', err);
+      toast.error('Failed to update user');
+    }
+  };
+
+  // Handle create category
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategory.name.trim()) return;
+
+    setIsCreatingCategory(true);
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: newCategory.name.trim(),
+          description: newCategory.description.trim() || undefined
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create category');
+      }
+
+      const result = await response.json();
+
+      // Add to local state
+      setCategories(prev => [...prev, result.data]);
+
+      // Reset form and close modal
+      setNewCategory({ name: "", description: "", icon: "" });
+      setShowAddCategoryModal(false);
+      toast.success('Category created successfully');
+    } catch (err) {
+      console.error('Error creating category:', err);
+      toast.error('Failed to create category');
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+  // Handle delete category
+  const handleDeleteCategory = async (categoryId: string) => {
+    const category = categories.find(cat => cat._id === categoryId);
+    if (!category) return;
+
+    setDeleteConfirmation({
+      isOpen: true,
+      type: 'category',
+      id: categoryId,
+      name: category.name
+    });
+  };
+
+  // Handle edit category
+  const handleEditCategory = (category: Category) => {
+    setEditingCategoryId(category._id);
+    setEditCategoryForm({
+      name: category.name,
+      description: category.description || ""
+    });
+  };
+
+  // Handle save category changes
+  const handleSaveCategoryChanges = async () => {
+    if (!editingCategoryId) return;
+
+    setIsUpdatingCategory(true);
+    try {
+      const response = await fetch(`/api/categories/${editingCategoryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: editCategoryForm.name.trim(),
+          description: editCategoryForm.description.trim() || undefined
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update category');
+      }
+
+      const result = await response.json();
+
+      // Update local state
+      setCategories(prev => prev.map(cat =>
+        cat._id === editingCategoryId ? { ...cat, ...editCategoryForm } : cat
+      ));
+
+      // Reset editing state
+      setEditingCategoryId(null);
+      setEditCategoryForm({ name: "", description: "" });
+      toast.success('Category updated successfully');
+    } catch (err) {
+      console.error('Error updating category:', err);
+      toast.error('Failed to update category');
+    } finally {
+      setIsUpdatingCategory(false);
+    }
+  };
+
+  // Handle cancel edit category
+  const handleCancelEditCategory = () => {
+    setEditingCategoryId(null);
+    setEditCategoryForm({ name: "", description: "" });
+  };
+
+  // Handle delete user
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      type: 'user',
+      id: userId,
+      name: userName
+    });
+  };
+
+  // Handle delete package
+  const handleDeletePackage = async (packageId: string, packageTitle: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      type: 'package',
+      id: packageId,
+      name: packageTitle
+    });
+  };
+
+  // Confirm deletion
+  const confirmDelete = async () => {
+    const { type, id, name } = deleteConfirmation;
+
+    try {
+      if (type === 'user') {
+        const response = await fetch(`/api/users/${id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete user');
+        }
+
+        // Remove from local state
+        setUsers(prev => prev.filter(user => user._id !== id));
+        toast.success(`User "${name}" deleted successfully`);
+
+      } else if (type === 'category') {
+        const response = await fetch(`/api/categories/${id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete category');
+        }
+
+        // Remove from local state
+        setCategories(prev => prev.filter(cat => cat._id !== id));
+        toast.success(`Category "${name}" deleted successfully`);
+
+      } else if (type === 'package') {
+        const response = await fetch(`/api/packages/${id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete package');
+        }
+
+        // Remove from local state
+        setPackages(prev => prev.filter(pkg => pkg._id !== id));
+
+        // Update stats if needed
+        if (stats) {
+          const updatedPackages = packages.filter(pkg => pkg._id !== id);
+          setStats({
+            ...stats,
+            totalPackages: updatedPackages.length,
+            publishedPackages: updatedPackages.filter((p: any) => p.isPublished).length,
+            pendingPackages: updatedPackages.filter((p: any) => !p.isPublished).length,
+            packages: updatedPackages
+          });
+        }
+
+        toast.success(`Package "${name}" deleted successfully`);
+      }
+    } catch (err) {
+      console.error(`Error deleting ${type}:`, err);
+      toast.error(`Failed to delete ${type}`);
+    } finally {
+      setDeleteConfirmation({
+        isOpen: false,
+        type: null,
+        id: '',
+        name: ''
+      });
+    }
+  };
+
+  // Cancel deletion
+  const cancelDelete = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      type: null,
+      id: '',
+      name: ''
+    });
+  };
+
+  // Handle view user details
+  const handleViewUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user details');
+      }
+
+      const result = await response.json();
+      setSelectedUser(result.data);
+      setIsViewingUser(true);
+    } catch (err) {
+      console.error('Error fetching user details:', err);
+      toast.error('Failed to fetch user details');
+    }
+  };
+
+  // Handle edit user
+  const handleEditUser = (user: User) => {
+    setEditingUserId(user._id);
+    setEditUserForm({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status || 'active'
+    });
+  };
+
+  // Handle save user changes
+  const handleSaveUserChanges = async () => {
+    if (!editingUserId) return;
+
+    try {
+      const response = await fetch(`/api/users/${editingUserId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(editUserForm),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user');
+      }
+
+      // Update local state
+      setUsers(prev => prev.map(user =>
+        user._id === editingUserId ? { ...user, ...editUserForm } : user
+      ));
+
+      // Reset editing state
+      setEditingUserId(null);
+      setEditUserForm({ name: "", email: "", role: "customer", status: "active" });
+      toast.success('User updated successfully');
+    } catch (err) {
+      console.error('Error updating user:', err);
+      toast.error('Failed to update user');
+    }
+  };
+
+  // Handle cancel edit
+  const handleCancelEditUser = () => {
+    setEditingUserId(null);
+    setEditUserForm({ name: "", email: "", role: "customer", status: "active" });
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setPackageCategoryFilter("all");
+    setPackageStatusFilter("all");
+  };
+
+  // Clear user filters only
+  const clearUserFilters = () => {
+    setSearchTerm("");
+    setRoleFilter("all");
+    setStatusFilter("all");
+  };
+
+  // Clear package filters only
+  const clearPackageFilters = async () => {
+    setSearchTerm("");
+    setPackageCategoryFilter("all");
+    setPackageStatusFilter("all");
+
+    // Reload packages without filters
+    try {
+      const response = await fetch('/api/packages?withDetails=true', { credentials: 'include' });
+      if (response.ok) {
+        const packagesData = await response.json();
+        const rawPackages = packagesData.data || [];
+
+        const packages = rawPackages.map((pkg: any) => ({
+          _id: pkg._id,
+          title: pkg.title,
+          categoryId: pkg.categoryId,
+          categoryName: pkg.category?.name || 'Unknown Category',
+          creatorId: pkg.creatorId,
+          creatorName: pkg.creator?.name || pkg.creator?.email || 'Unknown Creator',
+          duration: pkg.duration,
+          description: pkg.description,
+          createdAt: pkg.createdAt,
+          price: pkg.price,
+          rating: pkg.rating || 0,
+          isPublished: pkg.isPublished,
+          totalQuestions: pkg.contents?.length || 0,
+          totalStudents: pkg.totalStudents || 0
+        }));
+
+        setPackages(packages);
+
+        if (stats) {
+          setStats({
+            ...stats,
+            totalPackages: packages.length,
+            publishedPackages: packages.filter((p: any) => p.isPublished).length,
+            pendingPackages: packages.filter((p: any) => !p.isPublished).length,
+            packages
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error clearing package filters:', err);
+      toast.error('Failed to clear package filters');
+    }
+  };
+
+  const statsData = stats ? [
     {
       label: "Total Users",
-      value: users.length.toString(),
+      value: stats.totalUsers.toString(),
       change: "+12%",
       icon: Users,
       color: "text-blue-600",
     },
     {
       label: "Total Packages",
-      value: packages.length.toString(),
+      value: stats.totalPackages.toString(),
       change: "+8%",
       icon: Package,
       color: "text-green-600",
     },
     {
       label: "Active Creators",
-      value: users
-        .filter((u) => u.role === "creator" && u.status === "active")
-        .length.toString(),
+      value: stats.activeCreators.toString(),
       change: "+15%",
       icon: BarChart3,
       color: "text-purple-600",
     },
     {
       label: "Published Packages",
-      value: packages.filter((p) => p.status === "published").length.toString(),
+      value: stats.publishedPackages.toString(),
       change: "+23%",
       icon: Settings,
       color: "text-orange-600",
     },
-  ];
+  ] : [];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -304,24 +737,14 @@ export default function DashboardAdminPage() {
   };
 
   // Functions for handling package status updates
-  const handleEditStatus = (packageId: string, currentStatus: string) => {
+  const handleEditStatus = (packageId: string, currentStatus: boolean) => {
     setEditingPackageId(packageId);
-    setSelectedStatus(currentStatus);
+    setSelectedStatus(currentStatus ? "published" : "pending");
   };
 
   const handleSaveStatus = (packageId: string) => {
-    setPackages((prevPackages) =>
-      prevPackages.map((pkg) =>
-        pkg._id === packageId
-          ? {
-              ...pkg,
-              status: selectedStatus as "published" | "pending",
-            }
-          : pkg
-      )
-    );
-    setEditingPackageId(null);
-    setSelectedStatus("");
+    const isPublished = selectedStatus === "published";
+    handleUpdatePackageStatus(packageId, isPublished);
   };
 
   const handleCancelEdit = () => {
@@ -329,28 +752,86 @@ export default function DashboardAdminPage() {
     setSelectedStatus("");
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
+  const filteredUsers = users.filter((user) => {
+    // Search filter - check name and email
+    const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const filteredPackages = packages.filter(
-    (pkg) =>
+    // Role filter
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+
+    // Status filter
+    const matchesStatus = statusFilter === "all" || (user.status || "active") === statusFilter;
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  // Since we're doing server-side filtering, we can just use the packages directly
+  // Client-side filtering is kept as fallback for immediate UI response
+  const filteredPackages = packages.filter((pkg) => {
+    // Search filter - check package title and creator name (fallback for immediate response)
+    const matchesSearch = !searchTerm ||
       pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.creatorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      (pkg.creatorName?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+
+    // Category filter (fallback for immediate response)
+    const matchesCategory = packageCategoryFilter === "all" || pkg.categoryId === packageCategoryFilter;
+
+    // Status filter (fallback for immediate response)
+    const matchesStatus = packageStatusFilter === "all" ||
+      (packageStatusFilter === "published" && pkg.isPublished) ||
+      (packageStatusFilter === "draft" && !pkg.isPublished);
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  // Loading state
+  if (loading) {
+    return (
+      <div>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+            <button
+              onClick={loadDashboardData}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <Navbar/>
+      <Navbar />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => {
+            {statsData.map((stat, index) => {
               const IconComponent = stat.icon;
               return (
                 <div
@@ -388,11 +869,10 @@ export default function DashboardAdminPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                      activeTab === tab.id
-                        ? "border-blue-600 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                    className={`py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -411,16 +891,65 @@ export default function DashboardAdminPage() {
                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Search users..."
+                          placeholder="Search by name or email..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
                         />
                       </div>
-                      <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                        <Filter className="w-4 h-4 mr-2" />
-                        Filter
-                      </button>
+
+                      {/* Role Filter */}
+                      <div className="flex items-center space-x-2">
+                        <Filter className="w-4 h-4 text-gray-400" />
+                        <select
+                          value={roleFilter}
+                          onChange={(e) => setRoleFilter(e.target.value)}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="all">All Roles</option>
+                          <option value="admin">Admin</option>
+                          <option value="creator">Creator</option>
+                          <option value="customer">Customer</option>
+                        </select>
+                      </div>
+
+                      {/* Status Filter */}
+                      <div className="flex items-center space-x-2">
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="all">All Status</option>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </div>
+
+                      {/* Clear Filters Button */}
+                      {(searchTerm || roleFilter !== "all" || statusFilter !== "all") && (
+                        <button
+                          onClick={clearUserFilters}
+                          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          Clear Filters
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Results Count */}
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <span className="font-medium">
+                        Showing {filteredUsers.length} of {users.length} users
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          Active: {users.filter(u => (u.status || 'active') === 'active').length}
+                        </span>
+                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                          Inactive: {users.filter(u => u.status === 'inactive').length}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -439,7 +968,7 @@ export default function DashboardAdminPage() {
                             Join Date
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Activity
+                            Status
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
@@ -474,40 +1003,39 @@ export default function DashboardAdminPage() {
                               )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {user.role === "customer" &&
-                              user.packagesOwned &&
-                              user.totalSpent
-                                ? `${
-                                    user.packagesOwned
-                                  } packages • ${formatCurrency(
-                                    user.totalSpent
-                                  )}`
-                                : user.role === "creator" &&
-                                  user.packagesCreated &&
-                                  user.totalEarnings
-                                ? `${
-                                    user.packagesCreated
-                                  } packages • ${formatCurrency(
-                                    user.totalEarnings
-                                  )}`
-                                : user.role === "admin"
-                                ? "System Administrator"
-                                : "No activity"}
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                                  user.status || 'active'
+                                )}`}
+                              >
+                                {user.status || 'active'}
+                              </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex items-center space-x-2">
-                                <button className="text-blue-600 hover:text-blue-900">
+                                <button
+                                  onClick={() => handleViewUser(user._id)}
+                                  className="text-blue-600 hover:text-blue-900"
+                                  title="View Details"
+                                >
                                   <Eye className="w-4 h-4" />
                                 </button>
-                                <button className="text-green-600 hover:text-green-900">
+                                <button
+                                  onClick={() => handleEditUser(user)}
+                                  className="text-green-600 hover:text-green-900"
+                                  title="Edit User"
+                                >
                                   <Edit className="w-4 h-4" />
                                 </button>
-                                <button className="text-red-600 hover:text-red-900">
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                                <button className="text-gray-600 hover:text-gray-900">
-                                  <MoreVertical className="w-4 h-4" />
-                                </button>
+                                {user.role !== 'admin' && (
+                                  <button
+                                    onClick={() => handleDeleteUser(user._id, user.name)}
+                                    className="text-red-600 hover:text-red-900"
+                                    title="Delete User"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -528,29 +1056,67 @@ export default function DashboardAdminPage() {
                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Search packages..."
+                          placeholder="Search by package title or creator..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
                         />
                       </div>
-                      <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                        <Filter className="w-4 h-4 mr-2" />
-                        Filter
-                      </button>
+
+                      {/* Category Filter */}
+                      <div className="flex items-center space-x-2">
+                        <Filter className="w-4 h-4 text-gray-400" />
+                        <select
+                          value={packageCategoryFilter}
+                          onChange={(e) => setPackageCategoryFilter(e.target.value)}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="all">All Categories</option>
+                          {categories.map((category) => (
+                            <option key={category._id} value={category._id}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Status Filter */}
+                      <div className="flex items-center space-x-2">
+                        <select
+                          value={packageStatusFilter}
+                          onChange={(e) => setPackageStatusFilter(e.target.value)}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="all">All Status</option>
+                          <option value="published">Published</option>
+                          <option value="draft">Draft</option>
+                        </select>
+                      </div>
+
+                      {/* Clear Filters Button */}
+                      {(searchTerm || packageCategoryFilter !== "all" || packageStatusFilter !== "all") && (
+                        <button
+                          onClick={clearPackageFilters}
+                          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          Clear Filters
+                        </button>
+                      )}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">
-                        Pending:{" "}
-                        {packages.filter((p) => p.status === "pending").length}
+
+                    {/* Results Count */}
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <span className="font-medium">
+                        Showing {filteredPackages.length} of {packages.length} packages
                       </span>
-                      <span className="text-sm text-gray-600">
-                        Published:{" "}
-                        {
-                          packages.filter((p) => p.status === "published")
-                            .length
-                        }
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                          Published: {packages.filter(p => p.isPublished).length}
+                        </span>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                          Draft: {packages.filter(p => !p.isPublished).length}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -633,15 +1199,14 @@ export default function DashboardAdminPage() {
                               ) : (
                                 <div className="flex items-center space-x-2">
                                   <span
-                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                                      pkg.status
-                                    )}`}
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${pkg.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                      }`}
                                   >
-                                    {pkg.status}
+                                    {pkg.isPublished ? 'Published' : 'Draft'}
                                   </span>
                                   <button
                                     onClick={() =>
-                                      handleEditStatus(pkg._id, pkg.status)
+                                      handleEditStatus(pkg._id, pkg.isPublished)
                                     }
                                     className="text-blue-600 hover:text-blue-900"
                                     title="Edit Status"
@@ -652,30 +1217,13 @@ export default function DashboardAdminPage() {
                               )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center justify-center">
                                 <button
-                                  className="text-blue-600 hover:text-blue-900"
-                                  title="View Details"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                                <button
-                                  className="text-green-600 hover:text-green-900"
-                                  title="Edit Package"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
+                                  onClick={() => handleDeletePackage(pkg._id, pkg.title)}
                                   className="text-red-600 hover:text-red-900"
                                   title="Delete Package"
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  className="text-gray-600 hover:text-gray-900"
-                                  title="More Options"
-                                >
-                                  <MoreVertical className="w-4 h-4" />
                                 </button>
                               </div>
                             </td>
@@ -694,50 +1242,403 @@ export default function DashboardAdminPage() {
                     <h3 className="text-lg font-semibold text-gray-900">
                       Categories Management
                     </h3>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center">
+                    <button
+                      onClick={() => setShowAddCategoryModal(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Category
                     </button>
                   </div>
 
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {categories.map((category) => (
-                      <div
-                        key={category._id}
-                        className="bg-white border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-gray-900">
-                              {category.name}
-                            </h4>
-                            <p className="text-sm text-gray-500">
-                              {
-                                packages.filter(
-                                  (p) => p.categoryId === category._id
-                                ).length
-                              }{" "}
-                              packages
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button className="text-green-600 hover:text-green-900">
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                    {categories.length === 0 ? (
+                      <div className="col-span-full text-center py-8">
+                        <div className="text-gray-500">
+                          <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p className="text-lg font-medium text-gray-900 mb-2">No categories yet</p>
+                          <p className="text-gray-600 mb-4">Create your first category to organize packages</p>
+                          <button
+                            onClick={() => setShowAddCategoryModal(true)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 inline-flex items-center"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add First Category
+                          </button>
                         </div>
                       </div>
-                    ))}
+                    ) : (
+                      categories.map((category) => (
+                        <div
+                          key={category._id}
+                          className="bg-white border border-gray-200 rounded-lg p-4"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium text-gray-900">
+                                {category.name}
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                {
+                                  packages.filter(
+                                    (p) => p.categoryId === category._id
+                                  ).length
+                                }{" "}
+                                packages
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleEditCategory(category)}
+                                className="text-green-600 hover:text-green-900"
+                                title="Edit Category"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(category._id)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete Category"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
+          {/* Add Category Modal */}
+          {showAddCategoryModal && (
+            <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Add New Category</h3>
+                  <button
+                    onClick={() => {
+                      setShowAddCategoryModal(false);
+                      setNewCategory({ name: "", description: "", icon: "" });
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={handleCreateCategory}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Category Name *</label>
+                      <input
+                        type="text"
+                        value={newCategory.name}
+                        onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter category name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                      <textarea
+                        value={newCategory.description}
+                        onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter category description"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddCategoryModal(false);
+                        setNewCategory({ name: "", description: "", icon: "" });
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      disabled={isCreatingCategory}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isCreatingCategory || !newCategory.name.trim()}
+                    >
+                      {isCreatingCategory ? 'Creating...' : 'Create Category'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Category Modal */}
+          {editingCategoryId && (
+            <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Edit Category</h3>
+                  <button
+                    onClick={handleCancelEditCategory}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={(e) => { e.preventDefault(); handleSaveCategoryChanges(); }}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Category Name *</label>
+                      <input
+                        type="text"
+                        value={editCategoryForm.name}
+                        onChange={(e) => setEditCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter category name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                      <textarea
+                        value={editCategoryForm.description}
+                        onChange={(e) => setEditCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter category description"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={handleCancelEditCategory}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      disabled={isUpdatingCategory}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isUpdatingCategory || !editCategoryForm.name.trim()}
+                    >
+                      {isUpdatingCategory ? 'Updating...' : 'Update Category'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* User Details Modal */}
+          {isViewingUser && selectedUser && (
+            <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">User Details</h3>
+                  <button
+                    onClick={() => setIsViewingUser(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedUser.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Role</label>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadge(selectedUser.role)}`}>
+                      {selectedUser.role}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(selectedUser.status || 'active')}`}>
+                      {selectedUser.status || 'active'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Joined</label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {new Date(selectedUser.createdAt).toLocaleDateString('id-ID', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  {selectedUser.updatedAt && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {new Date(selectedUser.updatedAt).toLocaleDateString('id-ID', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit User Modal */}
+          {editingUserId && (
+            <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Edit User</h3>
+                  <button
+                    onClick={handleCancelEditUser}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={(e) => { e.preventDefault(); handleSaveUserChanges(); }}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Name</label>
+                      <input
+                        type="text"
+                        value={editUserForm.name}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, name: e.target.value }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <input
+                        type="email"
+                        value={editUserForm.email}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, email: e.target.value }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Role</label>
+                      <select
+                        value={editUserForm.role}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, role: e.target.value as "admin" | "customer" | "creator" }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="customer">Customer</option>
+                        <option value="creator">Creator</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Status</label>
+                      <select
+                        value={editUserForm.status}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, status: e.target.value as "active" | "inactive" }))}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={handleCancelEditUser}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.isOpen && (
+        <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Confirm Deletion</h3>
+              <button
+                onClick={cancelDelete}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-700">
+                Are you sure you want to delete {deleteConfirmation.type} "{deleteConfirmation.name}"?
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#4aed88',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ff4b4b',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   );
 }
