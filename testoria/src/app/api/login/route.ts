@@ -63,9 +63,24 @@ export async function POST(request: Request) {
             path: '/'
         });
 
+        // Set non-httpOnly cookie for client-side access to user role
+        cookieStore.set("user-role", user.role, {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/'
+        });
+
         return Response.json({
             message: "Login successful",
-            token
+            token,
+            user: {
+                id: user._id.toString(),
+                email: user.email,
+                role: user.role,
+                name: user.name
+            }
         });
 
     } catch (error) {
