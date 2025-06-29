@@ -85,6 +85,13 @@ export default function DashboardCreatorPage() {
   const [editFormData, setEditFormData] = useState<Partial<Package>>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // AI Processing states
+  const [processingPackageId, setProcessingPackageId] = useState<string | null>(null);
+  const [questionsGeneratingId, setQuestionsGeneratingId] = useState<string | null>(null);
+
+  // Questions state
+  const [packageQuestions, setPackageQuestions] = useState<any[]>([]);
+
   // Load creator data on component mount
   useEffect(() => {
     loadCreatorData();
@@ -325,7 +332,7 @@ export default function DashboardCreatorPage() {
     setShowDetailModal(true);
   };
 
-  const handleEditPackage = (pkg: Package) => {
+  const handleEditPackage = async (pkg: Package) => {
     setSelectedPackage(pkg);
     setEditFormData({
       title: pkg.title,
@@ -334,6 +341,10 @@ export default function DashboardCreatorPage() {
       duration: pkg.duration,
       isPublished: pkg.isPublished
     });
+    
+    // Load questions for this package
+    await loadPackageQuestions(pkg._id);
+    
     setShowEditModal(true);
   };
 
@@ -425,6 +436,90 @@ export default function DashboardCreatorPage() {
       toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // AI Processing handlers
+  const handleProcessAI = async (pkg: Package) => {
+    setProcessingPackageId(pkg._id);
+    try {
+      const response = await fetch(`/api/packages/${pkg._id}/process`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to process AI');
+      }
+
+      const result = await response.json();
+      
+      toast.success(`AI processing completed! Found ${result.data.totalQuestions} questions`);
+      
+      // Reload packages to get updated content
+      await loadCreatorData();
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process AI';
+      toast.error(errorMessage);
+    } finally {
+      setProcessingPackageId(null);
+    }
+  };
+
+  const handleGenerateQuestions = async (pkg: Package) => {
+    setQuestionsGeneratingId(pkg._id);
+    try {
+      const response = await fetch('/api/questions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ packageId: pkg._id })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate questions');
+      }
+
+      const result = await response.json();
+      
+      toast.success(`Successfully generated ${result.questionsCreated} questions`);
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate questions';
+      toast.error(errorMessage);
+    } finally {
+      setQuestionsGeneratingId(null);
+    }
+  };
+
+  const loadPackageQuestions = async (packageId: string) => {
+    try {
+      const response = await fetch(`/api/questions?packageId=${packageId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load questions');
+      }
+
+      const result = await response.json();
+      setPackageQuestions(result.questions || []);
+      
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      setPackageQuestions([]);
     }
   };
 
@@ -598,10 +693,10 @@ export default function DashboardCreatorPage() {
                                 </div>
                                 <div className="bg-white p-3 rounded-lg border">
                                   <span className="text-xs text-gray-500 block mb-1">
-                                    Questions
+                                    AI Content
                                   </span>
                                   <p className="font-semibold text-gray-900">
-                                    {pkg.contents?.length || 0}
+                                    {pkg.contents?.length || 0} items
                                   </p>
                                 </div>
                                 <div className="bg-white p-3 rounded-lg border">
@@ -613,9 +708,59 @@ export default function DashboardCreatorPage() {
                                   </p>
                                 </div>
                               </div>
+
+                              {/* Workflow Status Indicator */}
+                              <div className="mt-4 flex items-center space-x-4">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                  <span className="text-xs text-gray-600">PDF Uploaded</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <div className={`w-3 h-3 rounded-full ${pkg.contents && pkg.contents.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                  <span className="text-xs text-gray-600">AI Processed</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                                  <span className="text-xs text-gray-600">Questions Generated</span>
+                                </div>
+                              </div>
                             </div>
 
                             <div className="flex items-center space-x-2 ml-6">
+                              {/* AI Processing Button */}
+                              <button
+                                onClick={() => handleProcessAI(pkg)}
+                                disabled={processingPackageId === pkg._id}
+                                className="text-purple-600 hover:text-purple-900 p-2 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Process AI to extract questions"
+                              >
+                                {processingPackageId === pkg._id ? (
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+                                ) : (
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                  </svg>
+                                )}
+                              </button>
+
+                              {/* Generate Questions Button - only show if package has content */}
+                              {pkg.contents && pkg.contents.length > 0 && (
+                                <button
+                                  onClick={() => handleGenerateQuestions(pkg)}
+                                  disabled={questionsGeneratingId === pkg._id}
+                                  className="text-orange-600 hover:text-orange-900 p-2 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Generate questions from AI processed content"
+                                >
+                                  {questionsGeneratingId === pkg._id ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600"></div>
+                                  ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  )}
+                                </button>
+                              )}
+
                               <button
                                 onClick={() => handleViewPackage(pkg)}
                                 className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
@@ -839,7 +984,7 @@ export default function DashboardCreatorPage() {
       {/* Edit Modal */}
       {showEditModal && selectedPackage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-gray-900">Edit Package</h3>
@@ -853,79 +998,146 @@ export default function DashboardCreatorPage() {
                 </button>
               </div>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={editFormData.title || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={editFormData.description || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
-                  <input
-                    type="number"
-                    value={editFormData.price || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, price: parseInt(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column - Package Details */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Package Details</h4>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={editFormData.title || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      value={editFormData.description || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                      <input
+                        type="number"
+                        value={editFormData.price || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, price: parseInt(e.target.value) }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                      <input
+                        type="number"
+                        value={editFormData.duration || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Only show publish status checkbox for admin users */}
+                  {userRole === 'admin' && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="isPublished"
+                        checked={editFormData.isPublished || false}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, isPublished: e.target.checked }))}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="isPublished" className="ml-2 block text-sm text-gray-900">
+                        Published
+                      </label>
+                    </div>
+                  )}
+                  
+                  <div className="flex space-x-3 pt-4">
+                    <button
+                      onClick={handleEditSubmit}
+                      disabled={isProcessing}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isProcessing ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button
+                      onClick={() => setShowEditModal(false)}
+                      className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
-                  <input
-                    type="number"
-                    value={editFormData.duration || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+
+                {/* Right Column - Questions */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-semibold text-gray-900">Questions ({packageQuestions.length})</h4>
+                    {selectedPackage.contents && selectedPackage.contents.length > 0 && (
+                      <button
+                        onClick={() => handleGenerateQuestions(selectedPackage)}
+                        disabled={questionsGeneratingId === selectedPackage._id}
+                        className="text-sm bg-orange-100 text-orange-800 px-3 py-1 rounded-lg hover:bg-orange-200 transition-colors disabled:opacity-50"
+                      >
+                        {questionsGeneratingId === selectedPackage._id ? 'Generating...' : 'Generate Questions'}
+                      </button>
+                    )}
+                  </div>
+                  
+                  {packageQuestions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-gray-500 text-sm">No questions available</p>
+                      {selectedPackage.contents && selectedPackage.contents.length > 0 ? (
+                        <p className="text-gray-400 text-xs mt-1">Click "Generate Questions" to create from AI processed content</p>
+                      ) : (
+                        <p className="text-gray-400 text-xs mt-1">Process package with AI first to generate questions</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="max-h-96 overflow-y-auto space-y-3">
+                      {packageQuestions.map((question, index) => (
+                        <div key={question._id || index} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900 text-sm mb-2">
+                                Q{index + 1}: {question.questionText}
+                              </p>
+                              <div className="text-xs text-gray-600 space-y-1">
+                                <p><strong>A:</strong> {question.optionA}</p>
+                                <p><strong>B:</strong> {question.optionB}</p>
+                                <p><strong>C:</strong> {question.optionC}</p>
+                                <p><strong>D:</strong> {question.optionD}</p>
+                                {question.optionE && <p><strong>E:</strong> {question.optionE}</p>}
+                              </div>
+                              <p className="text-xs text-green-600 font-medium mt-2">
+                                Correct: {question.correctAnswer}
+                              </p>
+                              {question.explanation && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  <strong>Explanation:</strong> {question.explanation}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-              
-              {/* Only show publish status checkbox for admin users */}
-              {userRole === 'admin' && (
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isPublished"
-                    checked={editFormData.isPublished || false}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, isPublished: e.target.checked }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isPublished" className="ml-2 block text-sm text-gray-900">
-                    Published
-                  </label>
-                </div>
-              )}
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleEditSubmit}
-                  disabled={isProcessing}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isProcessing ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           </div>

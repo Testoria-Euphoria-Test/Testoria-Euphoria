@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Mail,
   Lock,
@@ -17,22 +17,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
-//jika user sudah login, redirect ke halaman dashboard sesuai dengan role user
-  if (typeof window !== "undefined") {
-    const userRole = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("x-user-role="))
-      ?.split("=")[1];
-    if (userRole) {
-      if (userRole === "admin") {
-        window.location.href = "/dashboard-admin";
-      } else if (userRole === "creator") {
-        window.location.href = "/dashboard-creator";
-      } else if (userRole === "customer") {
-        window.location.href = "/dashboard-customer";
-      }
-    }
-  }
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -40,6 +24,34 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Check if user is already logged in
+  const checkAuthStatus = () => {
+    if (typeof window !== "undefined") {
+      const userRole = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("user-role="))
+        ?.split("=")[1];
+      if (userRole) {
+        redirectToDashboard(userRole);
+      }
+    }
+  };
+
+  const redirectToDashboard = (role: string) => {
+    if (role === "admin") {
+      router.push("/dashboard-admin");
+    } else if (role === "creator") {
+      router.push("/dashboard-creator");
+    } else if (role === "customer") {
+      router.push("/dashboard-customer");
+    }
+  };
+
+  // Check auth status on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -69,20 +81,15 @@ export default function LoginPage() {
           email: "",
           password: "",
         });
-        // Navigate to dashboard or home after successful login
-        // jika cookies sudah di set, dan berisi role admin, redirect ke dashboard admin
-        // jika role customer, redirect ke halaman customer
-        // jika role creator, redirect ke halaman creator
-        const userRole = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("x-user-role="))
-          ?.split("=")[1];
-        if (userRole === "admin") {
-          router.push("/dashboard-admin");
-        } else if (userRole === "creator") {
-          router.push("/dashboard-creator");
-        } else if (userRole === "customer") {
-          router.push("/dashboard-customer");
+        
+        // Use the user data from response to redirect
+        if (data.user && data.user.role) {
+          redirectToDashboard(data.user.role);
+        } else {
+          // Fallback: try to read from cookie
+          setTimeout(() => {
+            checkAuthStatus();
+          }, 100); // Small delay to allow cookies to be set
         }
       } else {
         toast.error(data.message || "Login failed");
