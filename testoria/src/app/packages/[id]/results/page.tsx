@@ -558,7 +558,7 @@ export default function ResultsPage({
             <p className="text-gray-600 mt-2">{packageData.title}</p>
           )}
         </div>
-
+          
         {/* Score Overview */}
         <div
           className={`rounded-lg p-6 mb-8 ${getScoreBgColor(resultData.score)}`}
