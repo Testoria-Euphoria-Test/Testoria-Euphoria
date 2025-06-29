@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use, useCallback } from "react"; // ✅ Tambahkan useCallback
+import { useState, useEffect, use, useCallback } from "react";
 import { useRouter } from "next/navigation"; // ✅ Add Next.js router
 import { QuestionType } from "@/types/question";
 import Link from "next/link";
@@ -66,7 +66,7 @@ export default function TryoutPage({
       // Save user answers using the correct API format
       const resultData = {
         packageId: id,
-        answers: answersArray, 
+        answers: answersArray,
       };
 
       const response = await fetch("/api/user-answers", {
@@ -99,9 +99,17 @@ export default function TryoutPage({
           router.push(`/packages/${id}/results`);
         }, 3000);
       } else {
-        const errorData = await response.json();
-        console.error("Error saving answers:", errorData);
-        throw new Error(errorData.error || "Failed to save answers");
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          console.error("Error saving answers:", errorData);
+          throw new Error(errorData.error || "Failed to save answers");
+        } else {
+          throw new Error(
+            `HTTP ${response.status}: Failed to save answers (non-JSON response)`
+          );
+        }
       }
     } catch (error) {
       console.error("Error finishing tryout:", error);
@@ -119,47 +127,107 @@ export default function TryoutPage({
         // ✅ First, check if user has already completed this tryout
         console.log("🔍 Checking if user has already completed this tryout...");
         setCheckingCompletion(true);
-        
+
         try {
           // Check if user has result for this package
           const resultResponse = await fetch(`/api/results?packageId=${id}`, {
             credentials: "include",
           });
 
+          console.log("🔍 Result API response status:", resultResponse.status);
+
           if (resultResponse.ok) {
-            const resultData = await resultResponse.json();
-            console.log("📊 Result check response:", resultData);
-            
-            // If user has a result, redirect to results page
-            if (resultData.success && resultData.data && resultData.data.length > 0) {
-              console.log("✅ User has already completed this tryout, redirecting to results...");
-              setRedirecting(true);
-              setCheckingCompletion(false);
-              router.push(`/packages/${id}/results`);
-              return; // Stop execution
+            // Check if response is JSON before parsing
+            const contentType = resultResponse.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              try {
+                const resultData = await resultResponse.json();
+                console.log("📊 Result check response:", resultData);
+
+                // If user has a result, redirect to results page
+                if (
+                  resultData.success &&
+                  resultData.results &&
+                  resultData.results.length > 0
+                ) {
+                  console.log(
+                    "✅ User has already completed this tryout, redirecting to results..."
+                  );
+                  setRedirecting(true);
+                  setCheckingCompletion(false);
+                  router.push(`/packages/${id}/results`);
+                  return; // Stop execution
+                }
+              } catch (jsonError) {
+                console.error(
+                  "❌ Error parsing result response JSON:",
+                  jsonError
+                );
+              }
+            } else {
+              console.warn(
+                "⚠️ Results API returned non-JSON response, content-type:",
+                contentType
+              );
+              // Try to read as text for debugging
+              try {
+                const textResponse = await resultResponse.text();
+                console.warn(
+                  "Response body:",
+                  textResponse.substring(0, 200) + "..."
+                );
+              } catch {
+                console.warn("Could not read response as text");
+              }
             }
+          } else if (resultResponse.status === 404) {
+            console.log(
+              "📭 No result found (404), user can proceed with tryout"
+            );
+          } else {
+            console.warn(
+              "⚠️ Result API returned error status:",
+              resultResponse.status
+            );
           }
 
           // Also check user answers as fallback
-          const userAnswersResponse = await fetch(`/api/user-answers?packageId=${id}`, {
-            credentials: "include",
-          });
+          const userAnswersResponse = await fetch(
+            `/api/user-answers?packageId=${id}`,
+            {
+              credentials: "include",
+            }
+          );
 
           if (userAnswersResponse.ok) {
-            const userAnswersData = await userAnswersResponse.json();
-            console.log("📝 User answers check response:", userAnswersData);
-            
-            // If user has answers for this package, redirect to results page
-            if (userAnswersData.success && userAnswersData.data && userAnswersData.data.length > 0) {
-              console.log("✅ User has answers for this tryout, redirecting to results...");
-              setRedirecting(true);
-              setCheckingCompletion(false);
-              router.push(`/packages/${id}/results`);
-              return; // Stop execution
+            // Check if response is JSON before parsing
+            const contentType = userAnswersResponse.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              const userAnswersData = await userAnswersResponse.json();
+              console.log("📝 User answers check response:", userAnswersData);
+
+              // If user has answers for this package, redirect to results page
+              if (
+                userAnswersData.userAnswers &&
+                userAnswersData.userAnswers.length > 0
+              ) {
+                console.log(
+                  "✅ User has answers for this tryout, redirecting to results..."
+                );
+                setRedirecting(true);
+                setCheckingCompletion(false);
+                router.push(`/packages/${id}/results`);
+                return; // Stop execution
+              }
+            } else {
+              console.warn("⚠️ User answers API returned non-JSON response");
             }
           }
         } catch (error) {
-          console.log("⚠️ Error checking completion status, proceeding with tryout:", error);
+          console.log(
+            "⚠️ Error checking completion status, proceeding with tryout:",
+            error
+          );
           // Continue with normal flow if check fails
         }
 
@@ -172,10 +240,16 @@ export default function TryoutPage({
         });
 
         if (packageResponse.ok) {
-          const packageData = await packageResponse.json();
-          if (packageData.success) {
-            setPackageData(packageData.data);
-            setTimeLeft(packageData.data.duration * 60); // Convert to seconds
+          // Check if response is JSON before parsing
+          const contentType = packageResponse.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const packageData = await packageResponse.json();
+            if (packageData.success) {
+              setPackageData(packageData.data);
+              setTimeLeft(packageData.data.duration * 60); // Convert to seconds
+            }
+          } else {
+            console.warn("⚠️ Package API returned non-JSON response");
           }
         }
 
@@ -189,6 +263,14 @@ export default function TryoutPage({
 
         if (!questionsResponse.ok) {
           throw new Error("Failed to fetch questions");
+        }
+
+        // Check if response is JSON before parsing
+        const contentType = questionsResponse.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error(
+            "Questions API returned non-JSON response. Please check if the API is properly configured."
+          );
         }
 
         const data = await questionsResponse.json();
@@ -312,7 +394,8 @@ export default function TryoutPage({
             Tryout Already Completed
           </h2>
           <p className="text-gray-600 mb-6">
-            You have already completed this tryout. Redirecting you to the results page...
+            You have already completed this tryout. Redirecting you to the
+            results page...
           </p>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
         </div>
@@ -326,10 +409,9 @@ export default function TryoutPage({
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">
-            {checkingCompletion 
-              ? "Checking if you've already completed this tryout..." 
-              : "Loading tryout..."
-            }
+            {checkingCompletion
+              ? "Checking if you've already completed this tryout..."
+              : "Loading tryout..."}
           </p>
         </div>
       </div>
