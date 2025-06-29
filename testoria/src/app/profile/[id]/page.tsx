@@ -25,9 +25,38 @@ export default async function ProfileCreator({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await fetch(`http://localhost:3000/api/profiles/${id}`);
-  const res = await data.json();
-  const profileData: ProfileData = res.data;
+
+  let profileData: ProfileData;
+
+  try {
+    const data = await fetch(`http://localhost:3000/api/profiles/${id}`);
+    const res = await data.json();
+
+    if (!res.success || !res.data) {
+      throw new Error('Profile not found');
+    }
+
+    profileData = res.data;
+  } catch (error) {
+    // Return error page if profile fetch fails
+    return (
+      <div>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 text-lg mb-4">Profil tidak ditemukan</p>
+            <Link
+              href="/dashboard-customer"
+              className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Helper function untuk format tanggal
   const formatDate = (dateString: string) => {
@@ -85,7 +114,7 @@ export default async function ProfileCreator({
               <div className="relative px-6 pb-6">
                 {/* Profile Picture */}
                 <div className="absolute -top-20 left-6">
-                  {profileData.photoUrl ? (
+                  {profileData?.photoUrl && profileData.photoUrl.trim() !== "" ? (
                     <div className="relative w-32 h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden">
                       <Image
                         src={profileData.photoUrl}
@@ -99,8 +128,8 @@ export default async function ProfileCreator({
                     <div className="w-32 h-32 rounded-2xl border-4 border-white shadow-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                       <span className="text-white text-3xl font-bold">
                         {getInitials(
-                          profileData.user?.name,
-                          profileData.user?.email
+                          profileData?.user?.name,
+                          profileData?.user?.email
                         )}
                       </span>
                     </div>
@@ -112,13 +141,13 @@ export default async function ProfileCreator({
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                     <div>
                       <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                        {profileData.user?.name ||
-                          profileData.user?.email?.split("@")[0] ||
+                        {profileData?.user?.name ||
+                          profileData?.user?.email?.split("@")[0] ||
                           "Creator"}
                       </h1>
                       <div className="flex items-center space-x-3 mb-4">
                         <span className="px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full">
-                          {profileData.user?.role || "Creator"}
+                          {profileData?.user?.role || "Creator"}
                         </span>
                         <span className="px-4 py-2 bg-green-100 text-green-700 text-sm font-semibold rounded-full flex items-center">
                           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
@@ -139,7 +168,7 @@ export default async function ProfileCreator({
                           Email
                         </p>
                         <p className="font-semibold text-gray-900">
-                          {profileData.user?.email || "Not available"}
+                          {profileData?.user?.email || "Not available"}
                         </p>
                       </div>
                     </div>
@@ -153,7 +182,7 @@ export default async function ProfileCreator({
                         </p>
                         <p className="font-semibold text-gray-900">
                           {formatDate(
-                            profileData.user?.createdAt || profileData.createdAt
+                            profileData?.user?.createdAt || profileData?.createdAt || new Date().toISOString()
                           )}
                         </p>
                       </div>
@@ -161,7 +190,7 @@ export default async function ProfileCreator({
                   </div>
 
                   {/* Bio */}
-                  {profileData.bio && (
+                  {profileData?.bio && (
                     <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <div className="w-2 h-6 bg-blue-600 rounded-full mr-3"></div>
@@ -186,7 +215,7 @@ export default async function ProfileCreator({
               </h2>
 
               {/* Education */}
-              {profileData.education && (
+              {profileData?.education && (
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Education
@@ -210,7 +239,7 @@ export default async function ProfileCreator({
               )}
 
               {/* Certificates */}
-              {profileData.certificates &&
+              {profileData?.certificates &&
                 profileData.certificates.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -242,8 +271,8 @@ export default async function ProfileCreator({
                 )}
 
               {/* Jika tidak ada education atau certificates */}
-              {!profileData.education &&
-                (!profileData.certificates ||
+              {!profileData?.education &&
+                (!profileData?.certificates ||
                   profileData.certificates.length === 0) && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
