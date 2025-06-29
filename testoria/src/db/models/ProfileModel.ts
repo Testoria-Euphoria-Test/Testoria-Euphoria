@@ -159,6 +159,7 @@ export default class ProfileModel {
             "user.name": 1,
             "user.email": 1,
             "user.role": 1,
+            "user.createdAt": 1,
           },
         },
       ];

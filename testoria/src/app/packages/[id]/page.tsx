@@ -30,6 +30,13 @@ interface PackageWithDetails extends PackageResponse {
     role: string;
     _id: string;
   };
+  creatorProfile?: {
+    _id: string;
+    photoUrl?: string;
+    education?: string;
+    certificates?: string[];
+    bio?: string;
+  };
   categoryName?: string;
   creatorName?: string;
 }
@@ -293,9 +300,11 @@ export default function PackagePageDetail({
                     {packageData.price === 0 ? "Mulai Gratis" : "Daftar Sekarang"}
                   </button>
 
-                  {packageData.creator?._id && (
+                  {(packageData.creatorProfile?._id || packageData.creator?._id) && (
                     <Link
-                      href={`/profile/${packageData.creator._id}`}
+                      href={packageData.creatorProfile?._id 
+                        ? `/profile/${packageData.creatorProfile._id}` 
+                        : `/profile/user/${packageData.creator?._id}`}
                       className="w-full bg-gray-100 text-gray-800 py-3 px-4 rounded-lg font-semibold text-sm hover:bg-gray-200 transition-all duration-200 flex items-center justify-center"
                     >
                       <User className="w-4 h-4 mr-2" />
