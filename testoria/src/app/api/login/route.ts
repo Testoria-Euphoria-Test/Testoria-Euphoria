@@ -36,9 +36,32 @@ export async function POST(request: Request) {
         });
 
         const cookieStore = await cookies();
-        cookieStore.set("Authorization", `Bearer ${token}`);
-        cookieStore.set("x-user-id", user._id.toString());
-        cookieStore.set("x-user-role", user.role );
+        
+        // Set Authorization cookie with proper options
+        cookieStore.set("Authorization", `Bearer ${token}`, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/'
+        });
+        
+        // Set additional user info cookies
+        cookieStore.set("x-user-id", user._id.toString(), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/'
+        });
+        
+        cookieStore.set("x-user-role", user.role, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/'
+        });
 
         return Response.json({
             message: "Login successful",

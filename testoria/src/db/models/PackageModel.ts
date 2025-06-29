@@ -182,6 +182,12 @@ class PackageModel {
 
             pipeline.push(
                 {
+                    $addFields: {
+                        categoryName: "$category.name",
+                        creatorName: "$creator.name"
+                    }
+                },
+                {
                     $project: {
                         _id: 1,
                         title: 1,
@@ -196,8 +202,8 @@ class PackageModel {
                         updatedAt: 1,
                         categoryId: 1,
                         creatorId: 1,
-                        "category.name": 1,
-                        "creator.name": 1,
+                        categoryName: 1,
+                        creatorName: 1,
                         "creator.email": 1,
                         "creator.role": 1
                     }
@@ -287,6 +293,12 @@ class PackageModel {
                 },
               },
               {
+                $addFields: {
+                  categoryName: "$category.name",
+                  creatorName: "$creator.name"
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   title: 1,
@@ -299,6 +311,10 @@ class PackageModel {
                   isPublished: 1,
                   createdAt: 1,
                   updatedAt: 1,
+                  categoryId: 1,
+                  creatorId: 1,
+                  categoryName: 1,
+                  creatorName: 1,
                   "category._id": 1,
                   "category.name": 1,
                   "creator._id": 1,
