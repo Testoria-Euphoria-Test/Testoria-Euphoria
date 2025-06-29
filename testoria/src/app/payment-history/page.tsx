@@ -194,7 +194,7 @@ export default function PaymentHistoryPage() {
                               Package:
                             </span>
                             <h3 className="text-xl font-bold text-blue-600 mt-1">
-                              {payment.package.title}
+                              {payment.package?.title}
                             </h3>
                           </div>
 

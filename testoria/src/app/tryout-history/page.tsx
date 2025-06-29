@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FileText, ArrowLeft } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  FileText,
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
+import { QuestionType } from "@/types/question";
+import { UserAnswerType } from "@/types/userAnswer";
+import { ResultType } from "@/types/result";
 
 interface TryoutHistory {
   _id: string;
@@ -16,63 +26,368 @@ interface TryoutHistory {
   duration: number;
 }
 
+interface TryoutDetails {
+  questions: QuestionType[];
+  userAnswers: UserAnswerType[];
+  isLoading: boolean;
+  isExpanded: boolean;
+}
+
 export default function TryoutHistoryPage() {
   const [tryoutHistory, setTryoutHistory] = useState<TryoutHistory[]>([]);
+  const [tryoutDetails, setTryoutDetails] = useState<
+    Record<string, TryoutDetails>
+  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchTryoutHistory();
-  }, []);
+  const fetchTryoutDetails = async (packageId: string) => {
+    if (tryoutDetails[packageId] && !tryoutDetails[packageId].isLoading) {
+      return; // Already fetched or currently fetching
+    }
 
-  const fetchTryoutHistory = async () => {
+    setTryoutDetails((prev) => ({
+      ...prev,
+      [packageId]: {
+        questions: [],
+        userAnswers: [],
+        isLoading: true,
+        isExpanded: false,
+      },
+    }));
+
+    try {
+      const [questionsResponse, userAnswersResponse] = await Promise.all([
+        fetch(`/api/questions?packageId=${packageId}`),
+        fetch(`/api/user-answers?packageId=${packageId}`),
+      ]);
+
+      let questions: QuestionType[] = [];
+      let userAnswers: UserAnswerType[] = [];
+
+      if (questionsResponse.ok) {
+        const questionsData = await questionsResponse.json();
+        questions = questionsData.questions || [];
+      } else {
+        console.warn(`Failed to fetch questions for package ${packageId}`);
+      }
+
+      if (userAnswersResponse.ok) {
+        const userAnswersData = await userAnswersResponse.json();
+        userAnswers = userAnswersData.userAnswers || [];
+      } else {
+        console.warn(`Failed to fetch user answers for package ${packageId}`);
+      }
+
+      // Only use mock data if this is one of the demo packages and no real data is available
+      if (
+        questions.length === 0 &&
+        (packageId === "pkg2" || packageId === "pkg5")
+      ) {
+        console.log(`Using demo data for package ${packageId}`);
+        questions = generateMockQuestions(packageId);
+        userAnswers = generateMockUserAnswers(packageId, questions);
+      }
+
+      setTryoutDetails((prev) => ({
+        ...prev,
+        [packageId]: {
+          questions,
+          userAnswers,
+          isLoading: false,
+          isExpanded: false,
+        },
+      }));
+    } catch (error) {
+      console.error(`Error fetching details for package ${packageId}:`, error);
+
+      // Only use mock data for demo packages, otherwise show empty state
+      let questions: QuestionType[] = [];
+      let userAnswers: UserAnswerType[] = [];
+
+      if (packageId === "pkg2" || packageId === "pkg5") {
+        console.log(`Using demo data for package ${packageId} due to error`);
+        questions = generateMockQuestions(packageId);
+        userAnswers = generateMockUserAnswers(packageId, questions);
+      }
+
+      setTryoutDetails((prev) => ({
+        ...prev,
+        [packageId]: {
+          questions,
+          userAnswers,
+          isLoading: false,
+          isExpanded: false,
+        },
+      }));
+    }
+  };
+
+  const generateMockQuestions = (packageId: string): QuestionType[] => {
+    const baseQuestions = [
+      {
+        _id: `q1_${packageId}`,
+        packageId,
+        questionText: "Apa yang dimaksud dengan Pancasila?",
+        optionA: "Dasar negara Indonesia",
+        optionB: "Lambang negara Indonesia",
+        optionC: "Bendera negara Indonesia",
+        optionD: "Lagu kebangsaan Indonesia",
+        optionE: "Bahasa resmi Indonesia",
+        correctAnswer: "A" as const,
+        explanation:
+          "Pancasila adalah dasar negara Republik Indonesia yang terdiri dari lima sila sebagai pedoman hidup bangsa.",
+        images: [],
+      },
+      {
+        _id: `q2_${packageId}`,
+        packageId,
+        questionText: "Siapa proklamator kemerdekaan Indonesia?",
+        optionA: "Joko Widodo dan Ma'ruf Amin",
+        optionB: "Soekarno dan Mohammad Hatta",
+        optionC: "Soeharto dan Try Sutrisno",
+        optionD: "Megawati dan Hamzah Haz",
+        optionE: "SBY dan Boediono",
+        correctAnswer: "B" as const,
+        explanation:
+          "Soekarno dan Mohammad Hatta adalah proklamator kemerdekaan Indonesia pada tanggal 17 Agustus 1945.",
+        images: [],
+      },
+      {
+        _id: `q3_${packageId}`,
+        packageId,
+        questionText: "Berapa jumlah provinsi di Indonesia saat ini?",
+        optionA: "32 provinsi",
+        optionB: "33 provinsi",
+        optionC: "34 provinsi",
+        optionD: "35 provinsi",
+        optionE: "38 provinsi",
+        correctAnswer: "E" as const,
+        explanation:
+          "Indonesia saat ini memiliki 38 provinsi setelah pemekaran beberapa daerah dalam beberapa tahun terakhir.",
+        images: [],
+      },
+    ];
+
+    // Adjust number of questions based on package
+    if (packageId === "pkg2") {
+      return baseQuestions.slice(0, 3);
+    } else if (packageId === "pkg5") {
+      return [
+        {
+          _id: `q1_${packageId}`,
+          packageId,
+          questionText: "Berapa hasil dari 2² + 3² = ?",
+          optionA: "10",
+          optionB: "11",
+          optionC: "12",
+          optionD: "13",
+          optionE: "14",
+          correctAnswer: "D" as const,
+          explanation: "2² = 4 dan 3² = 9, jadi 4 + 9 = 13",
+          images: [],
+        },
+        {
+          _id: `q2_${packageId}`,
+          packageId,
+          questionText: "Jika f(x) = 2x + 3, berapa nilai f(5)?",
+          optionA: "11",
+          optionB: "12",
+          optionC: "13",
+          optionD: "14",
+          optionE: "15",
+          correctAnswer: "C" as const,
+          explanation: "f(5) = 2(5) + 3 = 10 + 3 = 13",
+          images: [],
+        },
+      ];
+    }
+
+    return baseQuestions;
+  };
+
+  const generateMockUserAnswers = (
+    packageId: string,
+    questions: QuestionType[]
+  ): UserAnswerType[] => {
+    return questions.map((question, index) => {
+      // Simulate some correct and some incorrect answers
+      let selectedAnswer = question.correctAnswer;
+      let isCorrect = true;
+
+      // Make some answers wrong for demonstration
+      if (packageId === "pkg2" && index === 1) {
+        selectedAnswer = "A";
+        isCorrect = false;
+      } else if (packageId === "pkg5" && index === 0) {
+        selectedAnswer = "B";
+        isCorrect = false;
+      }
+
+      return {
+        _id: `ua_${question._id}`,
+        userId: "current_user",
+        packageId,
+        questionId: question._id!,
+        selectedAnswer,
+        isCorrect,
+        createdAt: new Date().toISOString(),
+      };
+    });
+  };
+
+  const toggleTryoutDetails = (packageId: string) => {
+    const details = tryoutDetails[packageId];
+
+    if (!details) {
+      fetchTryoutDetails(packageId);
+    }
+
+    setTryoutDetails((prev) => ({
+      ...prev,
+      [packageId]: {
+        ...prev[packageId],
+        isExpanded: !prev[packageId]?.isExpanded,
+      },
+    }));
+  };
+
+  const getUserAnswerForQuestion = (
+    questionId: string,
+    packageId: string
+  ): UserAnswerType | undefined => {
+    const details = tryoutDetails[packageId];
+    if (!details) return undefined;
+    return details.userAnswers.find(
+      (answer) => answer.questionId === questionId
+    );
+  };
+
+  const fetchTryoutHistory = useCallback(async () => {
     try {
       setLoading(true);
-      // Since there's no API endpoint yet, use mock data
-      // In real implementation, replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
 
+      // Fetch real results data from API
+      const resultsResponse = await fetch("/api/results");
+
+      if (!resultsResponse.ok) {
+        throw new Error("Failed to fetch tryout history");
+      }
+
+      const resultsData = await resultsResponse.json();
+
+      if (!resultsData.success || !resultsData.results) {
+        throw new Error("Invalid response format");
+      }
+
+      // Process the results and get package information
+      const processedHistory = await Promise.all(
+        resultsData.results.map(async (result: ResultType) => {
+          try {
+            // Get packageId as string (handle both string and ObjectId cases)
+            const packageId = String(result.packageId);
+
+            // Fetch package information to get the title
+            const packageResponse = await fetch(`/api/packages/${packageId}`);
+            let packageTitle = "Unknown Package";
+
+            if (packageResponse.ok) {
+              const packageData = await packageResponse.json();
+              packageTitle =
+                packageData.title ||
+                packageData.data?.title ||
+                "Unknown Package";
+            }
+
+            // Calculate total questions from the database
+            const questionsResponse = await fetch(
+              `/api/questions?packageId=${packageId}`
+            );
+            let totalQuestions = 0;
+
+            if (questionsResponse.ok) {
+              const questionsData = await questionsResponse.json();
+              totalQuestions =
+                questionsData.count || questionsData.questions?.length || 0;
+            }
+
+            return {
+              _id: result._id || "",
+              packageId: packageId,
+              packageTitle,
+              score: result.score || 0,
+              totalQuestions: totalQuestions,
+              correctAnswers: result.totalCorrect || 0,
+              completedAt: result.createdAt || new Date().toISOString(),
+              duration: result.durationTaken || 0,
+            };
+          } catch (error) {
+            console.error(`Error processing result ${result._id}:`, error);
+            // Return fallback data for this result
+            const packageId = String(result.packageId);
+            return {
+              _id: result._id || "",
+              packageId: packageId,
+              packageTitle: "Unknown Package",
+              score: result.score || 0,
+              totalQuestions:
+                (result.totalCorrect || 0) +
+                (result.totalWrong || 0) +
+                (result.totalUnanswered || 0),
+              correctAnswers: result.totalCorrect || 0,
+              completedAt: result.createdAt || new Date().toISOString(),
+              duration: result.durationTaken || 0,
+            };
+          }
+        })
+      );
+
+      setTryoutHistory(processedHistory);
+
+      // Clear any previous error if successful
+      if (error) {
+        setError(null);
+      }
+    } catch (err) {
+      console.error("Error fetching tryout history:", err);
+
+      // Fallback to mock data if API fails
+      console.log("Falling back to demo data...");
       const mockData: TryoutHistory[] = [
         {
-          _id: "try1",
+          _id: "demo1",
           packageId: "pkg2",
-          packageTitle: "CPNS 2024 - Tes Wawasan Kebangsaan",
-          score: 85,
-          totalQuestions: 100,
-          correctAnswers: 85,
-          completedAt: "2024-02-20T10:30:00Z",
-          duration: 85,
+          packageTitle: "CPNS 2024 - Tes Wawasan Kebangsaan (Demo)",
+          score: 67,
+          totalQuestions: 3,
+          correctAnswers: 2,
+          completedAt: "2024-12-20T10:30:00Z",
+          duration: 15,
         },
         {
-          _id: "try2",
+          _id: "demo2",
           packageId: "pkg5",
-          packageTitle: "Olimpiade Matematika SMA",
-          score: 72,
-          totalQuestions: 50,
-          correctAnswers: 36,
-          completedAt: "2024-03-15T14:20:00Z",
-          duration: 220,
-        },
-        {
-          _id: "try3",
-          packageId: "pkg2",
-          packageTitle: "CPNS 2024 - Tes Wawasan Kebangsaan",
-          score: 91,
-          totalQuestions: 100,
-          correctAnswers: 91,
-          completedAt: "2024-03-22T11:45:00Z",
-          duration: 78,
+          packageTitle: "Olimpiade Matematika SMA (Demo)",
+          score: 50,
+          totalQuestions: 2,
+          correctAnswers: 1,
+          completedAt: "2024-12-15T14:20:00Z",
+          duration: 10,
         },
       ];
 
       setTryoutHistory(mockData);
-    } catch (err) {
-      console.error("Error fetching tryout history:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(
+        "Could not load your actual tryout history. Showing demo data instead."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [error]);
+
+  useEffect(() => {
+    fetchTryoutHistory();
+  }, [fetchTryoutHistory]);
 
   const formatDateTime = (dateString: string) => {
     try {
@@ -97,7 +412,7 @@ export default function TryoutHistoryPage() {
   };
 
   // ✅ Add safe number formatting
-  const safeNumber = (value: any, fallback: number = 0): number => {
+  const safeNumber = (value: unknown, fallback: number = 0): number => {
     const num = Number(value);
     return isNaN(num) ? fallback : num;
   };
@@ -174,6 +489,30 @@ export default function TryoutHistoryPage() {
                 </span>
               </div>
 
+              {/* Error/Demo Data Notice */}
+              {error && (
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-yellow-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {historyCount === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -195,65 +534,236 @@ export default function TryoutHistoryPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {tryoutHistory.map((tryout) => (
-                    <div
-                      key={tryout._id}
-                      className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              {tryout.packageTitle || "Unknown Package"}
-                            </h4>
-                            <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-                              Score: {safeNumber(tryout.score)}%
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Score:
-                              </span>
-                              <p
-                                className={`font-bold text-2xl ${getScoreColor(
-                                  tryout.score
-                                )}`}
-                              >
-                                {safeNumber(tryout.score)}%
-                              </p>
+                  {tryoutHistory.map((tryout) => {
+                    const details = tryoutDetails[tryout.packageId];
+                    const isExpanded = details?.isExpanded || false;
+                    const isLoadingDetails = details?.isLoading || false;
+
+                    return (
+                      <div
+                        key={tryout._id}
+                        className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200"
+                      >
+                        {/* Main tryout summary */}
+                        <div className="p-6">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <FileText className="w-5 h-5 text-gray-400" />
+                                <h4 className="text-lg font-semibold text-gray-900">
+                                  {tryout.packageTitle || "Unknown Package"}
+                                </h4>
+                                <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                                  Score: {safeNumber(tryout.score)}%
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <span className="text-gray-500 font-medium">
+                                    Score:
+                                  </span>
+                                  <p
+                                    className={`font-bold text-xl md:text-2xl ${getScoreColor(
+                                      tryout.score
+                                    )}`}
+                                  >
+                                    {safeNumber(tryout.score)}%
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 font-medium">
+                                    Correct Answers:
+                                  </span>
+                                  <p className="font-semibold text-gray-900">
+                                    {safeNumber(tryout.correctAnswers)}/
+                                    {safeNumber(tryout.totalQuestions)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 font-medium">
+                                    Duration:
+                                  </span>
+                                  <p className="font-semibold text-gray-900">
+                                    {safeNumber(tryout.duration)} minutes
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 font-medium">
+                                    Completed:
+                                  </span>
+                                  <p className="font-semibold text-gray-900 text-xs sm:text-sm">
+                                    {formatDateTime(tryout.completedAt)}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Correct Answers:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {safeNumber(tryout.correctAnswers)}/
-                                {safeNumber(tryout.totalQuestions)}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Duration:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {safeNumber(tryout.duration)} minutes
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Completed:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {formatDateTime(tryout.completedAt)}
-                              </p>
-                            </div>
+
+                            {/* Expand/Collapse Button */}
+                            <button
+                              onClick={() =>
+                                toggleTryoutDetails(tryout.packageId)
+                              }
+                              className="self-start sm:ml-4 flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              disabled={isLoadingDetails}
+                            >
+                              {isLoadingDetails ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                  <span>Loading...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>
+                                    {isExpanded
+                                      ? "Hide Details"
+                                      : "View Details"}
+                                  </span>
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-4 h-4" />
+                                  ) : (
+                                    <ChevronDown className="w-4 h-4" />
+                                  )}
+                                </>
+                              )}
+                            </button>
                           </div>
                         </div>
+
+                        {/* Expandable question details */}
+                        {isExpanded && details && (
+                          <div className="border-t border-gray-100 bg-gray-50">
+                            <div className="p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <h5 className="text-lg font-semibold text-gray-900">
+                                  Question Review
+                                </h5>
+                                <div className="text-sm text-gray-600">
+                                  {details.questions.length} question
+                                  {details.questions.length !== 1
+                                    ? "s"
+                                    : ""} •{" "}
+                                  {
+                                    details.userAnswers.filter(
+                                      (ua) => ua.isCorrect
+                                    ).length
+                                  }{" "}
+                                  correct
+                                </div>
+                              </div>
+
+                              {details.questions.length === 0 ? (
+                                <div className="text-center py-8">
+                                  <p className="text-gray-500">
+                                    No questions found for this tryout.
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="space-y-4 max-h-96 overflow-y-auto">
+                                  {details.questions.map((question, index) => {
+                                    const userAnswer = getUserAnswerForQuestion(
+                                      question._id!,
+                                      tryout.packageId
+                                    );
+                                    const isCorrect =
+                                      userAnswer?.isCorrect || false;
+
+                                    return (
+                                      <div
+                                        key={question._id}
+                                        className="bg-white rounded-lg p-4 border border-gray-200"
+                                      >
+                                        <div className="flex items-start space-x-3">
+                                          <div className="flex-shrink-0">
+                                            {isCorrect ? (
+                                              <CheckCircle className="w-5 h-5 text-green-500 mt-1" />
+                                            ) : (
+                                              <XCircle className="w-5 h-5 text-red-500 mt-1" />
+                                            )}
+                                          </div>
+
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center space-x-2 mb-2">
+                                              <span className="text-sm font-medium text-gray-500">
+                                                Question {index + 1}
+                                              </span>
+                                              <span
+                                                className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                                  isCorrect
+                                                    ? "bg-green-100 text-green-800"
+                                                    : "bg-red-100 text-red-800"
+                                                }`}
+                                              >
+                                                {isCorrect
+                                                  ? "Correct"
+                                                  : "Incorrect"}
+                                              </span>
+                                            </div>
+
+                                            <p className="text-gray-900 font-medium mb-3">
+                                              {question.questionText}
+                                            </p>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                              <div>
+                                                <span className="text-gray-500 font-medium">
+                                                  Your Answer:
+                                                </span>
+                                                <p
+                                                  className={`font-semibold ${
+                                                    isCorrect
+                                                      ? "text-green-600"
+                                                      : "text-red-600"
+                                                  }`}
+                                                >
+                                                  {userAnswer?.selectedAnswer
+                                                    ? `${
+                                                        userAnswer.selectedAnswer
+                                                      }. ${
+                                                        question[
+                                                          `option${userAnswer.selectedAnswer}` as keyof QuestionType
+                                                        ] as string
+                                                      }`
+                                                    : "No answer recorded"}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <span className="text-gray-500 font-medium">
+                                                  Correct Answer:
+                                                </span>
+                                                <p className="font-semibold text-green-600">
+                                                  {question.correctAnswer}.{" "}
+                                                  {
+                                                    question[
+                                                      `option${question.correctAnswer}` as keyof QuestionType
+                                                    ] as string
+                                                  }
+                                                </p>
+                                              </div>
+                                            </div>
+
+                                            {question.explanation && (
+                                              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                                                <span className="text-blue-800 font-medium text-sm">
+                                                  Explanation:
+                                                </span>
+                                                <p className="text-blue-700 text-sm mt-1">
+                                                  {question.explanation}
+                                                </p>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

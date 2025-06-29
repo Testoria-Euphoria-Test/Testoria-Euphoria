@@ -547,7 +547,7 @@ export default function ResultsPage({
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/packages"
+            href="/dashboard-customer"
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -557,7 +557,6 @@ export default function ResultsPage({
           {packageData && (
             <p className="text-gray-600 mt-2">{packageData.title}</p>
           )}
-
         </div>
 
         {/* Score Overview */}
@@ -720,7 +719,6 @@ export default function ResultsPage({
                   </p>
                 </div>
               )}
-
             </div>
           </div>
         </div>
@@ -846,7 +844,7 @@ export default function ResultsPage({
         {/* Action Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
           <Link
-            href="/packages"
+            href="/dashboard-customer"
             className="flex-1 bg-blue-600 text-white text-center py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Browse More Packages

@@ -231,9 +231,9 @@ export default function ButtonPayment({
 if (paymentStatus.hasPurchased) {
   return (
     <div className="flex-1">
-      <div >
+      <div>
         <button
-          onClick={() => router.push(`/packages/${packageId}`)}
+          onClick={() => router.push(`/packages/${packageId}/tryout`)}
           className="w-full bg-green-500 text-white px-3 py-3 rounded text-sm hover:bg-green-600 transition duration-200"
         >
           Akses Package
