@@ -1,7 +1,11 @@
+"use client";
+
 import { Mail, Calendar, Award, ArrowLeft, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
   id: string;
@@ -19,15 +23,92 @@ interface ProfileData {
   };
 }
 
-export default async function ProfileCreator({
+export default function ProfileCreator({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const data = await fetch(`http://localhost:3000/api/profiles/${id}`);
-  const res = await data.json();
-  const profileData: ProfileData = res.data;
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [id, setId] = useState<string>("");
+  const router = useRouter();
+
+  useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchData = async () => {
+      try {
+        // Check auth status
+        const authResponse = await fetch('/api/auth/check', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        setIsLoggedIn(authResponse.ok);
+
+        // Fetch profile data
+        const data = await fetch(`http://localhost:3000/api/profiles/${id}`);
+        const res = await data.json();
+
+        if (!res.success || !res.data) {
+          throw new Error('Profile not found');
+        }
+
+        setProfileData(res.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setProfileData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div>
+        <Navbar showUserActions={false} />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Memuat profil...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    // Return error page if profile fetch fails
+    return (
+      <div>
+        <Navbar showUserActions={isLoggedIn} />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 text-lg mb-4">Profil tidak ditemukan</p>
+            <Link
+              href={isLoggedIn ? "/dashboard-customer" : "/"}
+              className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              {isLoggedIn ? "Back to Dashboard" : "Back to Home"}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Helper function untuk format tanggal
   const formatDate = (dateString: string) => {
@@ -56,17 +137,17 @@ export default async function ProfileCreator({
 
   return (
     <div>
-      <Navbar />
+      <Navbar showUserActions={isLoggedIn} />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         {/* Header */}
         <div className="border-b border-gray-100 sticky top-0 z-40 backdrop-blur-sm bg-white/80">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <Link
-              href="/dashboard-customer"
+              href={isLoggedIn ? "/dashboard-customer" : "/"}
               className="inline-flex items-center text-white  transition-colors bg-blue-600 p-1.5 rounded-2xl font-bold"
             >
               <ArrowLeft className="w-5 h-5 mr-2 " />
-              Back to Dashboard
+              {isLoggedIn ? "Back to Dashboard" : "Back to Home"}
             </Link>
           </div>
         </div>
@@ -85,7 +166,7 @@ export default async function ProfileCreator({
               <div className="relative px-6 pb-6">
                 {/* Profile Picture */}
                 <div className="absolute -top-20 left-6">
-                  {profileData.photoUrl ? (
+                  {profileData?.photoUrl && profileData.photoUrl.trim() !== "" ? (
                     <div className="relative w-32 h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden">
                       <Image
                         src={profileData.photoUrl}
@@ -99,8 +180,8 @@ export default async function ProfileCreator({
                     <div className="w-32 h-32 rounded-2xl border-4 border-white shadow-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                       <span className="text-white text-3xl font-bold">
                         {getInitials(
-                          profileData.user?.name,
-                          profileData.user?.email
+                          profileData?.user?.name,
+                          profileData?.user?.email
                         )}
                       </span>
                     </div>
@@ -112,17 +193,17 @@ export default async function ProfileCreator({
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                     <div>
                       <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                        {profileData.user?.name ||
-                          profileData.user?.email?.split("@")[0] ||
+                        {profileData?.user?.name ||
+                          profileData?.user?.email?.split("@")[0] ||
                           "Creator"}
                       </h1>
                       <div className="flex items-center space-x-3 mb-4">
                         <span className="px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full">
-                          {profileData.user?.role || "Creator"}
+                          {profileData?.user?.role || "Creator"}
                         </span>
                         <span className="px-4 py-2 bg-green-100 text-green-700 text-sm font-semibold rounded-full flex items-center">
                           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                          Verified
+                          Terverifikasi
                         </span>
                       </div>
                     </div>
@@ -139,7 +220,7 @@ export default async function ProfileCreator({
                           Email
                         </p>
                         <p className="font-semibold text-gray-900">
-                          {profileData.user?.email || "Not available"}
+                          {profileData?.user?.email || "Tidak tersedia"}
                         </p>
                       </div>
                     </div>
@@ -149,11 +230,11 @@ export default async function ProfileCreator({
                       </div>
                       <div>
                         <p className="text-sm text-gray-600 font-medium">
-                          Joined
+                          Bergabung
                         </p>
                         <p className="font-semibold text-gray-900">
                           {formatDate(
-                            profileData.user?.createdAt || profileData.createdAt
+                            profileData?.user?.createdAt || profileData?.createdAt || new Date().toISOString()
                           )}
                         </p>
                       </div>
@@ -161,11 +242,11 @@ export default async function ProfileCreator({
                   </div>
 
                   {/* Bio */}
-                  {profileData.bio && (
+                  {profileData?.bio && (
                     <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <div className="w-2 h-6 bg-blue-600 rounded-full mr-3"></div>
-                        About
+                        Tentang
                       </h3>
                       <p className="text-gray-700 leading-relaxed">
                         {profileData.bio}
@@ -182,14 +263,14 @@ export default async function ProfileCreator({
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                   <GraduationCap className="w-5 h-5 text-blue-600" />
                 </div>
-                Education & Certifications
+                Pendidikan & Sertifikasi
               </h2>
 
               {/* Education */}
-              {profileData.education && (
+              {profileData?.education && (
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Education
+                    Pendidikan
                   </h3>
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
                     <div className="flex items-center space-x-4">
@@ -201,7 +282,7 @@ export default async function ProfileCreator({
                           {profileData.education}
                         </p>
                         <p className="text-sm text-blue-600 font-medium">
-                          Educational Background
+                          Latar Belakang Pendidikan
                         </p>
                       </div>
                     </div>
@@ -210,11 +291,11 @@ export default async function ProfileCreator({
               )}
 
               {/* Certificates */}
-              {profileData.certificates &&
+              {profileData?.certificates &&
                 profileData.certificates.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Certificates
+                      Sertifikat
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {profileData.certificates.map((cert, index) => (
@@ -231,7 +312,7 @@ export default async function ProfileCreator({
                                 {cert}
                               </p>
                               <p className="text-sm text-green-600 font-medium">
-                                Certified
+                                Tersertifikasi
                               </p>
                             </div>
                           </div>
@@ -242,15 +323,15 @@ export default async function ProfileCreator({
                 )}
 
               {/* Jika tidak ada education atau certificates */}
-              {!profileData.education &&
-                (!profileData.certificates ||
+              {!profileData?.education &&
+                (!profileData?.certificates ||
                   profileData.certificates.length === 0) && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                       <GraduationCap className="w-8 h-8 text-gray-400" />
                     </div>
                     <p className="text-gray-500 text-lg">
-                      No education or certification information available
+                      Tidak ada informasi pendidikan atau sertifikasi yang tersedia
                     </p>
                   </div>
                 )}

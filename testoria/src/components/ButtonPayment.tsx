@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
+// Declare window.snap for TypeScript
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
+
 interface PaymentStatus {
   hasPurchased: boolean;
   paymentStatus?: string;
@@ -56,6 +63,9 @@ export default function ButtonPayment({
         } else {
           setPaymentStatus({ hasPurchased: false });
         }
+      } else if (response.status === 401) {
+        // User not authenticated, but don't redirect automatically in check
+        setPaymentStatus({ hasPurchased: false });
       } else {
         setPaymentStatus({ hasPurchased: false });
       }
@@ -82,6 +92,12 @@ export default function ButtonPayment({
       });
 
       if (!resCreate.ok) {
+        if (resCreate.status === 401) {
+          // User not authenticated, redirect to login
+          toast.error("Silakan login terlebih dahulu untuk melakukan pembayaran");
+          router.push("/login");
+          return;
+        }
         throw new Error("Failed to create payment");
       }
 
@@ -122,7 +138,7 @@ export default function ButtonPayment({
 
       // 4. Call Midtrans Snap
       window.snap.pay(token, {
-        onSuccess: async (result) => {
+        onSuccess: async (result: any) => {
           console.log("Payment Success:", result);
 
           // Update payment status
@@ -155,12 +171,12 @@ export default function ButtonPayment({
             router.push("/dashboard-customer?tab=my-packages");
           }, 1500);
         },
-        onPending: (result) => {
+        onPending: (result: any) => {
           toast.success(
             "Pembayaran sedang diproses. Silakan tunggu konfirmasi."
           );
         },
-        onError: (result) => {
+        onError: (result: any) => {
           toast.error("Pembayaran gagal. Silakan coba lagi.", {
             duration: 3000,
           });
@@ -174,9 +190,16 @@ export default function ButtonPayment({
       });
     } catch (err) {
       console.error("Payment error:", err);
-      toast.error(
-        "Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi."
-      );
+      
+      // Check if it's an authentication error
+      if (err instanceof Error && err.message.includes("401")) {
+        toast.error("Silakan login terlebih dahulu untuk melakukan pembayaran");
+        router.push("/login");
+      } else {
+        toast.error(
+          "Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -243,7 +266,7 @@ if (paymentStatus.hasPurchased) {
   );
 }
 
-  // ✅ Show "Pay Now" if not purchased
+  // ✅ Show "Bayar Sekarang" if not purchased
   return (
     <button
       onClick={handlePay}
@@ -256,7 +279,7 @@ if (paymentStatus.hasPurchased) {
           Processing...
         </div>
       ) : (
-        "Pay Now"
+        "Bayar Sekarang"
       )}
     </button>
   );

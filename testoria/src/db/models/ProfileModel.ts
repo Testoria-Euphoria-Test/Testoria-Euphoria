@@ -14,7 +14,7 @@ const ProfileSchema = z.object({
   bio: z.string().max(500, "Bio too long").optional(),
 });
 
-class ProfileModel {
+export default class ProfileModel {
   static collection() {
     return database.collection("profiles");
   }
@@ -149,7 +149,7 @@ class ProfileModel {
           $project: {
             _id: 1,
             userId: 1,
-            photoUrl: 1,
+            photoUrl: { $ifNull: ["$photoUrl", ""] },
             education: 1,
             certificates: 1,
             bio: 1,
@@ -159,6 +159,7 @@ class ProfileModel {
             "user.name": 1,
             "user.email": 1,
             "user.role": 1,
+            "user.createdAt": 1,
           },
         },
       ];
@@ -304,7 +305,7 @@ class ProfileModel {
         {
           $project: {
             _id: 1,
-            photoUrl: 1,
+            photoUrl: { $ifNull: ["$photoUrl", ""] },
             education: 1,
             certificates: 1,
             bio: 1,
@@ -331,5 +332,3 @@ class ProfileModel {
     }
   }
 }
-
-export default ProfileModel;
