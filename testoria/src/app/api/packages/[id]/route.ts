@@ -61,6 +61,11 @@ export async function PUT(
 
         const body: PackageUpdateType = await request.json();
 
+        // If user is not admin, remove isPublished from update data
+        if (!isAdmin && 'isPublished' in body) {
+            delete body.isPublished;
+        }
+
         // Update package
         const result = await PackageModel.updateById(id, body);
 

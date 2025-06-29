@@ -13,8 +13,11 @@ export async function GET(request: Request) {
         const url = new URL(request.url);
         const publishedOnly = url.searchParams.get('publishedOnly') === 'true';
 
-        // Get creator's packages
-        const packages = await PackageModel.findByCreatorIdAll(userId, publishedOnly);
+        // Get creator's packages with category details
+        const packages = await PackageModel.findAllWithDetails({ 
+            creatorId: userId,
+            ...(publishedOnly && { status: 'published' })
+        });
 
         return Response.json({
             success: true,
