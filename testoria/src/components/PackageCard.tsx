@@ -23,8 +23,12 @@ export default function PackageCard({ package: pkg }: { package: PackageResponse
     return `${duration}m`;
   };
 
-  // Gunakan data statis atau dari data asli// Static value
   const questionCount = pkg.contents?.length || 50; // Static fallback
+
+  //buatkan logic jika package isPublished adlah true, maka tampilkan namun jika false, maka paket tidak ditampilkan
+  if (!pkg.isPublished) {
+    return null; // Tidak menampilkan paket yang tidak dipublikasikan
+  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 max-w-sm">
