@@ -533,6 +533,9 @@ export default function TryoutPage({
       cloudinaryImages:
         (currentQuestion.images?.length || 0) - filteredImages.length,
       filteredImageCount: filteredImages.length,
+      hasPassage: !!currentQuestion.passage && currentQuestion.passage.trim() !== '',
+      passageLength: currentQuestion.passage?.length || 0,
+      passagePreview: currentQuestion.passage?.substring(0, 100) + "...",
       optionA: !!currentQuestion.optionA,
       optionB: !!currentQuestion.optionB,
       optionC: !!currentQuestion.optionC,
@@ -601,6 +604,23 @@ export default function TryoutPage({
                   ></div>
                 </div>
               </div>
+
+              {/* Reading Passage if available */}
+              {currentQuestion?.passage && currentQuestion.passage.trim() !== '' && (
+                <div className="mb-6">
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-r-lg">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                      </svg>
+                      Reading Passage
+                    </h3>
+                    <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                      {currentQuestion.passage}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Question */}
               <div className="mb-6">
@@ -821,24 +841,35 @@ export default function TryoutPage({
 
               {/* Question Grid */}
               <div className="grid grid-cols-5 gap-2 mb-6">
-                {questions.map((_, index) => {
+                {questions.map((question, index) => {
                   const isAnswered = userAnswers.hasOwnProperty(index);
                   const isCurrent = index === currentQuestionIndex;
+                  const hasPassage = question.passage && question.passage.trim() !== '';
 
                   return (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentQuestionIndex(index)}
-                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                        isCurrent
-                          ? "bg-blue-600 text-white"
-                          : isAnswered
-                          ? "bg-green-100 text-green-800 border border-green-300"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
+                    <div key={index} className="relative">
+                      <button
+                        onClick={() => setCurrentQuestionIndex(index)}
+                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                          isCurrent
+                            ? "bg-blue-600 text-white"
+                            : isAnswered
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                      {/* Passage indicator */}
+                      {hasPassage && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border border-white" 
+                             title="This question has a reading passage">
+                          <svg className="w-2 h-2 text-white ml-0.5 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -856,6 +887,13 @@ export default function TryoutPage({
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-gray-100 rounded"></div>
                   <span className="text-gray-600">Not answered</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-gray-100 rounded"></div>
+                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-600">Has passage</span>
                 </div>
               </div>
 

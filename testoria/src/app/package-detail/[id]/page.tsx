@@ -883,6 +883,23 @@ export default function PackageDetailPage() {
                               <h4 className="text-lg font-semibold text-gray-900 mb-3">
                                 Question #{index + 1}
                               </h4>
+
+                              {question.passage && (
+                                <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                  <p className="text-sm text-purple-800">
+                                    <span className="font-medium">Reading Passage:</span> {question.passage}
+                                  </p>
+                                </div>
+                              )}
+
+                              {question.imagePrompt && (
+                                <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                  <p className="text-sm text-orange-800">
+                                    <span className="font-medium">Image Prompt:</span> {question.imagePrompt}
+                                  </p>
+                                </div>
+                              )}
+
                               <p className="text-gray-700 mb-4 leading-relaxed">
                                 {question.questionText}
                               </p>
@@ -920,22 +937,6 @@ export default function PackageDetailPage() {
                                 <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                   <p className="text-sm text-blue-800">
                                     <span className="font-medium">Explanation:</span> {question.explanation}
-                                  </p>
-                                </div>
-                              )}
-
-                              {question.passage && (
-                                <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                  <p className="text-sm text-purple-800">
-                                    <span className="font-medium">Reading Passage:</span> {question.passage}
-                                  </p>
-                                </div>
-                              )}
-
-                              {question.imagePrompt && (
-                                <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                  <p className="text-sm text-orange-800">
-                                    <span className="font-medium">Image Prompt:</span> {question.imagePrompt}
                                   </p>
                                 </div>
                               )}

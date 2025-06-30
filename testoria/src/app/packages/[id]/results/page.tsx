@@ -266,8 +266,8 @@ export default function ResultsPage({
                   score >= 80
                     ? "Excellent work! You demonstrated strong understanding of the material."
                     : score >= 60
-                    ? "Good effort! Consider reviewing the topics you missed to strengthen your knowledge."
-                    : "Keep practicing! Review the material and try again to improve your understanding.";
+                      ? "Good effort! Consider reviewing the topics you missed to strengthen your knowledge."
+                      : "Keep practicing! Review the material and try again to improve your understanding.";
 
                 // Create fallback result data with AI feedback or fallback
                 const fallbackResult: ResultData = {
@@ -558,7 +558,7 @@ export default function ResultsPage({
             <p className="text-gray-600 mt-2">{packageData.title}</p>
           )}
         </div>
-          
+
         {/* Score Overview */}
         <div
           className={`rounded-lg p-6 mb-8 ${getScoreBgColor(resultData.score)}`}
@@ -661,10 +661,13 @@ export default function ResultsPage({
                             <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
                           )}
                           {section.icon === "Target" && (
-                            <Target className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+                            <Target className="h-5 w-5 text-orange-600 mt-0.5 mr-3 flex-shrink-0" />
+                          )}
+                          {section.icon === "BookOpen" && (
+                            <BookOpen className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
                           )}
                           {section.icon === "Trophy" && (
-                            <Trophy className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                            <Trophy className="h-5 w-5 text-gray-600 mt-0.5 mr-3 flex-shrink-0" />
                           )}
                           {section.icon === "Brain" && (
                             <Brain className="h-5 w-5 text-purple-600 mt-0.5 mr-3 flex-shrink-0" />
@@ -676,19 +679,36 @@ export default function ResultsPage({
                               {section.title}
                             </h4>
                             <div className={`${section.textColor} space-y-3`}>
-                              {section.content.map((text, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-start group"
-                                >
-                                  <span
-                                    className={`w-2 h-2 ${section.accentColor} rounded-full mt-2 mr-3 flex-shrink-0 group-hover:scale-125 transition-transform duration-200`}
-                                  ></span>
-                                  <p className="text-sm leading-relaxed font-medium group-hover:text-opacity-90 transition-colors duration-200">
-                                    {text.trim()}.
-                                  </p>
-                                </div>
-                              ))}
+                              {section.content.map((text, idx) => {
+                                // Check if this is a checklist item
+                                const isChecklistItem = text.trim().startsWith('□');
+                                const cleanText = text.replace(/^□\s*/, '').trim();
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="flex items-start group"
+                                  >
+                                    {isChecklistItem ? (
+                                      <>
+                                        <div className="w-4 h-4 border-2 border-gray-400 rounded mt-1 mr-3 flex-shrink-0 group-hover:border-gray-600 transition-colors duration-200"></div>
+                                        <p className="text-sm leading-relaxed font-medium group-hover:text-opacity-90 transition-colors duration-200">
+                                          {cleanText}
+                                        </p>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span
+                                          className={`w-2 h-2 ${section.accentColor} rounded-full mt-2 mr-3 flex-shrink-0 group-hover:scale-125 transition-transform duration-200`}
+                                        ></span>
+                                        <p className="text-sm leading-relaxed font-medium group-hover:text-opacity-90 transition-colors duration-200">
+                                          {cleanText}{cleanText.endsWith('.') ? '' : '.'}
+                                        </p>
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         </div>
@@ -748,9 +768,8 @@ export default function ResultsPage({
                         <XCircle className="h-5 w-5 text-red-600" />
                       )}
                       <span
-                        className={`ml-2 text-sm font-medium ${
-                          answer.isCorrect ? "text-green-600" : "text-red-600"
-                        }`}
+                        className={`ml-2 text-sm font-medium ${answer.isCorrect ? "text-green-600" : "text-red-600"
+                          }`}
                       >
                         {answer.isCorrect ? "Correct" : "Incorrect"}
                       </span>
@@ -778,23 +797,21 @@ export default function ResultsPage({
                           return (
                             <div
                               key={option}
-                              className={`p-3 rounded-lg border ${
-                                isCorrect
+                              className={`p-3 rounded-lg border ${isCorrect
                                   ? "bg-green-50 border-green-200"
                                   : isSelected
-                                  ? "bg-red-50 border-red-200"
-                                  : "bg-gray-50 border-gray-200"
-                              }`}
+                                    ? "bg-red-50 border-red-200"
+                                    : "bg-gray-50 border-gray-200"
+                                }`}
                             >
                               <div className="flex items-center">
                                 <span
-                                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium mr-3 ${
-                                    isCorrect
+                                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium mr-3 ${isCorrect
                                       ? "bg-green-600 text-white"
                                       : isSelected
-                                      ? "bg-red-600 text-white"
-                                      : "bg-gray-300 text-gray-700"
-                                  }`}
+                                        ? "bg-red-600 text-white"
+                                        : "bg-gray-300 text-gray-700"
+                                    }`}
                                 >
                                   {option}
                                 </span>
