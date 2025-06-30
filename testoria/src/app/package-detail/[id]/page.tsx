@@ -11,8 +11,6 @@ import {
   Plus,
   Trash2,
   FileText,
-  Users,
-  DollarSign,
   Clock,
   BookOpen,
   Target,
@@ -153,7 +151,7 @@ export default function PackageDetailPage() {
       });
 
       if (!authResponse.ok) {
-        throw new Error('Authentication required');
+        throw new Error('Autentikasi diperlukan');
       }
 
       const authData = await authResponse.json();
@@ -167,7 +165,7 @@ export default function PackageDetailPage() {
       });
 
       if (!packageResponse.ok) {
-        throw new Error('Failed to load package data');
+        throw new Error('Gagal memuat data paket');
       }
 
       const packageResult = await packageResponse.json();
@@ -228,15 +226,15 @@ export default function PackageDetailPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update package');
+        throw new Error(errorData.message || 'Gagal memperbarui paket');
       }
 
       // Update local state
       setPackageData(prev => prev ? { ...prev, ...editPackageData } : null);
       setIsEditingPackage(false);
-      toast.success('Package updated successfully');
+      toast.success('Paket berhasil diperbarui');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update package';
+      const errorMessage = error instanceof Error ? error.message : 'Gagal memperbarui paket';
       toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
@@ -381,8 +379,8 @@ export default function PackageDetailPage() {
   };
 
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm('Are you sure you want to delete this question?')) return;
-
+    if (!confirm('Apa kamu yakiin ingin menghapus pertanyaan ini?')) return;
+    
     setIsProcessing(true);
     try {
       const response = await fetch(`/api/questions/${questionId}`, {
@@ -392,14 +390,14 @@ export default function PackageDetailPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete question');
+        throw new Error(errorData.message || 'Gagal menghapus pertanyaan');
       }
 
       // Update local state
       setQuestions(prev => prev.filter(q => q._id !== questionId));
-      toast.success('Question deleted successfully');
+      toast.success('Pertanyaan berhasil dihapus');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete question';
+      const errorMessage = error instanceof Error ? error.message : 'Gagal menghapus pertanyaan';
       toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
@@ -659,7 +657,7 @@ export default function PackageDetailPage() {
         <Navbar />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">Loading package details...</span>
+          <span className="ml-3 text-gray-600">Memuat detail paket...</span>
         </div>
       </div>
     );
@@ -672,13 +670,13 @@ export default function PackageDetailPage() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Package</h2>
-            <p className="text-gray-600 mb-4">{error || 'Package not found'}</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Gagal Memuat Paket</h2>
+            <p className="text-gray-600 mb-4">{error || 'Paket tidak ditemukan'}</p>
             <button
               onClick={() => router.back()}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
             >
-              Go Back
+              Kembali
             </button>
           </div>
         </div>
@@ -698,11 +696,11 @@ export default function PackageDetailPage() {
                 onClick={() => router.back()}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5 text-blue-900" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Package Details</h1>
-                <p className="text-gray-600">Manage package information and questions</p>
+                <h1 className="text-2xl font-bold text-gray-900">Detail Paket</h1>
+                <p className="text-gray-600">Kelola informasi dan soal paket</p>
               </div>
             </div>
 
@@ -719,7 +717,7 @@ export default function PackageDetailPage() {
                     ) : (
                       <Target className="w-4 h-4" />
                     )}
-                    <span>{isProcessing ? 'Processing...' : 'Process AI & Generate Questions'}</span>
+                    <span>{isProcessing ? 'Memproses...' : 'Proses AI & Generate Soal'}</span>
                   </button>
                 )}
 
@@ -729,7 +727,7 @@ export default function PackageDetailPage() {
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
                   >
                     <Edit className="w-4 h-4" />
-                    <span>Edit Package</span>
+                    <span>Edit Paket</span>
                   </button>
                 ) : (
                   <div className="flex items-center space-x-2">
@@ -739,14 +737,14 @@ export default function PackageDetailPage() {
                       className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
                     >
                       <Save className="w-4 h-4" />
-                      <span>Save</span>
+                      <span>Simpan</span>
                     </button>
                     <button
                       onClick={handleCancelEditPackage}
                       className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center space-x-2"
                     >
                       <X className="w-4 h-4" />
-                      <span>Cancel</span>
+                      <span>Batal</span>
                     </button>
                   </div>
                 )}
@@ -759,14 +757,14 @@ export default function PackageDetailPage() {
             <div className="p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <Package className="w-8 h-8 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Package Information</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Informasi Paket</h2>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-gray-600">
                 {/* Left Column - Basic Info */}
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Judul</label>
                     {isEditingPackage ? (
                       <input
                         type="text"
@@ -780,7 +778,7 @@ export default function PackageDetailPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
                     {isEditingPackage ? (
                       <textarea
                         value={editPackageData.description || ''}
@@ -932,7 +930,7 @@ export default function PackageDetailPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Harga</label>
                       {isEditingPackage ? (
                         <input
                           type="number"
@@ -946,7 +944,7 @@ export default function PackageDetailPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Durasi (menit)</label>
                       {isEditingPackage ? (
                         <input
                           type="number"
@@ -955,7 +953,7 @@ export default function PackageDetailPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       ) : (
-                        <p className="text-gray-900 font-medium">{packageData.duration} minutes</p>
+                        <p className="text-gray-900 font-medium">{packageData.duration} menit</p>
                       )}
                     </div>
                   </div>
@@ -985,7 +983,7 @@ export default function PackageDetailPage() {
                         <span className="text-sm text-blue-600">AI Content</span>
                       </div>
                       <p className="text-xl font-bold text-blue-900">{packageData.contents?.length || 0}</p>
-                      <p className="text-xs text-blue-600">Content items</p>
+                      <p className="text-xs text-blue-600">Item konten</p>
                     </div>
 
                     <div className="bg-green-50 p-4 rounded-lg border border-green-200">
@@ -994,7 +992,7 @@ export default function PackageDetailPage() {
                         <span className="text-sm text-green-600">Questions</span>
                       </div>
                       <p className="text-xl font-bold text-green-900">{questions.length}</p>
-                      <p className="text-xs text-green-600">Total questions</p>
+                      <p className="text-xs text-green-600">Total soal</p>
                     </div>
 
                     <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
@@ -1003,7 +1001,7 @@ export default function PackageDetailPage() {
                         <span className="text-sm text-purple-600">Source PDFs</span>
                       </div>
                       <p className="text-xl font-bold text-purple-900">{packageData.sourcePdf?.length || 0}</p>
-                      <p className="text-xs text-purple-600">PDF files</p>
+                      <p className="text-xs text-purple-600">File PDF</p>
                     </div>
 
                     <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
@@ -1012,18 +1010,18 @@ export default function PackageDetailPage() {
                         <span className="text-sm text-yellow-600">Status</span>
                       </div>
                       <p className="text-lg font-bold text-yellow-900">
-                        {packageData.isPublished ? 'Published' : 'Draft'}
+                        {packageData.isPublished ? 'Terpublikasi' : 'Draft'}
                       </p>
                     </div>
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Category</h4>
-                    <p className="text-gray-900">{packageData.categoryName || 'No Category'}</p>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Kategori</h4>
+                    <p className="text-gray-900">{packageData.categoryName || 'Tanpa Kategori'}</p>
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Created</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Dibuat</h4>
                     <p className="text-gray-900">{new Date(packageData.createdAt).toLocaleDateString('id-ID', {
                       year: 'numeric',
                       month: 'long',
@@ -1036,14 +1034,14 @@ export default function PackageDetailPage() {
           </div>
 
           {/* Questions Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 text-gray-800">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <CheckCircle2 className="w-8 h-8 text-green-600" />
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Questions ({questions.length})</h2>
-                    <p className="text-gray-600">Manage questions for this package</p>
+                    <h2 className="text-xl font-semibold text-gray-900">Soal ({questions.length})</h2>
+                    <p className="text-gray-600">Kelola soal untuk paket ini</p>
                   </div>
                 </div>
 
@@ -1053,7 +1051,7 @@ export default function PackageDetailPage() {
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add Question</span>
+                    <span>Tambah Soal</span>
                   </button>
                 )}
               </div>
@@ -1063,11 +1061,11 @@ export default function PackageDetailPage() {
               {questions.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No questions yet</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada soal</h3>
                   <p className="text-gray-600 mb-4">
                     {packageData.contents && packageData.contents.length > 0
-                      ? "Use AI processing to generate questions automatically or add them manually"
-                      : "Upload and process PDFs first, then generate questions"}
+                      ? "Gunakan proses AI untuk membuat soal secara otomatis atau tambahkan secara manual"
+                      : "Upload dan proses PDF terlebih dahulu, lalu buat soal"}
                   </p>
                   {isOwner && (
                     <div className="space-x-2">
@@ -1077,14 +1075,14 @@ export default function PackageDetailPage() {
                           disabled={isProcessing}
                           className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
                         >
-                          Process AI & Generate Questions
+                          Proses AI & Generate Soal
                         </button>
                       )}
                       <button
                         onClick={() => setShowAddQuestion(true)}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                       >
-                        Add Question Manually
+                        Tambah Soal Manual
                       </button>
                     </div>
                   )}
@@ -1100,26 +1098,26 @@ export default function PackageDetailPage() {
                         /* Edit Mode */
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-semibold text-gray-900">Edit Question #{index + 1}</h4>
+                            <h4 className="text-lg font-semibold text-gray-900">Edit Soal #{index + 1}</h4>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={handleSaveQuestion}
                                 disabled={isProcessing}
                                 className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50"
                               >
-                                Save
+                                Simpan
                               </button>
                               <button
                                 onClick={handleCancelEditQuestion}
                                 className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400"
                               >
-                                Cancel
+                                Batal
                               </button>
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Soal</label>
                             <textarea
                               value={editQuestionData.questionText}
                               onChange={(e) => setEditQuestionData(prev => ({ ...prev, questionText: e.target.value }))}
@@ -1152,7 +1150,7 @@ export default function PackageDetailPage() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Option A</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan A</label>
                               <input
                                 type="text"
                                 value={editQuestionData.optionA}
@@ -1161,7 +1159,7 @@ export default function PackageDetailPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Option B</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan B</label>
                               <input
                                 type="text"
                                 value={editQuestionData.optionB}
@@ -1170,7 +1168,7 @@ export default function PackageDetailPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Option C</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan C</label>
                               <input
                                 type="text"
                                 value={editQuestionData.optionC}
@@ -1179,7 +1177,7 @@ export default function PackageDetailPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Option D</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan D</label>
                               <input
                                 type="text"
                                 value={editQuestionData.optionD}
@@ -1188,7 +1186,7 @@ export default function PackageDetailPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Option E (Optional)</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan E (Opsional)</label>
                               <input
                                 type="text"
                                 value={editQuestionData.optionE}
@@ -1197,13 +1195,13 @@ export default function PackageDetailPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Jawaban Benar</label>
                               <select
                                 value={editQuestionData.correctAnswer}
                                 onChange={(e) => setEditQuestionData(prev => ({ ...prev, correctAnswer: e.target.value }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               >
-                                <option value="">Select correct answer</option>
+                                <option value="">Pilih jawaban benar</option>
                                 <option value="A">A</option>
                                 <option value="B">B</option>
                                 <option value="C">C</option>
@@ -1214,11 +1212,34 @@ export default function PackageDetailPage() {
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Penjelasan (Opsional)</label>
                             <textarea
                               value={editQuestionData.explanation}
                               onChange={(e) => setEditQuestionData(prev => ({ ...prev, explanation: e.target.value }))}
                               rows={2}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Bacaan (Opsional)</label>
+                            <textarea
+                              value={editQuestionData.passage}
+                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, passage: e.target.value }))}
+                              rows={3}
+                              placeholder="Enter the reading passage if this question is based on a text..."
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Image Prompt (Opsional)</label>
+                            <textarea
+                              value={editQuestionData.imagePrompt}
+                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, imagePrompt: e.target.value }))}
+                              rows={2}
+                              placeholder="Describe what type of image/diagram should be created for this question..."
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                           </div>
@@ -1229,7 +1250,7 @@ export default function PackageDetailPage() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                                Question #{index + 1}
+                                Soal #{index + 1}
                               </h4>
 
                               <p className="text-gray-700 mb-4 leading-relaxed">
@@ -1239,7 +1260,7 @@ export default function PackageDetailPage() {
                               {question.passage && (
                                 <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
                                   <p className="text-sm text-purple-800">
-                                    <span className="font-medium">Reading Passage:</span> {question.passage}
+                                    <span className="font-medium">Bacaan:</span> {question.passage}
                                   </p>
                                 </div>
                               )}
@@ -1357,7 +1378,7 @@ export default function PackageDetailPage() {
                                 <div className="flex items-center space-x-2">
                                   <CheckCircle2 className="w-4 h-4 text-green-600" />
                                   <span className="text-green-600 font-medium">
-                                    Correct Answer: {question.correctAnswer}
+                                    Jawaban Benar: {question.correctAnswer}
                                   </span>
                                 </div>
                               </div>
@@ -1365,7 +1386,7 @@ export default function PackageDetailPage() {
                               {question.explanation && (
                                 <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                   <p className="text-sm text-blue-800">
-                                    <span className="font-medium">Explanation:</span> {question.explanation}
+                                    <span className="font-medium">Penjelasan:</span> {question.explanation}
                                   </p>
                                 </div>
                               )}
@@ -1407,7 +1428,7 @@ export default function PackageDetailPage() {
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-gray-900">Add New Question</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Tambah Soal Baru</h3>
                 <button
                   onClick={() => setShowAddQuestion(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -1419,7 +1440,7 @@ export default function PackageDetailPage() {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Soal</label>
                 <textarea
                   value={newQuestionData.questionText}
                   onChange={(e) => setNewQuestionData(prev => ({ ...prev, questionText: e.target.value }))}
@@ -1431,7 +1452,7 @@ export default function PackageDetailPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Option A</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan A</label>
                   <input
                     type="text"
                     value={newQuestionData.optionA}
@@ -1441,7 +1462,7 @@ export default function PackageDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Option B</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan B</label>
                   <input
                     type="text"
                     value={newQuestionData.optionB}
@@ -1451,7 +1472,7 @@ export default function PackageDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Option C</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan C</label>
                   <input
                     type="text"
                     value={newQuestionData.optionC}
@@ -1461,7 +1482,7 @@ export default function PackageDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Option D</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan D</label>
                   <input
                     type="text"
                     value={newQuestionData.optionD}
@@ -1471,7 +1492,7 @@ export default function PackageDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Option E (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pilihan E (Opsional)</label>
                   <input
                     type="text"
                     value={newQuestionData.optionE}
@@ -1481,13 +1502,13 @@ export default function PackageDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Jawaban Benar</label>
                   <select
                     value={newQuestionData.correctAnswer}
                     onChange={(e) => setNewQuestionData(prev => ({ ...prev, correctAnswer: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="">Select correct answer</option>
+                    <option value="">Pilih jawaban benar</option>
                     <option value="A">A</option>
                     <option value="B">B</option>
                     <option value="C">C</option>
@@ -1498,7 +1519,7 @@ export default function PackageDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Penjelasan (Opsional)</label>
                 <textarea
                   value={newQuestionData.explanation}
                   onChange={(e) => setNewQuestionData(prev => ({ ...prev, explanation: e.target.value }))}
@@ -1509,7 +1530,7 @@ export default function PackageDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Reading Passage (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bacaan (Opsional)</label>
                 <textarea
                   value={newQuestionData.passage}
                   onChange={(e) => setNewQuestionData(prev => ({ ...prev, passage: e.target.value }))}
@@ -1520,7 +1541,7 @@ export default function PackageDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Image Prompt (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Image Prompt (Opsional)</label>
                 <textarea
                   value={newQuestionData.imagePrompt}
                   onChange={(e) => setNewQuestionData(prev => ({ ...prev, imagePrompt: e.target.value }))}
@@ -1536,13 +1557,13 @@ export default function PackageDetailPage() {
                   disabled={isProcessing || !newQuestionData.questionText || !newQuestionData.correctAnswer}
                   className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessing ? 'Creating...' : 'Create Question'}
+                  {isProcessing ? 'Membuat...' : 'Buat Soal'}
                 </button>
                 <button
                   onClick={() => setShowAddQuestion(false)}
                   className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400"
                 >
-                  Cancel
+                  Batal
                 </button>
               </div>
             </div>

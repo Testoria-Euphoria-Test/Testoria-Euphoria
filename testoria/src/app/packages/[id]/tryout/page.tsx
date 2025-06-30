@@ -383,19 +383,17 @@ export default function TryoutPage({
     return Object.keys(userAnswers).length;
   };
 
-  // Loading, error, and all other JSX remains the same...
-  // ✅ Show redirecting message if user already completed tryout
+  // Ubah semua tampilan teks ke Bahasa Indonesia
   if (redirecting) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-lg text-center">
           <CheckCircle className="w-16 h-16 text-blue-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Tryout Already Completed
+            Tryout sudah diselesaikan
           </h2>
           <p className="text-gray-600 mb-6">
-            You have already completed this tryout. Redirecting you to the
-            results page...
+            Anda sudah menyelesaikan tryout ini. Mengarahkan ke halaman hasil...
           </p>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
         </div>
@@ -410,8 +408,8 @@ export default function TryoutPage({
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">
             {checkingCompletion
-              ? "Checking if you've already completed this tryout..."
-              : "Loading tryout..."}
+              ? "Memeriksa apakah Anda sudah menyelesaikan tryout ini..."
+              : "Memuat tryout..."}
           </p>
         </div>
       </div>
@@ -423,13 +421,13 @@ export default function TryoutPage({
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+          <h2 className="text-xl font-bold text-red-600 mb-2">Terjadi Kesalahan</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <Link
             href="/my-package"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
-            Back to My Packages
+            Kembali ke Paket Saya
           </Link>
         </div>
       </div>
@@ -440,28 +438,28 @@ export default function TryoutPage({
   if (!isStarted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-lg">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-lg text-gray-600">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            {packageData?.title || `Package ${id}`}
+            {packageData?.title || `Paket ${id}`}
           </h1>
           <div className="space-y-4 mb-6">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Questions:</span>
+              <span className="text-gray-600">Jumlah Soal:</span>
               <span className="font-medium">{questions.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Duration:</span>
+              <span className="text-gray-600">Durasi:</span>
               <span className="font-medium">
-                {packageData?.duration || 60} minutes
+                {packageData?.duration || 60} menit
               </span>
             </div>
             <div className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-lg">
-              <strong>Instructions:</strong>
+              <strong>Petunjuk:</strong>
               <ul className="mt-2 space-y-1">
-                <li>• Read each question carefully</li>
-                <li>• Select the best answer</li>
-                <li>• You can navigate between questions</li>
-                <li>• Submit before time runs out</li>
+                <li>• Baca setiap soal dengan teliti</li>
+                <li>• Pilih jawaban yang paling tepat</li>
+                <li>• Anda dapat berpindah antar soal</li>
+                <li>• Kirim jawaban sebelum waktu habis</li>
               </ul>
             </div>
           </div>
@@ -469,7 +467,7 @@ export default function TryoutPage({
             onClick={() => setIsStarted(true)}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors"
           >
-            Start Tryout
+            Mulai Tryout
           </button>
         </div>
       </div>
@@ -483,11 +481,10 @@ export default function TryoutPage({
         <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-lg text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Tryout Completed!
+            Tryout Selesai!
           </h2>
           <p className="text-gray-600 mb-6">
-            Your answers have been saved. You will be redirected to the results
-            page shortly.
+            Jawaban Anda telah disimpan. Anda akan diarahkan ke halaman hasil sebentar lagi.
           </p>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
         </div>
@@ -502,15 +499,15 @@ export default function TryoutPage({
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">
-            No Questions Available
+            Tidak Ada Soal
           </h2>
           <p className="text-gray-600">
-            This package doesn&apos;t have any questions yet.
+            Paket ini belum memiliki soal.
           </p>
           <div className="mt-4 text-sm text-gray-500">
-            <p>Debug Info:</p>
-            <p>Package ID: {id}</p>
-            <p>Questions loaded: {questions.length}</p>
+            <p>Info Debug:</p>
+            <p>ID Paket: {id}</p>
+            <p>Jumlah soal: {questions.length}</p>
           </div>
         </div>
       </div>
@@ -559,7 +556,7 @@ export default function TryoutPage({
                 <ArrowLeft className="w-6 h-6" />
               </Link>
               <h1 className="text-xl font-bold text-gray-900">
-                {packageData?.title || `Package ${id}`}
+                {packageData?.title || `Paket ${id}`}
               </h1>
             </div>
             <div className="flex items-center space-x-6">
@@ -568,7 +565,7 @@ export default function TryoutPage({
                 <span className="font-medium">{formatTime(timeLeft)}</span>
               </div>
               <div className="text-sm text-gray-600">
-                {getAnsweredCount()}/{questions.length} answered
+                {getAnsweredCount()}/{questions.length} terjawab
               </div>
             </div>
           </div>
@@ -584,13 +581,13 @@ export default function TryoutPage({
               <div className="mb-6">
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <span>
-                    Question {currentQuestionIndex + 1} of {questions.length}
+                    Soal {currentQuestionIndex + 1} dari {questions.length}
                   </span>
                   <span>
                     {Math.round(
                       ((currentQuestionIndex + 1) / questions.length) * 100
                     )}
-                    % Complete
+                    % Selesai
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -605,21 +602,30 @@ export default function TryoutPage({
               </div>
 
               {/* Reading Passage if available */}
-              {currentQuestion?.passage && currentQuestion.passage.trim() !== '' && (
-                <div className="mb-6">
-                  <div className="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-r-lg">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
-                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                      </svg>
-                      Reading Passage
-                    </h3>
-                    <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                      {currentQuestion.passage}
+              {currentQuestion?.passage &&
+                currentQuestion.passage.trim() !== "" && (
+                  <div className="mb-6">
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-r-lg">
+                      <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Bacaan
+                      </h3>
+                      <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        {currentQuestion.passage}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Question Images if available */}
               {currentQuestion?.images &&
@@ -659,12 +665,12 @@ export default function TryoutPage({
               {/* Question */}
               <div className="mb-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  {currentQuestion?.questionText || "Question not available"}
+                  {currentQuestion?.questionText || "Soal tidak tersedia"}
                 </h2>
               </div>
 
               {/* Answer Options */}
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-6 text-gray-600">
                 {currentQuestion && (
                   <>
                     {/* Option A */}
@@ -802,7 +808,7 @@ export default function TryoutPage({
                   disabled={currentQuestionIndex === 0}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Previous
+                  Sebelumnya
                 </button>
 
                 {currentQuestionIndex === questions.length - 1 ? (
@@ -810,14 +816,14 @@ export default function TryoutPage({
                     onClick={handleFinishTryout}
                     className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
                   >
-                    Finish Tryout
+                    Selesai Tryout
                   </button>
                 ) : (
                   <button
                     onClick={handleNextQuestion}
                     className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                   >
-                    Next
+                    Selanjutnya
                   </button>
                 )}
               </div>
@@ -828,7 +834,7 @@ export default function TryoutPage({
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Question Navigator
+                Navigasi Soal
               </h3>
 
               {/* Question Grid */}
@@ -836,7 +842,8 @@ export default function TryoutPage({
                 {questions.map((question, index) => {
                   const isAnswered = userAnswers.hasOwnProperty(index);
                   const isCurrent = index === currentQuestionIndex;
-                  const hasPassage = question.passage && question.passage.trim() !== '';
+                  const hasPassage =
+                    question.passage && question.passage.trim() !== "";
 
                   return (
                     <div key={index} className="relative">
@@ -853,10 +860,22 @@ export default function TryoutPage({
                       </button>
                       {/* Passage indicator */}
                       {hasPassage && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border border-white"
-                          title="This question has a reading passage">
-                          <svg className="w-2 h-2 text-white ml-0.5 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+
+                        <div
+                          className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border border-white"
+                          title="This question has a reading passage"
+                        >
+                          <svg
+                            className="w-2 h-2 text-white ml-0.5 mt-0.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                              clipRule="evenodd"
+                            />
+
                           </svg>
                         </div>
                       )}
@@ -869,22 +888,22 @@ export default function TryoutPage({
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-blue-600 rounded"></div>
-                  <span className="text-gray-600">Current</span>
+                  <span className="text-gray-600">Saat ini</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                  <span className="text-gray-600">Answered</span>
+                  <span className="text-gray-600">Terjawab</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-gray-100 rounded"></div>
-                  <span className="text-gray-600">Not answered</span>
+                  <span className="text-gray-600">Belum dijawab</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="relative">
                     <div className="w-4 h-4 bg-gray-100 rounded"></div>
                     <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full"></div>
                   </div>
-                  <span className="text-gray-600">Has passage</span>
+                  <span className="text-gray-600">Ada bacaan</span>
                 </div>
               </div>
 
@@ -893,7 +912,7 @@ export default function TryoutPage({
                 onClick={handleFinishTryout}
                 className="w-full mt-6 bg-green-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-green-700 transition-colors"
               >
-                Submit Tryout
+                Kirim Tryout
               </button>
             </div>
           </div>

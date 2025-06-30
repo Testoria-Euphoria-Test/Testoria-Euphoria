@@ -290,22 +290,22 @@ export default function CreatePackagePage() {
               className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back
+              Kembali
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Package</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Buat Paket Baru</h1>
             <p className="text-gray-600 mt-2">
-              Upload your learning materials and create a comprehensive package for students
+              Upload materi pembelajaran dan buat paket komprehensif untuk siswa
             </p>
           </div>
 
           {/* Main Form */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 text-gray-400">
             <form onSubmit={handleSubmit} className="p-6 lg:p-8">
               <div className="space-y-6">
                 {/* Title */}
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                    Package Title *
+                    Judul Paket *
                   </label>
                   <input
                     type="text"
@@ -313,7 +313,7 @@ export default function CreatePackagePage() {
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    placeholder="Enter a descriptive title for your package"
+                    placeholder="Masukkan judul paket yang deskriptif"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -322,7 +322,7 @@ export default function CreatePackagePage() {
                 {/* Description */}
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    Deskripsi
                   </label>
                   <textarea
                     id="description"
@@ -330,7 +330,7 @@ export default function CreatePackagePage() {
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={4}
-                    placeholder="Provide a detailed description of what students will learn"
+                    placeholder="Jelaskan secara detail apa yang akan dipelajari siswa"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -341,12 +341,12 @@ export default function CreatePackagePage() {
                   <div>
                     <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-2">
                       <Tag className="w-4 h-4 inline mr-1" />
-                      Category *
+                      Kategori *
                     </label>
                     {loadingCategories ? (
                       <div className="flex items-center justify-center py-3 border border-gray-300 rounded-lg">
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Loading categories...
+                        Memuat kategori...
                       </div>
                     ) : (
                       <select
@@ -357,7 +357,7 @@ export default function CreatePackagePage() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                       >
-                        <option value="">Select a category</option>
+                        <option value="">Pilih kategori</option>
                         {categories.map((category) => (
                           <option key={category._id} value={category._id}>
                             {category.name}
@@ -371,7 +371,7 @@ export default function CreatePackagePage() {
                   <div>
                     <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
                       <Clock className="w-4 h-4 inline mr-1" />
-                      Duration (minutes) *
+                      Durasi (menit) *
                     </label>
                     <input
                       type="number"
@@ -391,7 +391,7 @@ export default function CreatePackagePage() {
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
                     <DollarSign className="w-4 h-4 inline mr-1" />
-                    Price (IDR) *
+                    Harga (IDR) *
                   </label>
                   <input
                     type="number"
@@ -406,7 +406,7 @@ export default function CreatePackagePage() {
                     required
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    Set to 0 for free packages
+                    Isi 0 untuk paket gratis
                   </p>
                 </div>
 
@@ -519,7 +519,7 @@ export default function CreatePackagePage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <FileText className="w-4 h-4 inline mr-1" />
-                    PDF Material *
+                    Materi PDF *
                   </label>
                   
                   {/* Drag and Drop Area */}
@@ -552,8 +552,8 @@ export default function CreatePackagePage() {
                     ) : (
                       <div className="text-gray-500">
                         <Upload className="w-8 h-8 mx-auto mb-2" />
-                        <p className="font-medium">Drop your PDF here or click to browse</p>
-                        <p className="text-sm">Maximum file size: 50MB</p>
+                        <p className="font-medium">Tarik PDF ke sini atau klik untuk memilih</p>
+                        <p className="text-sm">Ukuran maksimal file: 50MB</p>
                       </div>
                     )}
                   </div>
@@ -563,7 +563,7 @@ export default function CreatePackagePage() {
                 {loading && uploadProgress > 0 && (
                   <div>
                     <div className="flex justify-between text-sm text-gray-600 mb-2">
-                      <span>Uploading and processing...</span>
+                      <span>Mengunggah dan memproses...</span>
                       <span>{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -580,12 +580,12 @@ export default function CreatePackagePage() {
                   <div className="flex">
                     <AlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
                     <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">What happens after upload:</p>
+                      <p className="font-medium mb-1">Apa yang terjadi setelah upload:</p>
                       <ul className="list-disc list-inside space-y-1">
-                        <li>Your PDF will be processed and converted to images</li>
-                        <li>AI will extract questions and content automatically</li>
-                        <li>Package will be saved as draft (unpublished)</li>
-                        <li>You can review and edit before publishing</li>
+                        <li>PDF Anda akan diproses dan diubah menjadi gambar</li>
+                        <li>AI akan mengekstrak soal dan konten secara otomatis</li>
+                        <li>Paket akan disimpan sebagai draft (belum dipublikasikan)</li>
+                        <li>Anda dapat meninjau dan mengedit sebelum mempublikasikan</li>
                       </ul>
                     </div>
                   </div>
@@ -601,10 +601,10 @@ export default function CreatePackagePage() {
                     {loading ? (
                       <div className="flex items-center justify-center">
                         <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                        Creating Package...
+                        Membuat Paket...
                       </div>
                     ) : (
-                      'Create Package'
+                      'Buat Paket'
                     )}
                   </button>
                 </div>

@@ -230,36 +230,36 @@ export default function DashboardCreatorPage() {
 
   const stats = [
     {
-      label: "Total Packages",
+      label: "Total Paket",
       value: creatorProfile?.totalPackages.toString() || "0",
-      change: "+2 this month",
+      change: "+2 bulan ini",
       icon: Package,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
     },
     {
-      label: "Total Students",
+      label: "Total Siswa",
       value: creatorProfile?.totalStudents.toLocaleString() || "0",
-      change: "+15% this month",
+      change: "+15% bulan ini",
       icon: Users,
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
     },
     {
-      label: "Total Earnings",
+      label: "Total Pendapatan",
       value: formatCurrency(creatorProfile?.totalEarnings || 0),
-      change: "+28% this month",
+      change: "+28% bulan ini",
       icon: DollarSign,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200",
     },
     {
-      label: "Average Rating",
+      label: "Rata-rata Rating",
       value: creatorProfile?.rating.toString() || "0",
-      change: "4.9/5.0 stars",
+      change: "4.9/5.0 bintang",
       icon: Star,
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
@@ -268,8 +268,8 @@ export default function DashboardCreatorPage() {
   ];
 
   const navigationTabs = [
-    { id: "packages", label: "My Packages", icon: Package },
-    { id: "uploads", label: "Upload Materials", icon: FileText },
+    { id: "packages", label: "Paket Saya", icon: Package },
+    { id: "uploads", label: "Upload Materi", icon: FileText },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -568,10 +568,10 @@ export default function DashboardCreatorPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900">
-                        My Packages
+                        Paket Saya
                       </h3>
                       <p className="text-gray-600 mt-1">
-                        Manage and monitor your educational packages
+                        Kelola dan pantau paket edukasi Anda
                       </p>
                     </div>
                     <button 
@@ -579,20 +579,20 @@ export default function DashboardCreatorPage() {
                       className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 flex items-center transition-colors"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Create New Package
+                      Buat Paket Baru
                     </button>
                   </div>
 
                   {packages.length === 0 && (
                     <div className="text-center py-12">
                       <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No packages yet</h3>
-                      <p className="text-gray-600 mb-4">Start creating your first educational package</p>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada paket</h3>
+                      <p className="text-gray-600 mb-4">Mulai buat paket edukasi pertamamu</p>
                       <button 
                         onClick={handleCreatePackage}
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                       >
-                        Create Your First Package
+                        Buat Paket Pertama
                       </button>
                     </div>
                   )}
@@ -615,7 +615,7 @@ export default function DashboardCreatorPage() {
                                     pkg.isPublished ? "published" : "pending"
                                   )}`}
                                 >
-                                  {pkg.isPublished ? "Published" : "Draft"}
+                                  {pkg.isPublished ? "Terpublikasi" : "Draft"}
                                 </span>
                               </div>
                               <p className="text-gray-600 mb-4 leading-relaxed">
@@ -625,15 +625,15 @@ export default function DashboardCreatorPage() {
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="bg-white p-3 rounded-lg border">
                                   <span className="text-xs text-gray-500 block mb-1">
-                                    Category
+                                    Kategori
                                   </span>
                                   <p className="font-semibold text-gray-900">
-                                    {pkg.categoryName || 'No Category'}
+                                    {pkg.categoryName || 'Tanpa Kategori'}
                                   </p>
                                 </div>
                                 <div className="bg-white p-3 rounded-lg border">
                                   <span className="text-xs text-gray-500 block mb-1">
-                                    Price
+                                    Harga
                                   </span>
                                   <p className="font-semibold text-gray-900">
                                     {formatCurrency(pkg.price)}
@@ -641,18 +641,18 @@ export default function DashboardCreatorPage() {
                                 </div>
                                 <div className="bg-white p-3 rounded-lg border">
                                   <span className="text-xs text-gray-500 block mb-1">
-                                    AI Content
+                                    Konten AI
                                   </span>
                                   <p className="font-semibold text-gray-900">
-                                    {pkg.contents?.length || 0} items
+                                    {pkg.contents?.length || 0} item
                                   </p>
                                 </div>
                                 <div className="bg-white p-3 rounded-lg border">
                                   <span className="text-xs text-gray-500 block mb-1">
-                                    Duration
+                                    Durasi
                                   </span>
                                   <p className="font-semibold text-gray-900">
-                                    {pkg.duration} min
+                                    {pkg.duration} menit
                                   </p>
                                 </div>
                               </div>
@@ -661,15 +661,15 @@ export default function DashboardCreatorPage() {
                               <div className="mt-4 flex items-center space-x-4">
                                 <div className="flex items-center space-x-2">
                                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                  <span className="text-xs text-gray-600">PDF Uploaded</span>
+                                  <span className="text-xs text-gray-600">PDF Terunggah</span>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <div className={`w-3 h-3 rounded-full ${pkg.contents && pkg.contents.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                  <span className="text-xs text-gray-600">AI Processed</span>
+                                  <span className="text-xs text-gray-600">AI Diproses</span>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-                                  <span className="text-xs text-gray-600">Questions Generated</span>
+                                  <span className="text-xs text-gray-600">Soal Dibuat</span>
                                 </div>
                               </div>
                             </div>
@@ -680,7 +680,7 @@ export default function DashboardCreatorPage() {
                                 onClick={() => handleProcessAIAndGenerateQuestions(pkg)}
                                 disabled={processingPackageId === pkg._id}
                                 className="text-purple-600 hover:text-purple-900 p-2 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Process AI and Generate Questions"
+                                title="Proses AI & Generate Soal"
                               >
                                 {processingPackageId === pkg._id ? (
                                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
@@ -728,11 +728,10 @@ export default function DashboardCreatorPage() {
                 <div className="space-y-8">
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      Upload Learning Materials
+                      Upload Materi Pembelajaran
                     </h3>
                     <p className="text-gray-600">
-                      Upload PDF files to enhance your packages with additional
-                      materials
+                      Upload file PDF untuk meningkatkan paket Anda dengan materi tambahan.
                     </p>
                   </div>
 
@@ -784,7 +783,7 @@ export default function DashboardCreatorPage() {
                   {/* Uploaded Files List */}
                   <div>
                     <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                      Uploaded Materials
+                      Materi yang Sudah Upload  
                     </h4>
                     <div className="space-y-4">
                       {uploadedPDFs.map((pdf) => (
@@ -860,9 +859,9 @@ export default function DashboardCreatorPage() {
               <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
                 <Trash2 className="w-6 h-6 text-red-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Delete Package</h3>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Hapus Paket</h3>
               <p className="text-gray-600 text-center mb-6">
-                Are you sure you want to delete "<strong>{selectedPackage.title}</strong>"? This action cannot be undone.
+                Apakah Anda yakin ingin menghapus "<strong>{selectedPackage.title}</strong>"? Tindakan ini tidak dapat dibatalkan.
               </p>
               <div className="flex space-x-3">
                 <button
@@ -870,13 +869,13 @@ export default function DashboardCreatorPage() {
                   disabled={isProcessing}
                   className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessing ? 'Deleting...' : 'Delete'}
+                  {isProcessing ? 'Menghapus...' : 'Hapus'}
                 </button>
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400"
                 >
-                  Cancel
+                  Batal
                 </button>
               </div>
             </div>
@@ -890,17 +889,17 @@ export default function DashboardCreatorPage() {
           <div className="bg-white rounded-xl max-w-md w-full p-6">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Reupload PDF
+                Unggah Ulang PDF
               </h3>
               <p className="text-gray-600">
-                Replace the PDF file for "{selectedPackage.title}". This will clear existing processed content.
+                Ganti file PDF untuk "{selectedPackage.title}". Ini akan menghapus konten hasil proses AI sebelumnya.
               </p>
             </div>
 
             {/* File Upload Area */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select New PDF File
+                Pilih File PDF Baru
               </label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 hover:bg-orange-50 transition-all">
                 <input
@@ -913,14 +912,14 @@ export default function DashboardCreatorPage() {
                 <label htmlFor="reupload-file" className="cursor-pointer">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm font-medium text-gray-900 mb-1">
-                    {reuploadFile ? reuploadFile.name : 'Click to select PDF file'}
+                    {reuploadFile ? reuploadFile.name : 'Klik untuk pilih file PDF'}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Max 50MB • PDF format only
+                    Maksimal 50MB • Hanya format PDF
                   </p>
                   {reuploadFile && (
                     <p className="text-xs text-green-600 mt-1">
-                      ✓ {(reuploadFile.size / (1024 * 1024)).toFixed(2)}MB selected
+                      ✓ {(reuploadFile.size / (1024 * 1024)).toFixed(2)}MB dipilih
                     </p>
                   )}
                 </label>
@@ -937,14 +936,14 @@ export default function DashboardCreatorPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-yellow-800">
-                    Important Notice
+                    Penting
                   </h3>
                   <div className="mt-2 text-sm text-yellow-700">
                     <ul className="list-disc pl-5 space-y-1">
-                      <li>This will replace the current PDF file</li>
-                      <li>All existing AI processed content will be cleared</li>
-                      <li>You'll need to run AI processing again after upload</li>
-                      <li>Questions created from the old PDF will remain until you regenerate them</li>
+                      <li>Ini akan mengganti file PDF saat ini</li>
+                      <li>Semua konten hasil proses AI sebelumnya akan dihapus</li>
+                      <li>Anda perlu menjalankan proses AI lagi setelah upload</li>
+                      <li>Soal yang dibuat dari PDF lama akan tetap ada sampai Anda membuat ulang</li>
                     </ul>
                   </div>
                 </div>
@@ -958,7 +957,7 @@ export default function DashboardCreatorPage() {
                 disabled={isProcessing || !reuploadFile}
                 className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessing ? 'Uploading...' : 'Reupload PDF'}
+                {isProcessing ? 'Mengunggah...' : 'Unggah Ulang PDF'}
               </button>
               <button
                 onClick={() => {
@@ -968,7 +967,7 @@ export default function DashboardCreatorPage() {
                 }}
                 className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400"
               >
-                Cancel
+                Batal
               </button>
             </div>
           </div>

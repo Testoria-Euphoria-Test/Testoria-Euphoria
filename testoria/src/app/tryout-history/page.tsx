@@ -525,7 +525,8 @@ export default function TryoutHistoryPage() {
                               <div className="flex items-center space-x-3 mb-2">
                                 <FileText className="w-5 h-5 text-gray-400" />
                                 <h4 className="text-lg font-semibold text-gray-900">
-                                  {tryout.packageTitle || "Paket Tidak Diketahui"}
+                                  {tryout.packageTitle ||
+                                    "Paket Tidak Diketahui"}
                                 </h4>
                                 <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                                   Nilai: {safeNumber(tryout.score)}%
@@ -571,170 +572,16 @@ export default function TryoutHistoryPage() {
                                 </div>
                               </div>
                             </div>
-
-                            {/* Expand/Collapse Button */}
                             <button
                               onClick={() =>
-                                toggleTryoutDetails(tryout.packageId)
+                                (window.location.href = `/packages/${tryout.packageId}/results`)
                               }
                               className="self-start sm:ml-4 flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              disabled={isLoadingDetails}
                             >
-                              {isLoadingDetails ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                  <span>Memuat...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span>
-                                    {isExpanded
-                                      ? "Sembunyikan Detail"
-                                      : "Lihat Detail"}
-                                  </span>
-                                  {isExpanded ? (
-                                    <ChevronUp className="w-4 h-4" />
-                                  ) : (
-                                    <ChevronDown className="w-4 h-4" />
-                                  )}
-                                </>
-                              )}
+                              <div>Lihat Detail</div>
                             </button>
                           </div>
                         </div>
-
-                        {/* Expandable question details */}
-                        {isExpanded && details && (
-                          <div className="border-t border-gray-100 bg-gray-50">
-                            <div className="p-6">
-                              <div className="flex items-center justify-between mb-4">
-                                <h5 className="text-lg font-semibold text-gray-900">
-                                  Review Soal
-                                </h5>
-                                <div className="text-sm text-gray-600">
-                                  {details.questions.length} soal
-                                  {details.questions.length !== 1
-                                    ? ""
-                                    : ""} •{" "}
-                                  {
-                                    details.userAnswers.filter(
-                                      (ua) => ua.isCorrect
-                                    ).length
-                                  }{" "}
-                                  benar
-                                </div>
-                              </div>
-
-                              {details.questions.length === 0 ? (
-                                <div className="text-center py-8">
-                                  <p className="text-gray-500">
-                                    Tidak ada soal untuk tryout ini.
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="space-y-4 max-h-96 overflow-y-auto">
-                                  {details.questions.map((question, index) => {
-                                    const userAnswer = getUserAnswerForQuestion(
-                                      question._id!,
-                                      tryout.packageId
-                                    );
-                                    const isCorrect =
-                                      userAnswer?.isCorrect || false;
-
-                                    return (
-                                      <div
-                                        key={question._id}
-                                        className="bg-white rounded-lg p-4 border border-gray-200"
-                                      >
-                                        <div className="flex items-start space-x-3">
-                                          <div className="flex-shrink-0">
-                                            {isCorrect ? (
-                                              <CheckCircle className="w-5 h-5 text-green-500 mt-1" />
-                                            ) : (
-                                              <XCircle className="w-5 h-5 text-red-500 mt-1" />
-                                            )}
-                                          </div>
-
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center space-x-2 mb-2">
-                                              <span className="text-sm font-medium text-gray-500">
-                                                Soal {index + 1}
-                                              </span>
-                                              <span
-                                                className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                                  isCorrect
-                                                    ? "bg-green-100 text-green-800"
-                                                    : "bg-red-100 text-red-800"
-                                                }`}
-                                              >
-                                                {isCorrect
-                                                  ? "Benar"
-                                                  : "Salah"}
-                                              </span>
-                                            </div>
-
-                                            <p className="text-gray-900 font-medium mb-3">
-                                              {question.questionText}
-                                            </p>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                              <div>
-                                                <span className="text-gray-500 font-medium">
-                                                  Jawaban Anda:
-                                                </span>
-                                                <p
-                                                  className={`font-semibold ${
-                                                    isCorrect
-                                                      ? "text-green-600"
-                                                      : "text-red-600"
-                                                  }`}
-                                                >
-                                                  {userAnswer?.selectedAnswer
-                                                    ? `${
-                                                        userAnswer.selectedAnswer
-                                                      }. ${
-                                                        question[
-                                                          `option${userAnswer.selectedAnswer}` as keyof QuestionType
-                                                        ] as string
-                                                      }`
-                                                    : "Tidak ada jawaban"}
-                                                </p>
-                                              </div>
-                                              <div>
-                                                <span className="text-gray-500 font-medium">
-                                                  Jawaban Benar:
-                                                </span>
-                                                <p className="font-semibold text-green-600">
-                                                  {question.correctAnswer}.{" "}
-                                                  {
-                                                    question[
-                                                      `option${question.correctAnswer}` as keyof QuestionType
-                                                    ] as string
-                                                  }
-                                                </p>
-                                              </div>
-                                            </div>
-
-                                            {question.explanation && (
-                                              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                                                <span className="text-blue-800 font-medium text-sm">
-                                                  Penjelasan:
-                                                </span>
-                                                <p className="text-blue-700 text-sm mt-1">
-                                                  {question.explanation}
-                                                </p>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}

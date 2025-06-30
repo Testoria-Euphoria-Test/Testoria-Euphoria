@@ -85,11 +85,11 @@ export default function ResultsPage({
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const [generatingAIFeedback, setGeneratingAIFeedback] = useState(false);
   const [aiFeedbackSuccess, setAiFeedbackSuccess] = useState(false);
+  const [tryoutNotStarted, setTryoutNotStarted] = useState(false);
 
   useEffect(() => {
     const fetchDetailedAnswers = async () => {
       try {
-        // Fetch detailed answers
         const answersResponse = await fetch(
           `/api/user-answers?packageId=${packageId}`,
           {
@@ -101,7 +101,6 @@ export default function ResultsPage({
           const answersData = await answersResponse.json();
           console.log("📝 Answers data:", answersData);
 
-          // Fetch all questions for this package
           const questionsResponse = await fetch(
             `/api/questions?packageId=${packageId}`,
             { credentials: "include" }
@@ -111,7 +110,6 @@ export default function ResultsPage({
             const questionsData = await questionsResponse.json();
             console.log("📋 Questions data:", questionsData);
 
-            // Extract questions array from different possible structures
             let questions: Question[] = [];
             if (
               questionsData.questions &&
@@ -127,10 +125,8 @@ export default function ResultsPage({
               questions = questionsData;
             }
 
-            // Get user answers and enrich with question details
             const userAnswers =
               answersData.userAnswers || answersData.data || [];
-
             const enrichedAnswers = userAnswers.map((answer: AnswerDetail) => {
               const question = questions.find(
                 (q: Question) => q._id === answer.questionId
@@ -141,7 +137,6 @@ export default function ResultsPage({
             setAnswerDetails(enrichedAnswers);
           } else {
             console.warn("Failed to fetch questions for enrichment");
-            // Still set answers even without question details
             setAnswerDetails(answersData.userAnswers || answersData.data || []);
           }
         }
@@ -163,7 +158,6 @@ export default function ResultsPage({
         console.log("📝 User answers response status:", answersResponse.status);
 
         if (answersResponse.ok) {
-          // Check if response is JSON before parsing
           const contentType = answersResponse.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
             try {
@@ -174,7 +168,6 @@ export default function ResultsPage({
                 answersData.userAnswers &&
                 answersData.userAnswers.length > 0
               ) {
-                // Calculate results from user answers
                 const userAnswers = answersData.userAnswers;
                 const totalCorrect = userAnswers.filter(
                   (a: AnswerDetail) => a.isCorrect
@@ -184,14 +177,13 @@ export default function ResultsPage({
                 ).length;
                 const totalAnswered = userAnswers.length;
 
-                // Get total questions from questions API
                 const questionsResponse = await fetch(
                   `/api/questions?packageId=${packageId}`,
                   { credentials: "include" }
                 );
 
-                let totalQuestions = totalAnswered; // fallback
-                let questions: Question[] = []; // Initialize questions array
+                let totalQuestions = totalAnswered;
+                let questions: Question[] = [];
                 if (questionsResponse.ok) {
                   const questionsData = await questionsResponse.json();
                   if (
@@ -216,7 +208,6 @@ export default function ResultsPage({
                     ? Math.round((totalCorrect / totalQuestions) * 100)
                     : 0;
 
-                // Generate AI feedback based on user answers and questions
                 let aiFeedback = "";
                 if (questions.length > 0) {
                   try {
@@ -255,21 +246,15 @@ export default function ResultsPage({
                   } finally {
                     setGeneratingAIFeedback(false);
                   }
-                } else {
-                  console.warn(
-                    "⚠️ No questions available for AI feedback generation"
-                  );
                 }
 
-                // Fallback feedback if AI fails
                 const fallbackFeedback =
                   score >= 80
                     ? "Excellent work! You demonstrated strong understanding of the material."
                     : score >= 60
-                      ? "Good effort! Consider reviewing the topics you missed to strengthen your knowledge."
-                      : "Keep practicing! Review the material and try again to improve your understanding.";
+                    ? "Good effort! Consider reviewing the topics you missed to strengthen your knowledge."
+                    : "Keep practicing! Review the material and try again to improve your understanding.";
 
-                // Create fallback result data with AI feedback or fallback
                 const fallbackResult: ResultData = {
                   _id: "fallback",
                   userId: "current-user",
@@ -284,15 +269,12 @@ export default function ResultsPage({
                 };
 
                 setResultData(fallbackResult);
-
-                // Also fetch detailed answers
                 await fetchDetailedAnswers();
-                return; // Success, exit function
+                return;
               } else {
                 console.warn("⚠️ No user answers found in response");
-                throw new Error(
-                  "No tryout data found. Please complete a tryout first."
-                );
+                setTryoutNotStarted(true);
+                return;
               }
             } catch (jsonError) {
               console.error("❌ Error parsing user answers JSON:", jsonError);
@@ -306,17 +288,14 @@ export default function ResultsPage({
           }
         } else if (answersResponse.status === 404) {
           console.warn("📭 No user answers found (404)");
-          throw new Error(
-            "No tryout data found. Please complete the tryout first."
-          );
+          setTryoutNotStarted(true);
+          return;
         } else if (answersResponse.status === 401) {
           console.warn("🔐 Authentication required");
-          // Redirect to login
           window.location.href = "/login";
           return;
         } else {
           console.error("❌ User answers API error:", answersResponse.status);
-          // Try to read error message from response
           try {
             const errorText = await answersResponse.text();
             console.error("Error response:", errorText);
@@ -338,10 +317,8 @@ export default function ResultsPage({
     const fetchResultData = async () => {
       try {
         setLoading(true);
-
         console.log("🔍 Fetching results for packageId:", packageId);
 
-        // First, get package info
         const packageResponse = await fetch(`/api/packages/${packageId}`, {
           credentials: "include",
         });
@@ -353,7 +330,6 @@ export default function ResultsPage({
           }
         }
 
-        // Fetch latest result for this package
         const resultResponse = await fetch(
           `/api/results?packageId=${packageId}`,
           {
@@ -364,7 +340,6 @@ export default function ResultsPage({
         console.log("📊 Result response status:", resultResponse.status);
 
         if (resultResponse.ok) {
-          // Check if response is JSON before parsing
           const contentType = resultResponse.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
             try {
@@ -376,13 +351,9 @@ export default function ResultsPage({
                 resultData.results &&
                 resultData.results.length > 0
               ) {
-                // Use the first result (latest)
-                const latestResult = resultData.results[0];
-                setResultData(latestResult);
-
-                // Fetch detailed answers
+                setResultData(resultData.results[0]);
                 await fetchDetailedAnswers();
-                return; // Exit early if we have result data
+                return;
               } else {
                 console.log(
                   "📭 No result found, attempting fallback calculation..."
@@ -400,7 +371,6 @@ export default function ResultsPage({
               "⚠️ Results API returned non-JSON response, content-type:",
               contentType
             );
-            // Try to read as text for debugging
             try {
               const textResponse = await resultResponse.text();
               console.warn(
@@ -414,7 +384,6 @@ export default function ResultsPage({
           }
         } else if (resultResponse.status === 401) {
           console.warn("🔐 Authentication required");
-          // Redirect to login
           window.location.href = "/login";
           return;
         } else {
@@ -425,14 +394,12 @@ export default function ResultsPage({
           console.log("🔄 Attempting fallback calculation...");
         }
 
-        // Fallback: Calculate result from user answers
         await calculateFallbackResult();
       } catch (error) {
         console.error("Error fetching result data:", error);
         const errorMessage =
           error instanceof Error ? error.message : "Failed to load results";
 
-        // Check if it's an auth error
         if (
           errorMessage.includes("Authentication") ||
           errorMessage.includes("login")
@@ -451,10 +418,15 @@ export default function ResultsPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your results...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md mx-auto text-center">
+          <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Memuat hasil tryout...
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Mohon tunggu, hasil tryout Anda sedang dimuat.
+          </p>
         </div>
       </div>
     );
@@ -466,7 +438,7 @@ export default function ResultsPage({
         <div className="max-w-md mx-auto text-center">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Error Loading Results
+            Terjadi Kesalahan
           </h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="space-y-3">
@@ -482,7 +454,7 @@ export default function ResultsPage({
                   href="/packages"
                   className="block text-blue-600 hover:text-blue-800"
                 >
-                  Back to Packages
+                  Kembali ke Paket
                 </Link>
               </>
             ) : (
@@ -491,13 +463,13 @@ export default function ResultsPage({
                   href={`/packages/${packageId}/tryout`}
                   className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Take Tryout
+                  Mulai Tryout
                 </Link>
                 <Link
                   href="/packages"
                   className="block text-blue-600 hover:text-blue-800"
                 >
-                  Back to Packages
+                  Kembali ke Paket
                 </Link>
               </>
             )}
@@ -507,22 +479,23 @@ export default function ResultsPage({
     );
   }
 
-  if (!resultData) {
+  if (tryoutNotStarted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md mx-auto text-center">
-          <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            No Results Found
+            Silakan Mulai Tryout
           </h1>
           <p className="text-gray-600 mb-6">
-            You haven&apos;t completed this tryout yet.
+            Anda belum menyelesaikan tryout. Silakan lakukan tryout untuk
+            melihat hasilnya.
           </p>
           <Link
-            href={`/packages/${packageId}/tryout`}
+            href="/dashboard-customer"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Start Tryout
+            Kembali ke Dashboard
           </Link>
         </div>
       </div>
@@ -544,28 +517,26 @@ export default function ResultsPage({
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <Link
             href="/dashboard-customer"
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Packages
+            Kembali ke Paket
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Tryout Results</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Hasil Tryout</h1>
           {packageData && (
             <p className="text-gray-600 mt-2">{packageData.title}</p>
           )}
         </div>
 
-        {/* Score Overview */}
         <div
           className={`rounded-lg p-6 mb-8 ${getScoreBgColor(resultData.score)}`}
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Your Score</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Nilai Anda</h2>
               <p
                 className={`text-4xl font-bold ${getScoreColor(
                   resultData.score
@@ -580,13 +551,12 @@ export default function ResultsPage({
           </div>
         </div>
 
-        {/* Statistics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Correct</p>
+                <p className="text-sm text-gray-600">Benar</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {resultData.totalCorrect}
                 </p>
@@ -597,7 +567,7 @@ export default function ResultsPage({
             <div className="flex items-center">
               <XCircle className="h-8 w-8 text-red-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Wrong</p>
+                <p className="text-sm text-gray-600">Salah</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {resultData.totalWrong}
                 </p>
@@ -608,7 +578,7 @@ export default function ResultsPage({
             <div className="flex items-center">
               <Target className="h-8 w-8 text-gray-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Unanswered</p>
+                <p className="text-sm text-gray-600">Belum Dijawab</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {resultData.totalUnanswered}
                 </p>
@@ -619,16 +589,15 @@ export default function ResultsPage({
             <div className="flex items-center">
               <Clock className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Duration</p>
+                <p className="text-sm text-gray-600">Durasi</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {resultData.durationTaken} min
+                  {resultData.durationTaken} menit
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* AI Feedback */}
         <div className="bg-white rounded-lg p-6 shadow-sm mb-8 border border-gray-100">
           <div className="flex items-start">
             <div className="bg-purple-100 p-2 rounded-lg mr-4 flex-shrink-0">
@@ -680,9 +649,12 @@ export default function ResultsPage({
                             </h4>
                             <div className={`${section.textColor} space-y-3`}>
                               {section.content.map((text, idx) => {
-                                // Check if this is a checklist item
-                                const isChecklistItem = text.trim().startsWith('□');
-                                const cleanText = text.replace(/^□\s*/, '').trim();
+                                const isChecklistItem = text
+                                  .trim()
+                                  .startsWith("□");
+                                const cleanText = text
+                                  .replace(/^□\s*/, "")
+                                  .trim();
 
                                 return (
                                   <div
@@ -702,7 +674,8 @@ export default function ResultsPage({
                                           className={`w-2 h-2 ${section.accentColor} rounded-full mt-2 mr-3 flex-shrink-0 group-hover:scale-125 transition-transform duration-200`}
                                         ></span>
                                         <p className="text-sm leading-relaxed font-medium group-hover:text-opacity-90 transition-colors duration-200">
-                                          {cleanText}{cleanText.endsWith('.') ? '' : '.'}
+                                          {cleanText}
+                                          {cleanText.endsWith(".") ? "" : "."}
                                         </p>
                                       </>
                                     )}
@@ -743,15 +716,14 @@ export default function ResultsPage({
           </div>
         </div>
 
-        {/* Detailed Answers */}
         {answerDetails.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
-                Detailed Review
+                Review Detail
               </h3>
               <p className="text-gray-600 mt-1">
-                Review your answers and explanations
+                Tinjau jawaban dan penjelasan Anda
               </p>
             </div>
             <div className="divide-y divide-gray-200">
@@ -759,7 +731,7 @@ export default function ResultsPage({
                 <div key={answer._id} className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <h4 className="text-md font-medium text-gray-900">
-                      Question {index + 1}
+                      Soal {index + 1}
                     </h4>
                     <div className="flex items-center">
                       {answer.isCorrect ? (
@@ -768,10 +740,11 @@ export default function ResultsPage({
                         <XCircle className="h-5 w-5 text-red-600" />
                       )}
                       <span
-                        className={`ml-2 text-sm font-medium ${answer.isCorrect ? "text-green-600" : "text-red-600"
-                          }`}
+                        className={`ml-2 text-sm font-medium ${
+                          answer.isCorrect ? "text-green-600" : "text-red-600"
+                        }`}
                       >
-                        {answer.isCorrect ? "Correct" : "Incorrect"}
+                        {answer.isCorrect ? "Benar" : "Salah"}
                       </span>
                     </div>
                   </div>
@@ -797,21 +770,23 @@ export default function ResultsPage({
                           return (
                             <div
                               key={option}
-                              className={`p-3 rounded-lg border ${isCorrect
+                              className={`p-3 rounded-lg border ${
+                                isCorrect
                                   ? "bg-green-50 border-green-200"
                                   : isSelected
-                                    ? "bg-red-50 border-red-200"
-                                    : "bg-gray-50 border-gray-200"
-                                }`}
+                                  ? "bg-red-50 border-red-200"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
                             >
                               <div className="flex items-center">
                                 <span
-                                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium mr-3 ${isCorrect
+                                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium mr-3 ${
+                                    isCorrect
                                       ? "bg-green-600 text-white"
                                       : isSelected
-                                        ? "bg-red-600 text-white"
-                                        : "bg-gray-300 text-gray-700"
-                                    }`}
+                                      ? "bg-red-600 text-white"
+                                      : "bg-gray-300 text-gray-700"
+                                  }`}
                                 >
                                   {option}
                                 </span>
@@ -837,7 +812,7 @@ export default function ResultsPage({
                       {answer.question.explanation && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <h5 className="font-medium text-blue-900 mb-2">
-                            Explanation:
+                            Penjelasan:
                           </h5>
                           <p className="text-blue-800">
                             {answer.question.explanation}
@@ -849,7 +824,7 @@ export default function ResultsPage({
 
                   {!answer.question && (
                     <div className="text-gray-500 italic">
-                      Question details not available
+                      Detail soal tidak tersedia
                     </div>
                   )}
                 </div>
@@ -858,19 +833,18 @@ export default function ResultsPage({
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
           <Link
             href="/dashboard-customer"
             className="flex-1 bg-blue-600 text-white text-center py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Browse More Packages
+            Telusuri Paket Lain
           </Link>
           <Link
             href="/dashboard-customer"
             className="flex-1 bg-gray-600 text-white text-center py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors"
           >
-            Back to Dashboard
+            Kembali ke Dashboard
           </Link>
         </div>
       </div>
