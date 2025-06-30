@@ -22,6 +22,8 @@ import {
   Wand2,
   Link,
   Eye,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
@@ -33,6 +35,7 @@ interface Package {
   description: string;
   sourcePdf: string[];
   pdfImages: string[];
+  images: string[]; // Add images field for package cover slideshow
   contents: any[];
   categoryId: string;
   creatorId: string;
@@ -127,6 +130,8 @@ export default function PackageDetailPage() {
   const [currentQuestionForImage, setCurrentQuestionForImage] = useState<string | null>(null);
   const [manualImageUrl, setManualImageUrl] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  // Image management states
+  const [newImageUrl, setNewImageUrl] = useState("");
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState("");
 
@@ -175,7 +180,8 @@ export default function PackageDetailPage() {
         description: pkg.description,
         price: pkg.price,
         duration: pkg.duration,
-        isPublished: pkg.isPublished
+        isPublished: pkg.isPublished,
+        images: pkg.images || [] // Include images field
       });
 
       // Check if user is owner
@@ -244,8 +250,65 @@ export default function PackageDetailPage() {
       description: packageData?.description,
       price: packageData?.price,
       duration: packageData?.duration,
-      isPublished: packageData?.isPublished
+      isPublished: packageData?.isPublished,
+      images: packageData?.images || [] // Include images field
     });
+  };
+
+  // Package images management handlers
+  const handleAddPackageImage = () => {
+    if (!newImageUrl.trim()) {
+      toast.error('Please enter a valid image URL');
+      return;
+    }
+
+    // Simple URL validation
+    try {
+      new URL(newImageUrl);
+    } catch {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+
+    const currentImages = editPackageData.images || [];
+    if (currentImages.includes(newImageUrl)) {
+      toast.error('This image URL is already added');
+      return;
+    }
+
+    setEditPackageData(prev => ({
+      ...prev,
+      images: [...currentImages, newImageUrl]
+    }));
+    setNewImageUrl("");
+    toast.success('Image URL added successfully');
+  };
+
+  const handleRemovePackageImage = (index: number) => {
+    const currentImages = editPackageData.images || [];
+    setEditPackageData(prev => ({
+      ...prev,
+      images: currentImages.filter((_, i) => i !== index)
+    }));
+    toast.success('Image removed successfully');
+  };
+
+  const handleMovePackageImageUp = (index: number) => {
+    const currentImages = editPackageData.images || [];
+    if (index === 0) return;
+    
+    const newImages = [...currentImages];
+    [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+    setEditPackageData(prev => ({ ...prev, images: newImages }));
+  };
+
+  const handleMovePackageImageDown = (index: number) => {
+    const currentImages = editPackageData.images || [];
+    if (index === currentImages.length - 1) return;
+    
+    const newImages = [...currentImages];
+    [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+    setEditPackageData(prev => ({ ...prev, images: newImages }));
   };
 
   // Question edit handlers
@@ -727,6 +790,143 @@ export default function PackageDetailPage() {
                       />
                     ) : (
                       <p className="text-gray-600">{packageData.description}</p>
+                    )}
+                  </div>
+
+                  {/* Package Cover Images Section */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Package Cover Images
+                    </label>
+                    {isEditingPackage ? (
+                      <div className="space-y-4">
+                        <p className="text-sm text-gray-500">
+                          Add image URLs that will be displayed as a slideshow on your package card.
+                        </p>
+                        
+                        {/* Add Image URL Input */}
+                        <div className="flex gap-2">
+                          <input
+                            type="url"
+                            value={newImageUrl}
+                            onChange={(e) => setNewImageUrl(e.target.value)}
+                            placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddPackageImage();
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddPackageImage}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Images List */}
+                        {(editPackageData.images && editPackageData.images.length > 0) ? (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-gray-700">
+                              Added Images ({editPackageData.images.length}):
+                            </p>
+                            {editPackageData.images.map((imageUrl, index) => (
+                              <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+                                {/* Image Preview */}
+                                <img
+                                  src={imageUrl}
+                                  alt={`Package cover ${index + 1}`}
+                                  className="w-12 h-12 object-cover rounded"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAyMEMxNiAxOC44OTU0IDE2Ljg5NTQgMTggMTggMThDMTkuMTA0NiAxOCAyMCAxOC44OTU0IDIwIDIwQzIwIDIxLjEwNDYgMTkuMTA0NiAyMiAxOCAyMkMxNi44OTU0IDIyIDE2IDIxLjEwNDYgMTYgMjBaIiBmaWxsPSIjOUI5Qjk5Ii8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNOCAxMkM4IDEwLjg5NTQgOC44OTU0MyAxMCAxMCAxMEgzMEMzMS4xMDQ2IDEwIDMyIDEwLjg5NTQgMzIgMTJWMjhDMzIgMjkuMTA0NiAzMS4xMDQ2IDMwIDMwIDMwSDEwQzguODk1NDMgMzAgOCAyOS4xMDQ2IDggMjhWMTJaTTEwIDEySDMwVjI0LjU4NTlMMjYuNzA3MSAyMS4yOTI5QzI2LjMxNjYgMjAuOTAyNCAyNS42ODM0IDIwLjkwMjQgMjUuMjkyOSAyMS4yOTI5TDIwIDI2LjU4NTlMMTUuNzA3MSAxNy4yOTI5QzE1LjMxNjYgMTYuOTAyNCAxNC42ODM0IDE2LjkwMjQgMTQuMjkyOSAxNy4yOTI5TDEwIDIxLjU4NTlWMTJaIiBmaWxsPSIjOUI5Qjk5Ii8+Cjwvc3ZnPgo=';
+                                  }}
+                                />
+                                
+                                {/* URL Text */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    Image {index + 1}
+                                  </p>
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {imageUrl}
+                                  </p>
+                                </div>
+
+                                {/* Move Controls */}
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMovePackageImageUp(index)}
+                                    disabled={index === 0}
+                                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Move up"
+                                  >
+                                    <ChevronUp className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMovePackageImageDown(index)}
+                                    disabled={index === (editPackageData.images?.length || 0) - 1}
+                                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Move down"
+                                  >
+                                    <ChevronDown className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {/* Remove Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemovePackageImage(index)}
+                                  className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                                  title="Remove image"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
+                            <ImagePlus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                            <p className="text-sm text-gray-500">No images added yet</p>
+                            <p className="text-xs text-gray-400">Package will use default cover</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        {(packageData.images && packageData.images.length > 0) ? (
+                          <div className="space-y-2">
+                            <p className="text-sm text-gray-600 mb-2">
+                              {packageData.images.length} image(s) configured for slideshow
+                            </p>
+                            <div className="grid grid-cols-4 gap-2">
+                              {packageData.images.map((imageUrl, index) => (
+                                <img
+                                  key={index}
+                                  src={imageUrl}
+                                  alt={`Package cover ${index + 1}`}
+                                  className="w-full h-16 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
+                                  onClick={() => {
+                                    setViewingImageUrl(imageUrl);
+                                    setShowImageViewer(true);
+                                  }}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAyMEMxNiAxOC44OTU0IDE2Ljg5NTQgMTggMTggMThDMTkuMTA0NiAxOCAyMCAxOC44OTU0IDIwIDIwQzIwIDIxLjEwNDYgMTkuMTA0NiAyMiAxOCAyMkMxNi44OTU0IDIyIDE2IDIxLjEwNDYgMTYgMjBaIiBmaWxsPSIjOUI5Qjk5Ii8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNOCAxMkM4IDEwLjg5NTQgOC44OTU0MyAxMCAxMCAxMEgzMEMzMS4xMDQ2IDEwIDMyIDEwLjg5NTQgMzIgMTJWMjhDMzIgMjkuMTA0NiAzMS4xMDQ2IDMwIDMwIDMwSDEwQzguODk1NDMgMzAgOCAyOS4xMDQ2IDggMjhWMTJaTTEwIDEySDMwVjI0LjU4NTlMMjYuNzA3MSAyMS4yOTI5QzI2LjMxNjYgMjAuOTAyNCAyNS42ODM0IDIwLjkwMjQgMjUuMjkyOSAyMS4yOTI5TDIwIDI2LjU4NTlMMTUuNzA3MSAxNy4yOTI5QzE1LjMxNjYgMTYuOTAyNCAxNC42ODM0IDE2LjkwMjQgMTQuMjkyOSAxNy4yOTI5TDEwIDIxLjU4NTlWMTJaIiBmaWxsPSIjOUI5Qjk5Ii8+Cjwvc3ZnPgo=';
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">No images configured - using default cover</p>
+                        )}
+                      </div>
                     )}
                   </div>
 
