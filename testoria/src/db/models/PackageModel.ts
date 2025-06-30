@@ -40,6 +40,7 @@ class PackageModel {
                 title: validatedData.title,
                 sourcePdf: validatedData.sourcePdf,
                 pdfImages: validatedData.pdfImages,
+                images: validatedData.images || [], // Default to empty array
                 contents: validatedData.contents,
                 categoryId: new ObjectId(validatedData.categoryId),
                 creatorId: new ObjectId(validatedData.creatorId),
@@ -193,6 +194,7 @@ class PackageModel {
                         title: 1,
                         sourcePdf: 1,
                         pdfImages: 1,
+                        images: 1, // Include images field
                         price: 1,
                         contents: 1,
                         duration: 1,
@@ -304,6 +306,7 @@ class PackageModel {
                   title: 1,
                   sourcePdf: 1,
                   pdfImages: 1,
+                  images: 1, // Include images field
                   contents: 1,
                   duration: 1,
                   price: 1,
