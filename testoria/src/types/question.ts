@@ -10,6 +10,8 @@ export type QuestionType = {
     correctAnswer: 'A' | 'B' | 'C' | 'D' | 'E';
     explanation: string;
     images: string[];
+    passage?: string; // Reading passage for the question(s)
+    imagePrompt?: string; // Description of images needed for the question
     createdAt?: string;
     updatedAt?: string;
 };

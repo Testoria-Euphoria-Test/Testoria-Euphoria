@@ -19,6 +19,8 @@ class QuestionModel {
             correctAnswer: question.correctAnswer,
             explanation: question.explanation,
             images: question.images || [],
+            passage: question.passage || '',
+            imagePrompt: question.imagePrompt || '',
             createdAt: new Date().toISOString()
         };
         const result = await this.collection().insertOne(toInsert);
@@ -46,10 +48,10 @@ class QuestionModel {
             toUpdate.packageId = new ObjectId(toUpdate.packageId) as any;
         }
         delete toUpdate._id; // Remove _id from update data
-        
+
         const result = await this.collection().updateOne(
             { _id: new ObjectId(id) },
-            { 
+            {
                 $set: {
                     ...toUpdate,
                     updatedAt: new Date().toISOString()

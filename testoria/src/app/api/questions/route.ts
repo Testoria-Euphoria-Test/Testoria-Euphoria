@@ -12,17 +12,17 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        
+
         // Validate required fields
         if (!body.packageId) {
-            return NextResponse.json({ 
-                error: "Missing required field: packageId" 
+            return NextResponse.json({
+                error: "Missing required field: packageId"
             }, { status: 400 });
         }
 
         // Get package to extract content
-        const pkg = await database.collection("packages").findOne({ 
-            _id: new ObjectId(body.packageId) 
+        const pkg = await database.collection("packages").findOne({
+            _id: new ObjectId(body.packageId)
         });
 
         if (!pkg) {
@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
 
         // Check if package has content
         if (!pkg.contents || pkg.contents.length === 0) {
-            return NextResponse.json({ 
-                error: "Package has no content. Please process the package with AI first." 
+            return NextResponse.json({
+                error: "Package has no content. Please process the package with AI first."
             }, { status: 400 });
         }
 
@@ -49,10 +49,10 @@ export async function POST(req: NextRequest) {
         // Handle both content structures:
         // 1. Direct questions in contents array (current structure)
         // 2. Nested structure with type: "question" and questions array
-        
+
         for (const contentItem of pkg.contents) {
             let questionsToProcess = [];
-            
+
             // Check if it's a direct question object
             if (contentItem.questionText && contentItem.options && contentItem.correctAnswer) {
                 questionsToProcess = [contentItem];
@@ -75,6 +75,8 @@ export async function POST(req: NextRequest) {
                     optionE: question.options?.E || question.optionE || "",
                     correctAnswer: question.correctAnswer,
                     explanation: question.explanation || "",
+                    passage: question.passage || "",
+                    imagePrompt: question.imagePrompt || "",
                     images: [] // Always empty - for manual image additions only
                 };
 
@@ -120,8 +122,8 @@ export async function POST(req: NextRequest) {
             }));
 
             console.log("Package content analysis:", JSON.stringify(contentInfo, null, 2));
-            
-            return NextResponse.json({ 
+
+            return NextResponse.json({
                 error: "No valid questions found in package content",
                 debug: {
                     contentItemsCount: pkg.contents.length,
@@ -131,7 +133,7 @@ export async function POST(req: NextRequest) {
             }, { status: 400 });
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             message: `${questionCount} questions created successfully from package content`,
             questionsCreated: questionCount,
             packageId: body.packageId,
@@ -154,15 +156,15 @@ export async function GET(req: NextRequest) {
     try {
         const url = new URL(req.url);
         const packageId = url.searchParams.get('packageId');
-        
+
         if (!packageId) {
             return NextResponse.json({ error: 'Package ID is required' }, { status: 400 });
         }
 
         const questions = await QuestionModel.findByPackageId(packageId);
-        return NextResponse.json({ 
+        return NextResponse.json({
             questions,
-            count: questions.length 
+            count: questions.length
         });
     } catch (error) {
         console.error("Questions retrieval error:", error);
