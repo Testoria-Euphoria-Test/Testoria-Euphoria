@@ -1207,10 +1207,10 @@ export default function DashboardAdminPage() {
                                     onChange={(e) =>
                                       setSelectedStatus(e.target.value)
                                     }
-                                    className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-600"
                                   >
                                     <option value="draft">draft</option>
-                                    <option value="published">Published</option>
+                                    <option value="published">Terpublikasi</option>
                                   </select>
                                   <button
                                     onClick={() => handleSaveStatus(pkg._id)}
