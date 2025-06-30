@@ -16,7 +16,7 @@ function shouldHavePassage(questions: ParsedQuestion[]): boolean {
         'berdasarkan teks', 'menurut bacaan', 'dari teks', 'sesuai teks', 'teks di atas',
         'bacaan di atas', 'dalam teks', 'pada teks', 'dari cerita', 'dalam cerita',
         'tokoh dalam', 'karakter dalam', 'pesan dalam teks', 'isi teks', 'makna teks',
-        
+
         // English
         'according to the text', 'based on the passage', 'in the text', 'from the text',
         'the passage states', 'according to the passage', 'in the story', 'from the story',
@@ -35,21 +35,21 @@ function shouldHavePassage(questions: ParsedQuestion[]): boolean {
 function extractPassageFromRawText(rawText: string): string {
     // Look for common patterns that indicate reading passages
     const lines = rawText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    
+
     // Strategy 1: Look for continuous paragraphs before questions start
-    const questionStartIndex = lines.findIndex(line => 
+    const questionStartIndex = lines.findIndex(line =>
         /^\d+\./.test(line) || // Lines starting with "1.", "2.", etc.
         line.toLowerCase().includes('question') ||
         line.toLowerCase().includes('pertanyaan')
     );
-    
+
     if (questionStartIndex > 0) {
         const potentialPassage = lines.slice(0, questionStartIndex).join(' ').trim();
         if (potentialPassage.length > 50) { // At least 50 characters for a meaningful passage
             return potentialPassage;
         }
     }
-    
+
     // Strategy 2: Look for text between common passage markers
     const passageMarkers = [
         'passage:',
@@ -59,13 +59,13 @@ function extractPassageFromRawText(rawText: string): string {
         'text:',
         'cerita:'
     ];
-    
+
     for (const marker of passageMarkers) {
         const markerIndex = rawText.toLowerCase().indexOf(marker.toLowerCase());
         if (markerIndex !== -1) {
             const textAfterMarker = rawText.substring(markerIndex + marker.length);
             const nextQuestionMatch = textAfterMarker.match(/\n\s*\d+\./);
-            
+
             if (nextQuestionMatch) {
                 const passage = textAfterMarker.substring(0, nextQuestionMatch.index).trim();
                 if (passage.length > 30) {
@@ -74,7 +74,7 @@ function extractPassageFromRawText(rawText: string): string {
             }
         }
     }
-    
+
     return '';
 }
 
@@ -141,17 +141,17 @@ ONLY return the actual reading passage text.`,
         }
 
         const data = await res.json();
-        
+
         if (data.choices && data.choices[0] && data.choices[0].message) {
             const content = data.choices[0].message.content.trim();
-            
+
             if (content === "NO_PASSAGE_FOUND" || content.length < 20) {
                 return '';
             }
-            
+
             return content;
         }
-        
+
         return '';
     } catch (error) {
         console.error("Secondary passage extraction failed:", error);
@@ -244,8 +244,9 @@ Before extracting questions, THOROUGHLY scan the ENTIRE image for ANY text that 
 - Text passages may appear in Indonesian, English, or other languages
 
 STEP 2 - EXTRACT QUESTIONS:
-- Find all numbered questions (1, 2, 3, etc.)
-- Include complete question text
+- Find all numbered questions (1, 2, 3, etc.) if present 
+- If the text is a description or narrative that is not a question, convert it into a relevant question format based on its context
+- Include complete question text 
 - Extract all answer options (A, B, C, D, E if present)
 - Determine correct answers if possible
 
@@ -359,16 +360,16 @@ Output ONLY valid JSON, no other text.`,
                 // First, try fallback extraction if questions suggest there should be passage but none found
                 const questionsWithoutPassage = parsed.questions.filter(q => !q.passage || q.passage.trim() === '');
                 const shouldHavePassageFlag = shouldHavePassage(parsed.questions);
-                
+
                 if (shouldHavePassageFlag && questionsWithoutPassage.length > 0) {
                     console.log(`🔍 Questions suggest there should be reading material. Attempting fallback extraction...`);
-                    
+
                     // Try to extract passage from the raw AI response
                     const extractedPassage = extractPassageFromRawText(content);
-                    
+
                     if (extractedPassage) {
                         console.log(`✅ Fallback extraction found passage: "${extractedPassage.substring(0, 100)}..."`);
-                        
+
                         // Apply extracted passage to questions that don't have it
                         questionsWithoutPassage.forEach(q => {
                             if (shouldHavePassage([q])) { // Only apply to questions that specifically need it
@@ -377,13 +378,13 @@ Output ONLY valid JSON, no other text.`,
                         });
                     } else {
                         console.log(`❌ Fallback extraction failed. Trying secondary AI analysis...`);
-                        
+
                         // Last resort: Use secondary AI analysis specifically for reading passages
                         const secondaryPassage = await extractPassageSecondary(imageUrl);
-                        
+
                         if (secondaryPassage) {
                             console.log(`🎯 Secondary AI found passage: "${secondaryPassage.substring(0, 100)}..."`);
-                            
+
                             // Apply to all questions that need passage
                             questionsWithoutPassage.forEach(q => {
                                 if (shouldHavePassage([q])) {
@@ -395,7 +396,7 @@ Output ONLY valid JSON, no other text.`,
                         }
                     }
                 }
-                
+
                 // Define comprehensive patterns that indicate a question references reading material
                 const textReferencePatterns = [
                     // Indonesian patterns
@@ -420,7 +421,7 @@ Output ONLY valid JSON, no other text.`,
                     'pesan dalam teks',
                     'isi teks',
                     'makna teks',
-                    
+
                     // English patterns
                     'according to the text',
                     'based on the passage',
@@ -441,7 +442,7 @@ Output ONLY valid JSON, no other text.`,
                 // Re-check after fallback processing
                 const finalQuestionsWithoutPassage = parsed.questions.filter(q => !q.passage || q.passage.trim() === '');
                 const finalQuestionsWithPassage = parsed.questions.filter(q => q.passage && q.passage.trim() !== '');
-                
+
                 // Check if any question strongly suggests there should be reading material
                 const referencingQuestions = finalQuestionsWithoutPassage.filter(q => {
                     const questionLower = q.questionText.toLowerCase();
@@ -454,24 +455,24 @@ Output ONLY valid JSON, no other text.`,
                     console.log('Questions that need passage:');
                     referencingQuestions.forEach((q, i) => {
                         console.log(`${i + 1}. "${q.questionText.substring(0, 150)}..."`);
-                        
+
                         // Find which pattern matched
-                        const matchedPattern = textReferencePatterns.find(pattern => 
+                        const matchedPattern = textReferencePatterns.find(pattern =>
                             q.questionText.toLowerCase().includes(pattern.toLowerCase())
                         );
                         console.log(`   → Matched pattern: "${matchedPattern}"`);
                     });
-                    
+
                     // If some questions have passage but others don't, try to share the passage
                     if (finalQuestionsWithPassage.length > 0 && finalQuestionsWithPassage[0].passage) {
                         const sharedPassage = finalQuestionsWithPassage[0].passage;
                         console.log(`ℹ️ Attempting to share passage from other questions: "${sharedPassage.substring(0, 100)}..."`);
-                        
+
                         // Apply shared passage to questions that reference text but don't have passage
                         referencingQuestions.forEach(q => {
                             q.passage = sharedPassage;
                         });
-                        
+
                         console.log(`✅ Applied shared passage to ${referencingQuestions.length} questions`);
                     }
                 }
@@ -480,37 +481,37 @@ Output ONLY valid JSON, no other text.`,
                 parsed.questions.forEach(q => {
                     if (!q.imagePrompt || q.imagePrompt.trim() === '') {
                         const questionLower = q.questionText.toLowerCase();
-                        
+
                         // Check if question mentions visual elements
                         const visualPatterns = [
                             'diagram', 'grafik', 'tabel', 'peta', 'gambar', 'ilustrasi', 'bagan',
                             'chart', 'graph', 'map', 'figure', 'image', 'picture', 'illustration'
                         ];
-                        
-                        const needsVisual = visualPatterns.some(pattern => 
-                            questionLower.includes(pattern) || 
+
+                        const needsVisual = visualPatterns.some(pattern =>
+                            questionLower.includes(pattern) ||
                             q.options.A.toLowerCase().includes(pattern) ||
                             q.options.B.toLowerCase().includes(pattern) ||
                             q.options.C.toLowerCase().includes(pattern) ||
                             q.options.D.toLowerCase().includes(pattern)
                         );
-                        
+
                         if (needsVisual) {
                             console.log(`📊 Question might benefit from visual aid: "${q.questionText.substring(0, 100)}..."`);
                         }
                     }
                 });
-                
+
                 // Log final summary
                 const finalQuestionsWithoutPassageCount = parsed.questions.filter(q => !q.passage || q.passage.trim() === '').length;
                 const finalQuestionsWithPassageCount = parsed.questions.filter(q => q.passage && q.passage.trim() !== '').length;
-                
+
                 console.log(`📋 Final Processing Summary:`);
                 console.log(`   - Total questions: ${parsed.questions.length}`);
                 console.log(`   - Questions with passage: ${finalQuestionsWithPassageCount}`);
                 console.log(`   - Questions without passage: ${finalQuestionsWithoutPassageCount}`);
                 console.log(`   - Questions that should have passage: ${referencingQuestions.length}`);
-                
+
                 if (shouldHavePassageFlag && finalQuestionsWithPassageCount === 0) {
                     console.log(`⚠️ WARNING: Questions suggest reading material is needed but none was found!`);
                 }

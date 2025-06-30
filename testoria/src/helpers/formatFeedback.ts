@@ -1,5 +1,5 @@
 export interface FeedbackSection {
-  type: "strength" | "improvement" | "motivation" | "general";
+  type: "performance" | "mastered" | "improvement" | "recommendations" | "motivation";
   title: string;
   icon: string;
   content: string[];
@@ -14,6 +14,114 @@ export function formatAIFeedback(feedback: string): FeedbackSection[] {
     return [];
   }
 
+  const sections: FeedbackSection[] = [];
+
+  // Parse structured feedback sections based on our AI format
+  const sectionMarkers = [
+    { marker: "**EVALUASI PERFORMA:**", type: "performance" as const, title: "📊 Evaluasi Performa", icon: "Brain" },
+    { marker: "**Yang Dikuasai:**", type: "mastered" as const, title: "✅ Yang Sudah Dikuasai", icon: "CheckCircle" },
+    { marker: "**Area yang Perlu Diperbaiki:**", type: "improvement" as const, title: "🎯 Area yang Perlu Diperbaiki", icon: "Target" },
+    { marker: "**REKOMENDASI BELAJAR:**", type: "recommendations" as const, title: "📚 Rekomendasi Belajar", icon: "BookOpen" },
+    { marker: "**MOTIVASI & LANGKAH SELANJUTNYA:**", type: "motivation" as const, title: "🚀 Motivasi & Langkah Selanjutnya", icon: "Trophy" }
+  ];
+
+  // Split feedback into sections
+  let remainingText = feedback;
+
+  for (let i = 0; i < sectionMarkers.length; i++) {
+    const currentMarker = sectionMarkers[i];
+    const nextMarker = sectionMarkers[i + 1];
+
+    const startIndex = remainingText.indexOf(currentMarker.marker);
+    if (startIndex === -1) continue;
+
+    let endIndex = remainingText.length;
+    if (nextMarker) {
+      const nextIndex = remainingText.indexOf(nextMarker.marker);
+      if (nextIndex !== -1) {
+        endIndex = nextIndex;
+      }
+    }
+
+    const sectionText = remainingText.substring(startIndex + currentMarker.marker.length, endIndex).trim();
+
+    if (sectionText.length > 0) {
+      // Parse content - split by bullet points or lines
+      const lines = sectionText
+        .split(/\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => line.replace(/^[•\-\*]\s*/, '').trim()) // Remove bullet points
+        .filter(line => line.length > 0);
+
+      if (lines.length > 0) {
+        sections.push({
+          type: currentMarker.type,
+          title: currentMarker.title,
+          icon: currentMarker.icon,
+          content: lines,
+          ...getColorScheme(currentMarker.type)
+        });
+      }
+    }
+  }
+
+  // Fallback: if no structured sections found, try the old keyword-based approach
+  if (sections.length === 0) {
+    return formatLegacyFeedback(feedback);
+  }
+
+  return sections;
+}
+
+function getColorScheme(type: string) {
+  switch (type) {
+    case "performance":
+      return {
+        bgColor: "bg-gradient-to-r from-purple-50 to-violet-50",
+        borderColor: "border-purple-400",
+        textColor: "text-purple-800",
+        accentColor: "bg-purple-500",
+      };
+    case "mastered":
+      return {
+        bgColor: "bg-gradient-to-r from-green-50 to-emerald-50",
+        borderColor: "border-green-400",
+        textColor: "text-green-800",
+        accentColor: "bg-green-500",
+      };
+    case "improvement":
+      return {
+        bgColor: "bg-gradient-to-r from-orange-50 to-amber-50",
+        borderColor: "border-orange-400",
+        textColor: "text-orange-800",
+        accentColor: "bg-orange-500",
+      };
+    case "recommendations":
+      return {
+        bgColor: "bg-gradient-to-r from-blue-50 to-indigo-50",
+        borderColor: "border-blue-400",
+        textColor: "text-blue-800",
+        accentColor: "bg-blue-500",
+      };
+    case "motivation":
+      return {
+        bgColor: "bg-gradient-to-r from-gray-50 to-slate-50",
+        borderColor: "border-gray-400",
+        textColor: "text-gray-800",
+        accentColor: "bg-gray-500",
+      };
+    default:
+      return {
+        bgColor: "bg-gradient-to-r from-gray-50 to-slate-50",
+        borderColor: "border-gray-400",
+        textColor: "text-gray-800",
+        accentColor: "bg-gray-500",
+      };
+  }
+}
+
+function formatLegacyFeedback(feedback: string): FeedbackSection[] {
   // Clean and split feedback into sentences
   const sentences = feedback
     .split(/[.!?]+/)
@@ -111,14 +219,11 @@ export function formatAIFeedback(feedback: string): FeedbackSection[] {
   // Add sections if they have content
   if (strengths.length > 0) {
     sections.push({
-      type: "strength",
+      type: "mastered",
       title: "✅ Yang Sudah Dikuasai",
       icon: "CheckCircle",
       content: strengths,
-      bgColor: "bg-gradient-to-r from-green-50 to-emerald-50",
-      borderColor: "border-green-400",
-      textColor: "text-green-800",
-      accentColor: "bg-green-500",
+      ...getColorScheme("mastered")
     });
   }
 
@@ -128,10 +233,7 @@ export function formatAIFeedback(feedback: string): FeedbackSection[] {
       title: "🎯 Area untuk Diperbaiki",
       icon: "Target",
       content: improvements,
-      bgColor: "bg-gradient-to-r from-yellow-50 to-amber-50",
-      borderColor: "border-yellow-400",
-      textColor: "text-yellow-800",
-      accentColor: "bg-yellow-500",
+      ...getColorScheme("improvement")
     });
   }
 
@@ -141,26 +243,18 @@ export function formatAIFeedback(feedback: string): FeedbackSection[] {
       title: "🚀 Motivasi & Saran",
       icon: "Trophy",
       content: motivation,
-      bgColor: "bg-gradient-to-r from-blue-50 to-indigo-50",
-      borderColor: "border-blue-400",
-      textColor: "text-blue-800",
-      accentColor: "bg-blue-500",
+      ...getColorScheme("motivation")
     });
   }
-
- 
 
   // If no categorization worked, return original feedback as general
   if (sections.length === 0) {
     sections.push({
-      type: "general",
+      type: "performance",
       title: "📝 Feedback AI",
       icon: "Brain",
       content: [feedback],
-      bgColor: "bg-gradient-to-r from-purple-50 to-violet-50",
-      borderColor: "border-purple-400",
-      textColor: "text-purple-800",
-      accentColor: "bg-purple-500",
+      ...getColorScheme("performance")
     });
   }
 
