@@ -56,6 +56,20 @@ export default function MyProfilePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // If profile not found (404), create empty profile state
+        if (response.status === 404) {
+          setProfile(null);
+          setFormData({
+            photoUrl: "",
+            education: "",
+            bio: "",
+            certificates: [""],
+          });
+          setError(null);
+          return;
+        }
+        
         throw new Error(errorData.message || "Failed to fetch profile");
       }
 
@@ -68,8 +82,9 @@ export default function MyProfilePage() {
           education: data.data.education || "",
           bio: data.data.bio || "",
           certificates:
-            data.data.certificates?.length > 0 ? data.data.certificates : [""],
+            data.data.certificates && data.data.certificates.length > 0 ? data.data.certificates : [""],
         });
+        setError(null);
       } else {
         setError(data.message || "Failed to load profile");
       }
@@ -121,8 +136,10 @@ export default function MyProfilePage() {
         certificates: cleanCertificates,
       };
 
+      // Use POST for creating new profile, PUT for updating existing
+      const method = profile ? "PUT" : "POST";
       const response = await fetch("/api/profiles/me", {
-        method: "PUT",
+        method: method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -138,7 +155,7 @@ export default function MyProfilePage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Profile updated successfully!");
+        toast.success(profile ? "Profile updated successfully!" : "Profile created successfully!");
         setIsEditing(false);
         await fetchProfile(); // Refresh profile data
       } else {
@@ -186,7 +203,15 @@ export default function MyProfilePage() {
         education: profile.education || "",
         bio: profile.bio || "",
         certificates:
-          profile.certificates?.length > 0 ? profile.certificates : [""],
+          profile.certificates && profile.certificates.length > 0 ? profile.certificates : [""],
+      });
+    } else {
+      // If no profile exists, reset to empty form
+      setFormData({
+        photoUrl: "",
+        education: "",
+        bio: "",
+        certificates: [""],
       });
     }
     setIsEditing(false);
@@ -228,18 +253,18 @@ export default function MyProfilePage() {
           {/* Header */}
           <div className="mb-6 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
-            {profile && !isEditing && (
+            {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
                 className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
+                {profile ? "Edit Profile" : "Create Profile"}
               </button>
             )}
           </div>
 
-          {profile ? (
+          {profile || !error ? (
             <div className="space-y-6">
               {/* Main Profile Card */}
               <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
@@ -247,12 +272,12 @@ export default function MyProfilePage() {
                   {/* Avatar */}
                   <div className="flex-shrink-0">
                     <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 ring-4 ring-white shadow-lg">
-                      {(isEditing ? formData.photoUrl : profile.photoUrl) ? (
+                      {(isEditing ? formData.photoUrl : profile?.photoUrl) ? (
                         <Image
                           src={
                             isEditing
                               ? formData.photoUrl
-                              : profile.photoUrl || ""
+                              : profile?.photoUrl || ""
                           }
                           alt="Profile"
                           width={80}
@@ -289,25 +314,25 @@ export default function MyProfilePage() {
                   {/* User Info */}
                   <div className="flex-1 min-w-0">
                     <h2 className="text-xl font-semibold text-slate-900 mb-1">
-                      {profile.user?.name ||
-                        profile.user?.email?.split("@")[0] ||
+                      {profile?.user?.name ||
+                        profile?.user?.email?.split("@")[0] ||
                         "User"}
                     </h2>
                     <div className="flex items-center text-slate-600 mb-2">
                       <Mail className="w-4 h-4 mr-2" />
                       <span className="text-sm">
-                        {profile.user?.email || "No email"}
+                        {profile?.user?.email || "No email"}
                       </span>
                     </div>
                     <div className="flex items-center space-x-4">
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 capitalize font-medium">
-                        {profile.user?.role || "customer"}
+                        {profile?.user?.role || "customer"}
                       </span>
                       <span className="flex items-center text-xs text-slate-500">
                         <Calendar className="w-3 h-3 mr-1" />
-                        {profile.createdAt
+                        {profile?.createdAt
                           ? new Date(profile.createdAt).toLocaleDateString()
-                          : ""}
+                          : "Not set"}
                       </span>
                     </div>
                   </div>
@@ -360,7 +385,7 @@ export default function MyProfilePage() {
                     />
                   ) : (
                     <p className="text-sm text-slate-700 leading-relaxed">
-                      {profile.bio || "No bio available."}
+                      {profile?.bio || "No bio available."}
                     </p>
                   )}
                   {isEditing && (
@@ -389,7 +414,7 @@ export default function MyProfilePage() {
                     />
                   ) : (
                     <p className="text-sm text-slate-700">
-                      {profile.education || "No education information."}
+                      {profile?.education || "No education information."}
                     </p>
                   )}
                   {isEditing && (
@@ -408,7 +433,7 @@ export default function MyProfilePage() {
                         Certificates (
                         {isEditing
                           ? formData.certificates.filter((c) => c.trim()).length
-                          : profile.certificates?.length || 0}
+                          : profile?.certificates?.length || 0}
                         )
                       </h3>
                     </div>
@@ -452,7 +477,7 @@ export default function MyProfilePage() {
                     </div>
                   ) : (
                     <>
-                      {profile.certificates &&
+                      {profile?.certificates &&
                       profile.certificates.length > 0 ? (
                         <div className="space-y-2">
                           {profile.certificates.map((cert, index) => (
@@ -490,20 +515,21 @@ export default function MyProfilePage() {
               )}
             </div>
           ) : (
+            // Show error state only if there's an actual error (not 404)
             <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
               <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Profile Found
+                Error Loading Profile
               </h3>
               <p className="text-gray-600 mb-4 text-sm">
-                Create a profile to get started.
+                {error}
               </p>
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={() => window.location.reload()}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
               >
                 <User className="w-4 h-4 mr-2" />
-                Create Profile
+                Try Again
               </button>
             </div>
           )}

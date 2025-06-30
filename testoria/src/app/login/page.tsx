@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -76,12 +77,12 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(data.message || "Login successful!");
+        toast.success(data.message || "Masuk berhasil!");
         setFormData({
           email: "",
           password: "",
         });
-        
+
         // Use the user data from response to redirect
         if (data.user && data.user.role) {
           redirectToDashboard(data.user.role);
@@ -92,10 +93,10 @@ export default function LoginPage() {
           }, 100); // Small delay to allow cookies to be set
         }
       } else {
-        toast.error(data.message || "Login failed");
+        toast.error(data.message || "Gagal Masuk");
       }
     } catch (error) {
-      toast.error((error as Error).message || "Login failed");
+      toast.error((error as Error).message || "Gagal Masuk");
     } finally {
       setIsLoading(false);
     }
@@ -104,21 +105,19 @@ export default function LoginPage() {
   const features = [
     {
       icon: Shield,
-      title: "High-Quality Practice Questions",
+      title: "Soal Latihan Berkualitas Tinggi",
       description:
-        "Access to premium questions from trusted and experienced sources",
+        "Akses ke soal premium dari sumber terpercaya dan berpengalaman",
     },
     {
       icon: Users,
-      title: "Automated PDF Processing",
-      description:
-        "Upload questions from PDF files with automated conversion system",
+      title: "Pemrosesan PDF Otomatis",
+      description: "Upload soal dari file PDF dengan sistem konversi otomatis",
     },
     {
       icon: Zap,
-      title: "Auto-Grading & Analysis",
-      description:
-        "Instant results with AI-generated analysis and detailed explanations",
+      title: "Penilaian & Analisis Otomatis",
+      description: "Hasil instan dengan analisis AI dan penjelasan detail",
     },
   ];
 
@@ -128,25 +127,34 @@ export default function LoginPage() {
         {/* Left Side - Features Section */}
         <div className="hidden lg:flex lg:w-1/2 p-12 flex-col justify-center relative overflow-hidden">
           {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-30" style={{
-            backgroundImage: `url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')`
-          }}></div>
-          
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage: `url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')`,
+            }}
+          ></div>
+
           <div className="max-w-md relative z-10">
             {/* Logo */}
-            <div className="flex items-center mb-8">
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-4">
-                <GraduationCap className="w-7 h-7 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-white">Testoria</h1>
-            </div>
+            <Link href="/" className="flex items-center mb-8">
+                <div className=" flex items-center justify-center mr-4">
+                  <Image 
+                  width={90}
+                  height={90}
+                  src="/testoria.svg" alt="Testoria Logo" />
+                </div>
+                <h1 className="text-2xl font-bold text-white"></h1>
 
-            <h1 className="text-4xl font-bold text-white mb-6">
-              Welcome back to
+            </Link>
+
+            <h1 className="text-3xl font-bold text-white mb-6">
+              Selamat datang kembali di
               <span className="block text-blue-400">Testoria</span>
             </h1>
             <p className="text-blue-100 text-lg mb-12">
-              Platform try out online terpercaya untuk persiapan ujian UTBK, CPNS, SNBT, dan Kedinasan dengan sistem pembelajaran yang interaktif.
+              Platform try out online terpercaya untuk persiapan ujian UTBK,
+              CPNS, SNBT, dan Kedinasan dengan sistem pembelajaran yang
+              interaktif.
             </p>
 
             <div className="space-y-8">
@@ -169,21 +177,19 @@ export default function LoginPage() {
 
             <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
               <h4 className="text-white font-medium mb-3">
-                User Roles Available:
+                Peran Pengguna Tersedia:
               </h4>
               <div className="space-y-2 text-sm text-blue-100">
                 <p>
-                  • <span className="text-white">Digital Creators:</span> Upload
-                  & monetize question packages
+                  • <span className="text-white">Pembuat Digital:</span> Upload
+                  & monetisasi paket soal
                 </p>
                 <p>
-                  • <span className="text-white">Customers:</span> Purchase
-                  packages & take timed tests
+                  • <span className="text-white">Pelanggan:</span> Beli paket &
+                  ikuti tes terbatas waktu
                 </p>
               </div>
             </div>
-
-
           </div>
         </div>
 
@@ -201,17 +207,15 @@ export default function LoginPage() {
             {/* Mobile Header - only visible on small screens */}
             <div className="lg:hidden text-center mb-8">
               <h2 className="text-3xl font-bold text-[#374151]">
-                Welcome Back
+                Selamat Datang Kembali
               </h2>
-              <p className="text-[#6b7280] mt-2">
-                Sign in to your Testoria account
-              </p>
+              <p className="text-[#6b7280] mt-2">Masuk ke akun Testoria Anda</p>
             </div>
 
             {/* Desktop Header */}
             <div className="hidden lg:block text-center mb-8">
-              <h2 className="text-3xl font-bold text-[#374151]">Sign In</h2>
-              <p className="text-[#6b7280] mt-2">Access your account</p>
+              <h2 className="text-3xl font-bold text-[#374151]">Masuk</h2>
+              <p className="text-[#6b7280] mt-2"></p>
             </div>
 
             {/* Login Form */}
@@ -223,7 +227,7 @@ export default function LoginPage() {
                     htmlFor="email"
                     className="block text-sm font-medium text-[#374151] mb-2"
                   >
-                    Email Address
+                    Alamat Email
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -236,7 +240,7 @@ export default function LoginPage() {
                       value={formData.email}
                       onChange={handleChange}
                       className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af] transition"
-                      placeholder="Enter your email"
+                      placeholder="Masukkan email Anda"
                     />
                   </div>
                 </div>
@@ -247,7 +251,7 @@ export default function LoginPage() {
                     htmlFor="password"
                     className="block text-sm font-medium text-[#374151] mb-2"
                   >
-                    Password
+                    Kata Sandi
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -260,7 +264,7 @@ export default function LoginPage() {
                       value={formData.password}
                       onChange={handleChange}
                       className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af] transition"
-                      placeholder="Enter your password"
+                      placeholder="Masukkan kata sandi Anda"
                     />
                     <button
                       type="button"
@@ -276,25 +280,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <input
-                      id="remember-me"
-                      name="remember-me"
-                      type="checkbox"
-                      className="h-4 w-4 text-[#3b82f6] focus:ring-[#3b82f6] border-gray-300 rounded"
-                    />
-                    <label
-                      htmlFor="remember-me"
-                      className="ml-2 block text-sm text-[#4b5563]"
-                    >
-                      Remember me
-                    </label>
-                  </div>
-
-                </div>
-
                 {/* Submit Button */}
                 <button
                   type="submit"
@@ -305,11 +290,11 @@ export default function LoginPage() {
                     {isLoading ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Signing In...
+                        Masuk...
                       </>
                     ) : (
                       <>
-                        Sign In
+                        Masuk
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
@@ -324,7 +309,7 @@ export default function LoginPage() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white text-[#6b7280]">
-                    New to Testoria?
+                    Baru di Testoria?
                   </span>
                 </div>
               </div>
@@ -334,14 +319,16 @@ export default function LoginPage() {
                 href="/register"
                 className="w-full flex justify-center items-center px-4 py-3 border border-[#3b82f6] rounded-lg text-[#3b82f6] bg-white hover:bg-[#f0f9ff] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 transition duration-200 font-semibold group"
               >
-                Create new account
+                Buat akun baru
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
             {/* Mobile Features - only visible on small screens */}
             <div className="lg:hidden mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Why Choose Testoria?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+                Mengapa Memilih Testoria?
+              </h3>
               <div className="space-y-4">
                 {features.slice(0, 2).map((feature, index) => (
                   <div key={index} className="flex items-center space-x-3">
@@ -349,8 +336,12 @@ export default function LoginPage() {
                       <feature.icon className="w-4 h-4 text-blue-600" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900">{feature.title}</h4>
-                      <p className="text-xs text-gray-600">{feature.description}</p>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        {feature.title}
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        {feature.description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -360,6 +351,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-    
   );
 }

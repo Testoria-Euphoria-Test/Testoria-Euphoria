@@ -8,7 +8,7 @@ export const handleLogout = async () => {
   cookieStore.delete("Authorization");
   cookieStore.delete("x-user-id");
   cookieStore.delete("x-user-role");
-  cookieStore.delete("user-role"); // Delete the client-accessible role cookie
+  cookieStore.delete("user-role");
 
   redirect("/login");
 };

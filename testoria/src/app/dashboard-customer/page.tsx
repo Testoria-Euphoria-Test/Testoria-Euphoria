@@ -72,7 +72,7 @@ export default function DashboardCustomerPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       const fallbackCategories = [
-        { _id: "all", name: "All Categories" },
+        { _id: "all", name: "Semua Kategori" },
         { _id: "685baa87dc36f1fa426c9831", name: "CPNS" },
         { _id: "685f64151ead9f4f152b2197", name: "SKD Kedinasan" },
         { _id: "685f6fcc1ead9f4f152b2198", name: "SNBT" },
@@ -106,14 +106,14 @@ export default function DashboardCustomerPage() {
 
         if (validCategories.length > 0) {
           setCategories([
-            { _id: "all", name: "All Categories" },
+            { _id: "all", name: "Semua Kategori" },
             ...validCategories,
           ]);
         } else {
-          throw new Error("No valid categories");
+          throw new Error("Tidak ada kategori yang valid");
         }
       } catch (error) {
-        console.log("Using fallback categories due to:", error);
+        console.log("Menggunakan fallback kategori karena:", error);
         setCategories(fallbackCategories);
       }
     };
@@ -124,27 +124,27 @@ export default function DashboardCustomerPage() {
   const navigationItems = [
     {
       id: "browse",
-      label: "Browse Packages",
+      label: "Telusuri Paket",
       icon: Package,
       type: "tab",
     },
     {
       id: "my-packages",
-      label: "My Packages",
+      label: "Paket Saya",
       icon: BookOpen,
       type: "button",
       href: "/my-package",
     },
     {
       id: "payment-history",
-      label: "Payment History",
+      label: "Riwayat Pembayaran",
       icon: CreditCard,
       type: "button",
       href: "/payment-history",
     },
     {
       id: "tryout-history",
-      label: "Tryout History",
+      label: "Riwayat Tryout",
       icon: FileText,
       type: "button",
       href: "/tryout-history",
@@ -232,7 +232,7 @@ export default function DashboardCustomerPage() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading packages...</p>
+            <p className="mt-4 text-gray-600">Memuat paket...</p>
           </div>
         </div>
       </div>
@@ -245,13 +245,13 @@ export default function DashboardCustomerPage() {
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
           <div className="text-center max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-2">Terjadi Kesalahan</h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             >
-              Try Again
+              Coba Lagi
             </button>
           </div>
         </div>
@@ -267,7 +267,7 @@ export default function DashboardCustomerPage() {
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Dashboard Customer
+              Dashboard Pelanggan
             </h1>
           </div>
 
@@ -313,10 +313,10 @@ export default function DashboardCustomerPage() {
                       <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="Search packages..."
+                        placeholder="Cari paket..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-12 pr-4 py-3 w-full sm:w-80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white"
+                        className="pl-12 pr-4 py-3 w-full sm:w-80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white text-gray-600"
                       />
                     </div>
 
@@ -324,7 +324,7 @@ export default function DashboardCustomerPage() {
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium min-w-[200px]"
+                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium min-w-[200px] text-gray-400"
                     >
                       {categories.map((category) => (
                         <option key={category._id} value={category._id}>
@@ -339,14 +339,14 @@ export default function DashboardCustomerPage() {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium"
+                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium text-gray-400"
                     >
-                      <option value="popular">Most Popular</option>
-                      <option value="newest">Newest</option>
-                      <option value="oldest">Oldest</option>
-                      <option value="title">Title A-Z</option>
-                      <option value="price-low">Price: Low to High</option>
-                      <option value="price-high">Price: High to Low</option>
+                      <option value="popular">Paling Populer</option>
+                      <option value="newest">Terbaru</option>
+                      <option value="oldest">Terlama</option>
+                      <option value="title">Judul A-Z</option>
+                      <option value="price-low">Harga: Termurah</option>
+                      <option value="price-high">Harga: Termahal</option>
                     </select>
 
                     {/* View Mode */}
@@ -374,7 +374,6 @@ export default function DashboardCustomerPage() {
                     </div>
                   </div>
                 </div>
-
               </div>
             )}
 
@@ -419,13 +418,13 @@ export default function DashboardCustomerPage() {
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 mb-3">
                         {searchTerm || selectedCategory !== "all"
-                          ? "No packages found"
-                          : "No packages available"}
+                          ? "Paket tidak ditemukan"
+                          : "Belum ada paket"}
                       </h3>
                       <p className="text-gray-600 text-lg max-w-md mx-auto mb-4">
                         {searchTerm || selectedCategory !== "all"
-                          ? "Try adjusting your search or filter criteria to find the perfect test package."
-                          : "There are no packages available at the moment. Please check back later."}
+                          ? "Coba ubah kata kunci pencarian atau filter untuk menemukan paket yang sesuai."
+                          : "Belum ada paket yang tersedia saat ini. Silakan cek kembali nanti."}
                       </p>
                       {(searchTerm || selectedCategory !== "all") && (
                         <button
@@ -435,7 +434,7 @@ export default function DashboardCustomerPage() {
                           }}
                           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                          Clear Filters
+                          Hapus Filter
                         </button>
                       )}
                     </div>

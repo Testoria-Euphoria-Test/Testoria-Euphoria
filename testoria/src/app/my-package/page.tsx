@@ -18,7 +18,7 @@ export default function MyPackagePage() {
               className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
+              Kembali ke Dashboard
             </Link>
           </div>
         </div>

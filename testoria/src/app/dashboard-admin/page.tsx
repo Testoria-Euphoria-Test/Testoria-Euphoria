@@ -361,10 +361,10 @@ export default function DashboardAdminPage() {
       // Reset form and close modal
       setNewCategory({ name: "", description: "", icon: "" });
       setShowAddCategoryModal(false);
-      toast.success('Category created successfully');
+      toast.success('Kategori berhasil dibuat');
     } catch (err) {
       console.error('Error creating category:', err);
-      toast.error('Failed to create category');
+      toast.error('Gagal membuat kategori');
     } finally {
       setIsCreatingCategory(false);
     }
@@ -421,10 +421,10 @@ export default function DashboardAdminPage() {
       // Reset editing state
       setEditingCategoryId(null);
       setEditCategoryForm({ name: "", description: "" });
-      toast.success('Category updated successfully');
+      toast.success('Kategori berhasil diperbarui');
     } catch (err) {
       console.error('Error updating category:', err);
-      toast.error('Failed to update category');
+      toast.error('Gagal memperbarui kategori');
     } finally {
       setIsUpdatingCategory(false);
     }
@@ -473,7 +473,7 @@ export default function DashboardAdminPage() {
 
         // Remove from local state
         setUsers(prev => prev.filter(user => user._id !== id));
-        toast.success(`User "${name}" deleted successfully`);
+        toast.success(`Pengguna "${name}" berhasil dihapus`);
 
       } else if (type === 'category') {
         const response = await fetch(`/api/categories/${id}`, {
@@ -487,7 +487,7 @@ export default function DashboardAdminPage() {
 
         // Remove from local state
         setCategories(prev => prev.filter(cat => cat._id !== id));
-        toast.success(`Category "${name}" deleted successfully`);
+        toast.success(`Kategori "${name}" berhasil dihapus`);
 
       } else if (type === 'package') {
         const response = await fetch(`/api/packages/${id}`, {
@@ -514,11 +514,11 @@ export default function DashboardAdminPage() {
           });
         }
 
-        toast.success(`Package "${name}" deleted successfully`);
+        toast.success(`Paket "${name}" berhasil dihapus`);
       }
     } catch (err) {
       console.error(`Error deleting ${type}:`, err);
-      toast.error(`Failed to delete ${type}`);
+      toast.error(`Gagal menghapus ${type}`);
     } finally {
       setDeleteConfirmation({
         isOpen: false,
@@ -555,7 +555,7 @@ export default function DashboardAdminPage() {
       setIsViewingUser(true);
     } catch (err) {
       console.error('Error fetching user details:', err);
-      toast.error('Failed to fetch user details');
+      toast.error('Gagal mengambil detail pengguna');
     }
   };
 
@@ -594,10 +594,10 @@ export default function DashboardAdminPage() {
       // Reset editing state
       setEditingUserId(null);
       setEditUserForm({ name: "", email: "", role: "customer", status: "active" });
-      toast.success('User updated successfully');
+      toast.success('Pengguna berhasil diperbarui');
     } catch (err) {
       console.error('Error updating user:', err);
-      toast.error('Failed to update user');
+      toast.error('Gagal memperbarui pengguna');
     }
   };
 
@@ -667,7 +667,7 @@ export default function DashboardAdminPage() {
       }
     } catch (err) {
       console.error('Error clearing package filters:', err);
-      toast.error('Failed to clear package filters');
+      toast.error('Gagal menghapus filter paket');
     }
   };
 
@@ -739,7 +739,7 @@ export default function DashboardAdminPage() {
   // Functions for handling package status updates
   const handleEditStatus = (packageId: string, currentStatus: boolean) => {
     setEditingPackageId(packageId);
-    setSelectedStatus(currentStatus ? "published" : "pending");
+    setSelectedStatus(currentStatus ? "published" : "draft");
   };
 
   const handleSaveStatus = (packageId: string) => {
@@ -794,7 +794,7 @@ export default function DashboardAdminPage() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+            <p className="mt-4 text-gray-600">Memuat data dashboard...</p>
           </div>
         </div>
       </div>
@@ -809,14 +809,14 @@ export default function DashboardAdminPage() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              <strong className="font-bold">Error: </strong>
+              <strong className="font-bold">Kesalahan: </strong>
               <span className="block sm:inline">{error}</span>
             </div>
             <button
               onClick={loadDashboardData}
               className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Retry
+              Coba Lagi
             </button>
           </div>
         </div>
@@ -833,6 +833,13 @@ export default function DashboardAdminPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {statsData.map((stat, index) => {
               const IconComponent = stat.icon;
+              // Ubah label statistik ke Bahasa Indonesia
+              const labelMap: Record<string, string> = {
+                "Total Users": "Total Pengguna",
+                "Total Packages": "Total Paket",
+                "Active Creators": "Creator Aktif",
+                "Published Packages": "Paket Terpublikasi",
+              };
               return (
                 <div
                   key={index}
@@ -840,7 +847,9 @@ export default function DashboardAdminPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        {labelMap[stat.label] || stat.label}
+                      </p>
                       <p className="text-2xl font-bold text-gray-900">
                         {stat.value}
                       </p>
@@ -862,17 +871,18 @@ export default function DashboardAdminPage() {
             <div className="border-b border-gray-200">
               <nav className="flex space-x-8 px-6">
                 {[
-                  { id: "users", label: "Users Management" },
-                  { id: "packages", label: "Package Management" },
-                  { id: "categories", label: "Categories" },
+                  { id: "users", label: "Kelola Pengguna" },
+                  { id: "packages", label: "Kelola Paket" },
+                  { id: "categories", label: "Kelola Kategori" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
+                    className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                      activeTab === tab.id
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
                   >
                     {tab.label}
                   </button>
@@ -891,10 +901,10 @@ export default function DashboardAdminPage() {
                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Search by name or email..."
+                          placeholder="Cari nama atau email..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 text-gray-600"
                         />
                       </div>
 
@@ -904,9 +914,9 @@ export default function DashboardAdminPage() {
                         <select
                           value={roleFilter}
                           onChange={(e) => setRoleFilter(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparen text-gray-600"
                         >
-                          <option value="all">All Roles</option>
+                          <option value="all">Semua Role</option>
                           <option value="admin">Admin</option>
                           <option value="creator">Creator</option>
                           <option value="customer">Customer</option>
@@ -918,21 +928,23 @@ export default function DashboardAdminPage() {
                         <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-600"
                         >
-                          <option value="all">All Status</option>
+                          <option value="all">Semua Status</option>
                           <option value="active">Active</option>
                           <option value="inactive">Inactive</option>
                         </select>
                       </div>
 
                       {/* Clear Filters Button */}
-                      {(searchTerm || roleFilter !== "all" || statusFilter !== "all") && (
+                      {(searchTerm ||
+                        roleFilter !== "all" ||
+                        statusFilter !== "all") && (
                         <button
                           onClick={clearUserFilters}
                           className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
                         >
-                          Clear Filters
+                          Hapus Filter
                         </button>
                       )}
                     </div>
@@ -940,14 +952,21 @@ export default function DashboardAdminPage() {
                     {/* Results Count */}
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <span className="font-medium">
-                        Showing {filteredUsers.length} of {users.length} users
+                        Menampilkan {filteredUsers.length} dari {users.length}{" "}
+                        pengguna
                       </span>
                       <div className="flex items-center space-x-2">
                         <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                          Active: {users.filter(u => (u.status || 'active') === 'active').length}
+                          Active:{" "}
+                          {
+                            users.filter(
+                              (u) => (u.status || "active") === "active"
+                            ).length
+                          }
                         </span>
                         <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                          Inactive: {users.filter(u => u.status === 'inactive').length}
+                          Inactive:{" "}
+                          {users.filter((u) => u.status === "inactive").length}
                         </span>
                       </div>
                     </div>
@@ -959,19 +978,19 @@ export default function DashboardAdminPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            User
+                            Nama Pengguna
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Role
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Join Date
+                            Tanggal Bergabung
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
+                            Aksi
                           </th>
                         </tr>
                       </thead>
@@ -1005,10 +1024,10 @@ export default function DashboardAdminPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                                  user.status || 'active'
+                                  user.status || "active"
                                 )}`}
                               >
-                                {user.status || 'active'}
+                                {user.status || "active"}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -1016,22 +1035,24 @@ export default function DashboardAdminPage() {
                                 <button
                                   onClick={() => handleViewUser(user._id)}
                                   className="text-blue-600 hover:text-blue-900"
-                                  title="View Details"
+                                  title="Lihat Detail"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleEditUser(user)}
                                   className="text-green-600 hover:text-green-900"
-                                  title="Edit User"
+                                  title="Edit Pengguna"
                                 >
                                   <Edit className="w-4 h-4" />
                                 </button>
-                                {user.role !== 'admin' && (
+                                {user.role !== "admin" && (
                                   <button
-                                    onClick={() => handleDeleteUser(user._id, user.name)}
+                                    onClick={() =>
+                                      handleDeleteUser(user._id, user.name)
+                                    }
                                     className="text-red-600 hover:text-red-900"
-                                    title="Delete User"
+                                    title="Hapus Pengguna"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
@@ -1056,10 +1077,10 @@ export default function DashboardAdminPage() {
                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Search by package title or creator..."
+                          placeholder="Cari paket atau creator..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 text-gray-600"
                         />
                       </div>
 
@@ -1068,10 +1089,12 @@ export default function DashboardAdminPage() {
                         <Filter className="w-4 h-4 text-gray-400" />
                         <select
                           value={packageCategoryFilter}
-                          onChange={(e) => setPackageCategoryFilter(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          onChange={(e) =>
+                            setPackageCategoryFilter(e.target.value)
+                          }
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-600"
                         >
-                          <option value="all">All Categories</option>
+                          <option value="all">Semua Kategori</option>
                           {categories.map((category) => (
                             <option key={category._id} value={category._id}>
                               {category.name}
@@ -1084,22 +1107,26 @@ export default function DashboardAdminPage() {
                       <div className="flex items-center space-x-2">
                         <select
                           value={packageStatusFilter}
-                          onChange={(e) => setPackageStatusFilter(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          onChange={(e) =>
+                            setPackageStatusFilter(e.target.value)
+                          }
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-600"
                         >
-                          <option value="all">All Status</option>
-                          <option value="published">Published</option>
+                          <option value="all">Semua Status</option>
+                          <option value="published">Terpublikasi</option>
                           <option value="draft">Draft</option>
                         </select>
                       </div>
 
                       {/* Clear Filters Button */}
-                      {(searchTerm || packageCategoryFilter !== "all" || packageStatusFilter !== "all") && (
+                      {(searchTerm ||
+                        packageCategoryFilter !== "all" ||
+                        packageStatusFilter !== "all") && (
                         <button
                           onClick={clearPackageFilters}
                           className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
                         >
-                          Clear Filters
+                          Hapus Filter
                         </button>
                       )}
                     </div>
@@ -1107,14 +1134,16 @@ export default function DashboardAdminPage() {
                     {/* Results Count */}
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <span className="font-medium">
-                        Showing {filteredPackages.length} of {packages.length} packages
+                        Menampilkan {filteredPackages.length} dari{" "}
+                        {packages.length} paket
                       </span>
                       <div className="flex items-center space-x-2">
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                          Published: {packages.filter(p => p.isPublished).length}
+                          Terpublikasi:{" "}
+                          {packages.filter((p) => p.isPublished).length}
                         </span>
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                          Draft: {packages.filter(p => !p.isPublished).length}
+                          Draft: {packages.filter((p) => !p.isPublished).length}
                         </span>
                       </div>
                     </div>
@@ -1126,22 +1155,22 @@ export default function DashboardAdminPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Package
+                            Nama Paket
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Creator
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Category
+                            Kategori
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Price
+                            Harga
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
+                            Aksi
                           </th>
                         </tr>
                       </thead>
@@ -1180,7 +1209,7 @@ export default function DashboardAdminPage() {
                                     }
                                     className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   >
-                                    <option value="pending">Pending</option>
+                                    <option value="draft">draft</option>
                                     <option value="published">Published</option>
                                   </select>
                                   <button
@@ -1199,10 +1228,13 @@ export default function DashboardAdminPage() {
                               ) : (
                                 <div className="flex items-center space-x-2">
                                   <span
-                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${pkg.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                      }`}
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                      pkg.isPublished
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-yellow-100 text-yellow-800"
+                                    }`}
                                   >
-                                    {pkg.isPublished ? 'Published' : 'Draft'}
+                                    {pkg.isPublished ? "Terpublikasi" : "Draft"}
                                   </span>
                                   <button
                                     onClick={() =>
@@ -1219,9 +1251,11 @@ export default function DashboardAdminPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex items-center justify-center">
                                 <button
-                                  onClick={() => handleDeletePackage(pkg._id, pkg.title)}
+                                  onClick={() =>
+                                    handleDeletePackage(pkg._id, pkg.title)
+                                  }
                                   className="text-red-600 hover:text-red-900"
-                                  title="Delete Package"
+                                  title="Hapus Paket"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -1240,14 +1274,14 @@ export default function DashboardAdminPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Categories Management
+                      Kelola Kategori
                     </h3>
                     <button
                       onClick={() => setShowAddCategoryModal(true)}
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Category
+                      Tambah Kategori
                     </button>
                   </div>
 
@@ -1256,14 +1290,18 @@ export default function DashboardAdminPage() {
                       <div className="col-span-full text-center py-8">
                         <div className="text-gray-500">
                           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p className="text-lg font-medium text-gray-900 mb-2">No categories yet</p>
-                          <p className="text-gray-600 mb-4">Create your first category to organize packages</p>
+                          <p className="text-lg font-medium text-gray-900 mb-2">
+                            Belum ada kategori
+                          </p>
+                          <p className="text-gray-600 mb-4">
+                            Buat kategori pertama Anda untuk mengelola paket
+                          </p>
                           <button
                             onClick={() => setShowAddCategoryModal(true)}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 inline-flex items-center"
                           >
                             <Plus className="w-4 h-4 mr-2" />
-                            Add First Category
+                            Tambah Kategori Pertama
                           </button>
                         </div>
                       </div>
@@ -1284,21 +1322,23 @@ export default function DashboardAdminPage() {
                                     (p) => p.categoryId === category._id
                                   ).length
                                 }{" "}
-                                packages
+                                paket
                               </p>
                             </div>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleEditCategory(category)}
                                 className="text-green-600 hover:text-green-900"
-                                title="Edit Category"
+                                title="Edit Kategori"
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteCategory(category._id)}
+                                onClick={() =>
+                                  handleDeleteCategory(category._id)
+                                }
                                 className="text-red-600 hover:text-red-900"
-                                title="Delete Category"
+                                title="Hapus Kategori"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -1317,7 +1357,9 @@ export default function DashboardAdminPage() {
             <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Add New Category</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Tambah Kategori Baru
+                  </h3>
                   <button
                     onClick={() => {
                       setShowAddCategoryModal(false);
@@ -1331,23 +1373,37 @@ export default function DashboardAdminPage() {
                 <form onSubmit={handleCreateCategory}>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Category Name *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Nama Kategori *
+                      </label>
                       <input
                         type="text"
                         value={newCategory.name}
-                        onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter category name"
+                        onChange={(e) =>
+                          setNewCategory((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+                        placeholder="Masukkan nama kategori"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Deskripsi (Opsional)
+                      </label>
                       <textarea
                         value={newCategory.description}
-                        onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter category description"
+                        onChange={(e) =>
+                          setNewCategory((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+                        placeholder="Masukkan deskripsi kategori"
                         rows={3}
                       />
                     </div>
@@ -1362,14 +1418,14 @@ export default function DashboardAdminPage() {
                       className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                       disabled={isCreatingCategory}
                     >
-                      Cancel
+                      Batal
                     </button>
                     <button
                       type="submit"
                       className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isCreatingCategory || !newCategory.name.trim()}
                     >
-                      {isCreatingCategory ? 'Creating...' : 'Create Category'}
+                      {isCreatingCategory ? "Membuat..." : "Buat Kategori"}
                     </button>
                   </div>
                 </form>
@@ -1382,7 +1438,9 @@ export default function DashboardAdminPage() {
             <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Edit Category</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Edit Kategori
+                  </h3>
                   <button
                     onClick={handleCancelEditCategory}
                     className="text-gray-400 hover:text-gray-600"
@@ -1390,26 +1448,45 @@ export default function DashboardAdminPage() {
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <form onSubmit={(e) => { e.preventDefault(); handleSaveCategoryChanges(); }}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveCategoryChanges();
+                  }}
+                >
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Category Name *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Nama Kategori *
+                      </label>
                       <input
                         type="text"
                         value={editCategoryForm.name}
-                        onChange={(e) => setEditCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter category name"
+                        onChange={(e) =>
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+                        placeholder="Masukkan nama kategori"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Deskripsi (Opsional)
+                      </label>
                       <textarea
                         value={editCategoryForm.description}
-                        onChange={(e) => setEditCategoryForm(prev => ({ ...prev, description: e.target.value }))}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter category description"
+                        onChange={(e) =>
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-medium focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+                        placeholder="Masukkan deskripsi kategori"
                         rows={3}
                       />
                     </div>
@@ -1421,14 +1498,18 @@ export default function DashboardAdminPage() {
                       className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                       disabled={isUpdatingCategory}
                     >
-                      Cancel
+                      Batal
                     </button>
                     <button
                       type="submit"
                       className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isUpdatingCategory || !editCategoryForm.name.trim()}
+                      disabled={
+                        isUpdatingCategory || !editCategoryForm.name.trim()
+                      }
                     >
-                      {isUpdatingCategory ? 'Updating...' : 'Update Category'}
+                      {isUpdatingCategory
+                        ? "Memperbarui..."
+                        : "Perbarui Kategori"}
                     </button>
                   </div>
                 </form>
@@ -1441,7 +1522,9 @@ export default function DashboardAdminPage() {
             <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">User Details</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Detail Pengguna
+                  </h3>
                   <button
                     onClick={() => setIsViewingUser(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -1451,44 +1534,76 @@ export default function DashboardAdminPage() {
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedUser.name}</p>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Nama
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.name}
+                    </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.email}
+                    </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Role</label>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadge(selectedUser.role)}`}>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Role
+                    </label>
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadge(
+                        selectedUser.role
+                      )}`}
+                    >
                       {selectedUser.role}
                     </span>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(selectedUser.status || 'active')}`}>
-                      {selectedUser.status || 'active'}
+                    <label className="block text-sm font-medium text-gray-700">
+                      Status
+                    </label>
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                        selectedUser.status || "active"
+                      )}`}
+                    >
+                      {selectedUser.status === "inactive"
+                        ? "Inactive"
+                        : "Active"}
                     </span>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Joined</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Bergabung
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {new Date(selectedUser.createdAt).toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      {new Date(selectedUser.createdAt).toLocaleDateString(
+                        "id-ID",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </p>
                   </div>
                   {selectedUser.updatedAt && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Terakhir Diperbarui
+                      </label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {new Date(selectedUser.updatedAt).toLocaleDateString('id-ID', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
+                        {new Date(selectedUser.updatedAt).toLocaleDateString(
+                          "id-ID",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
                       </p>
                     </div>
                   )}
@@ -1502,7 +1617,9 @@ export default function DashboardAdminPage() {
             <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Edit User</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Edit Pengguna
+                  </h3>
                   <button
                     onClick={handleCancelEditUser}
                     className="text-gray-400 hover:text-gray-600"
@@ -1510,33 +1627,62 @@ export default function DashboardAdminPage() {
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <form onSubmit={(e) => { e.preventDefault(); handleSaveUserChanges(); }}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveUserChanges();
+                  }}
+                >
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Name</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Nama
+                      </label>
                       <input
                         type="text"
                         value={editUserForm.name}
-                        onChange={(e) => setEditUserForm(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) =>
+                          setEditUserForm((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
                       <input
                         type="email"
                         value={editUserForm.email}
-                        onChange={(e) => setEditUserForm(prev => ({ ...prev, email: e.target.value }))}
+                        onChange={(e) =>
+                          setEditUserForm((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Role</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Role
+                      </label>
                       <select
                         value={editUserForm.role}
-                        onChange={(e) => setEditUserForm(prev => ({ ...prev, role: e.target.value as "admin" | "customer" | "creator" }))}
+                        onChange={(e) =>
+                          setEditUserForm((prev) => ({
+                            ...prev,
+                            role: e.target.value as
+                              | "admin"
+                              | "customer"
+                              | "creator",
+                          }))
+                        }
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="customer">Customer</option>
@@ -1545,10 +1691,17 @@ export default function DashboardAdminPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Status</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
                       <select
                         value={editUserForm.status}
-                        onChange={(e) => setEditUserForm(prev => ({ ...prev, status: e.target.value as "active" | "inactive" }))}
+                        onChange={(e) =>
+                          setEditUserForm((prev) => ({
+                            ...prev,
+                            status: e.target.value as "active" | "inactive",
+                          }))
+                        }
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="active">Active</option>
@@ -1562,13 +1715,13 @@ export default function DashboardAdminPage() {
                       onClick={handleCancelEditUser}
                       className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
-                      Cancel
+                      Batal
                     </button>
                     <button
                       type="submit"
                       className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
                     >
-                      Save Changes
+                      Simpan Perubahan
                     </button>
                   </div>
                 </form>
@@ -1583,7 +1736,9 @@ export default function DashboardAdminPage() {
         <div className="fixed inset-0 bg-gray-300 bg-opacity-10 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Confirm Deletion</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Konfirmasi Hapus
+              </h3>
               <button
                 onClick={cancelDelete}
                 className="text-gray-400 hover:text-gray-600"
@@ -1593,8 +1748,8 @@ export default function DashboardAdminPage() {
             </div>
             <div className="mb-4">
               <p className="text-sm text-gray-700">
-                Are you sure you want to delete {deleteConfirmation.type} "{deleteConfirmation.name}"?
-                This action cannot be undone.
+                Apakah Anda yakin ingin menghapus {deleteConfirmation.type} "
+                {deleteConfirmation.name}"? Tindakan ini tidak dapat dibatalkan.
               </p>
             </div>
             <div className="flex justify-end space-x-3">
@@ -1602,13 +1757,13 @@ export default function DashboardAdminPage() {
                 onClick={cancelDelete}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Cancel
+                Batal
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
               >
-                Delete
+                Hapus
               </button>
             </div>
           </div>
@@ -1620,21 +1775,21 @@ export default function DashboardAdminPage() {
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#363636',
-            color: '#fff',
+            background: "#363636",
+            color: "#fff",
           },
           success: {
             duration: 3000,
             iconTheme: {
-              primary: '#4aed88',
-              secondary: '#fff',
+              primary: "#4aed88",
+              secondary: "#fff",
             },
           },
           error: {
             duration: 4000,
             iconTheme: {
-              primary: '#ff4b4b',
-              secondary: '#fff',
+              primary: "#ff4b4b",
+              secondary: "#fff",
             },
           },
         }}

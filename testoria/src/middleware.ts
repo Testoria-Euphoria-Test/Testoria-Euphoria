@@ -94,5 +94,6 @@ export const config = {
         '/api/user-answers/:path*',
         '/api/results/:path*',
         '/api/test-ai/:path*'
+        
     ],
 }
