@@ -40,7 +40,7 @@ export default async function Home() {
               </div>
 
               <h1 className="text-4xl lg:text-6xl font-black tracking-tight mb-6 leading-tight uppercase">
-                Master Your <span className="text-blue-400">Future</span>
+                Kuasai <span className="text-blue-400">Masa Depanmu</span>
               </h1>
 
               <p className="text-xl text-gray-300 mb-8 leading-relaxed">
@@ -52,12 +52,12 @@ export default async function Home() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/login">
                   <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-full shadow-xl hover:scale-105 hover:from-blue-500 hover:to-blue-600 transition-all duration-300 text-lg">
-                    Get Started
+                    Mulai Sekarang
                   </button>
                 </Link>
                 <Link href="#packages">
                   <button className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-black transition-all duration-300 text-lg">
-                    Browse Packages
+                    Jelajahi Paket
                   </button>
                 </Link>
               </div>
@@ -68,7 +68,7 @@ export default async function Home() {
                 width={500}
                 height={400}
                 src="/undraw_master-plan_m8ym.svg"
-                alt="Master Plan Illustration"
+                alt="Ilustrasi Rencana Master"
                 className="w-full h-auto max-w-lg transform hover:scale-105 transition-transform duration-300"
               />
             </div>

@@ -102,7 +102,7 @@ export default function ProfileCreator({
               className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              {isLoggedIn ? "Back to Dashboard" : "Back to Home"}
+              {isLoggedIn ? "Kembali ke Dashboard" : "Kembali ke Beranda"}
             </Link>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function ProfileCreator({
               className="inline-flex items-center text-white  transition-colors bg-blue-600 p-1.5 rounded-2xl font-bold"
             >
               <ArrowLeft className="w-5 h-5 mr-2 " />
-              {isLoggedIn ? "Back to Dashboard" : "Back to Home"}
+              {isLoggedIn ? "Kembali ke Dashboard" : "Kembali ke Beranda"}
             </Link>
           </div>
         </div>

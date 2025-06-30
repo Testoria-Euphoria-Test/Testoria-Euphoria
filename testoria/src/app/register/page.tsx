@@ -32,7 +32,7 @@ export default function RegisterPage() {
 
         // Validate password confirmation
         if (formData.password !== formData.confirmPassword) {
-            toast.error('Passwords do not match')
+            toast.error('Password tidak cocok')
             setIsLoading(false)
             return
         }
@@ -54,7 +54,7 @@ export default function RegisterPage() {
             const data = await response.json()
 
             if (response.ok) {
-                toast.success(data.message || 'Registration successful!')
+                toast.success(data.message || 'Pendaftaran berhasil!')
                 setFormData({
                     name: '',
                     email: '',
@@ -67,11 +67,11 @@ export default function RegisterPage() {
                     router.push('/login')
                 }, 1500) // Give time for toast to show
             } else {
-                toast.error(data.message || 'Registration failed')
+                toast.error(data.message || 'Pendaftaran gagal')
             }
         } catch (error) {
             console.log('Registration error:', error);
-            toast.error('An error occurred. Please try again.')
+            toast.error('Terjadi kesalahan. Silakan coba lagi.')
         } finally {
             setIsLoading(false)
         }
@@ -88,8 +88,8 @@ export default function RegisterPage() {
                                 <UserCircle className="w-8 h-8 text-white" />
                             </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-[#374151]">Create Account</h2>
-                        <p className="text-[#4b5563] mt-2">Join Testoria today</p>
+                        <h2 className="text-3xl font-bold text-[#374151]">Buat Akun</h2>
+                        <p className="text-[#4b5563] mt-2">Bergabung dengan Testoria hari ini</p>
                     </div>
                     {/* Form */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                             {/* Name Field */}
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Full Name
+                                    Nama Lengkap
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -110,7 +110,7 @@ export default function RegisterPage() {
                                         value={formData.name}
                                         onChange={handleChange}
                                         className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Enter your full name"
+                                        placeholder="Masukkan nama lengkap Anda"
                                     />
                                 </div>
                             </div>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
                             {/* Email Field */}
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Email Address
+                                    Email
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,7 +131,7 @@ export default function RegisterPage() {
                                         value={formData.email}
                                         onChange={handleChange}
                                         className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Enter your email"
+                                        placeholder="Masukkan email Anda"
                                     />
                                 </div>
                             </div>
@@ -139,7 +139,7 @@ export default function RegisterPage() {
                             {/* Role Field */}
                             <div>
                                 <label htmlFor="role" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Account Type
+                                    Akun Sebagai
                                 </label>
                                 <select
                                     id="role"
@@ -148,8 +148,8 @@ export default function RegisterPage() {
                                     onChange={handleChange}
                                     className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] bg-white"
                                 >
-                                    <option value="customer">Customer</option>
-                                    <option value="creator">Creator</option>
+                                    <option value="customer">Pelanggan</option>
+                                    <option value="creator">Pembuat Konten</option>
                                 </select>
                             </div>
 
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                                         value={formData.password}
                                         onChange={handleChange}
                                         className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Enter your password"
+                                        placeholder="Masukkan password Anda"
                                     />
                                     <button
                                         type="button"
@@ -188,7 +188,7 @@ export default function RegisterPage() {
                             {/* Confirm Password Field */}
                             <div>
                                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#374151] mb-2">
-                                    Confirm Password
+                                    Konfirmasi Password
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -201,7 +201,7 @@ export default function RegisterPage() {
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
                                         className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-[#374151] placeholder-[#9ca3af]"
-                                        placeholder="Confirm your password"
+                                        placeholder="Konfirmasi password Anda"
                                     />
                                     <button
                                         type="button"
@@ -223,18 +223,18 @@ export default function RegisterPage() {
                                 disabled={isLoading}
                                 className="w-full bg-[#3b82f6] text-white py-3 px-4 rounded-md hover:bg-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 transition duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isLoading ? 'Creating Account...' : 'Create Account'}
+                                {isLoading ? 'Membuat Akun...' : 'Buat Akun'}
                             </button>
                         </form>
                         {/* Login Link */}
                         <div className="mt-6 text-center">
                             <p className="text-sm text-[#4b5563]">
-                                Already have an account?{' '}
+                                Sudah punya akun?{' '}
                                 <Link
                                     href="/login"
                                     className="font-medium text-[#3b82f6] hover:text-[#2563eb] transition"
                                 >
-                                    Sign in
+                                    Masuk
                                 </Link>
                             </p>
                         </div>

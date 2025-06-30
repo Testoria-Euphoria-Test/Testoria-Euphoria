@@ -427,7 +427,7 @@ export default function TryoutHistoryPage() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading tryout history...</p>
+            <p className="mt-4 text-gray-600">Memuat riwayat tryout...</p>
           </div>
         </div>
       </div>
@@ -440,13 +440,13 @@ export default function TryoutHistoryPage() {
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
           <div className="text-center max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-2">Kesalahan</h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchTryoutHistory}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             >
-              Try Again
+              Coba Lagi
             </button>
           </div>
         </div>
@@ -466,7 +466,7 @@ export default function TryoutHistoryPage() {
               className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
+              Kembali ke Dashboard
             </Link>
           </div>
         </div>
@@ -477,41 +477,16 @@ export default function TryoutHistoryPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Tryout History
+                    Riwayat Tryout
                   </h1>
                   <p className="text-gray-600">
-                    Review your test performance and track your progress over
-                    time.
+                    Tinjau performa tes Anda dan pantau perkembangan Anda dari waktu ke waktu.
                   </p>
                 </div>
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {historyCount} attempts
+                  {historyCount} percobaan
                 </span>
               </div>
-
-              {/* Error/Demo Data Notice */}
-              {error && (
-                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-5 w-5 text-yellow-400"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-yellow-700">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {historyCount === 0 ? (
                 <div className="text-center py-16">
@@ -519,17 +494,16 @@ export default function TryoutHistoryPage() {
                     <FileText className="w-12 h-12 text-gray-400" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    No Tryout History
+                    Tidak Ada Riwayat Tryout
                   </h3>
                   <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                    You haven&apos;t completed any tryouts yet. Start practicing
-                    to see your results here.
+                    Anda belum menyelesaikan tryout apapun. Mulai latihan untuk melihat hasil Anda di sini.
                   </p>
                   <Link
                     href="/dashboard-customer"
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
                   >
-                    Browse Packages
+                    Jelajahi Paket
                   </Link>
                 </div>
               ) : (
@@ -551,16 +525,16 @@ export default function TryoutHistoryPage() {
                               <div className="flex items-center space-x-3 mb-2">
                                 <FileText className="w-5 h-5 text-gray-400" />
                                 <h4 className="text-lg font-semibold text-gray-900">
-                                  {tryout.packageTitle || "Unknown Package"}
+                                  {tryout.packageTitle || "Paket Tidak Diketahui"}
                                 </h4>
                                 <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-                                  Score: {safeNumber(tryout.score)}%
+                                  Nilai: {safeNumber(tryout.score)}%
                                 </span>
                               </div>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                 <div>
                                   <span className="text-gray-500 font-medium">
-                                    Score:
+                                    Nilai:
                                   </span>
                                   <p
                                     className={`font-bold text-xl md:text-2xl ${getScoreColor(
@@ -572,7 +546,7 @@ export default function TryoutHistoryPage() {
                                 </div>
                                 <div>
                                   <span className="text-gray-500 font-medium">
-                                    Correct Answers:
+                                    Jawaban Benar:
                                   </span>
                                   <p className="font-semibold text-gray-900">
                                     {safeNumber(tryout.correctAnswers)}/
@@ -581,15 +555,15 @@ export default function TryoutHistoryPage() {
                                 </div>
                                 <div>
                                   <span className="text-gray-500 font-medium">
-                                    Duration:
+                                    Durasi:
                                   </span>
                                   <p className="font-semibold text-gray-900">
-                                    {safeNumber(tryout.duration)} minutes
+                                    {safeNumber(tryout.duration)} menit
                                   </p>
                                 </div>
                                 <div>
                                   <span className="text-gray-500 font-medium">
-                                    Completed:
+                                    Selesai:
                                   </span>
                                   <p className="font-semibold text-gray-900 text-xs sm:text-sm">
                                     {formatDateTime(tryout.completedAt)}
@@ -609,14 +583,14 @@ export default function TryoutHistoryPage() {
                               {isLoadingDetails ? (
                                 <>
                                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                  <span>Loading...</span>
+                                  <span>Memuat...</span>
                                 </>
                               ) : (
                                 <>
                                   <span>
                                     {isExpanded
-                                      ? "Hide Details"
-                                      : "View Details"}
+                                      ? "Sembunyikan Detail"
+                                      : "Lihat Detail"}
                                   </span>
                                   {isExpanded ? (
                                     <ChevronUp className="w-4 h-4" />
@@ -635,26 +609,26 @@ export default function TryoutHistoryPage() {
                             <div className="p-6">
                               <div className="flex items-center justify-between mb-4">
                                 <h5 className="text-lg font-semibold text-gray-900">
-                                  Question Review
+                                  Review Soal
                                 </h5>
                                 <div className="text-sm text-gray-600">
-                                  {details.questions.length} question
+                                  {details.questions.length} soal
                                   {details.questions.length !== 1
-                                    ? "s"
+                                    ? ""
                                     : ""} •{" "}
                                   {
                                     details.userAnswers.filter(
                                       (ua) => ua.isCorrect
                                     ).length
                                   }{" "}
-                                  correct
+                                  benar
                                 </div>
                               </div>
 
                               {details.questions.length === 0 ? (
                                 <div className="text-center py-8">
                                   <p className="text-gray-500">
-                                    No questions found for this tryout.
+                                    Tidak ada soal untuk tryout ini.
                                   </p>
                                 </div>
                               ) : (
@@ -684,7 +658,7 @@ export default function TryoutHistoryPage() {
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-2 mb-2">
                                               <span className="text-sm font-medium text-gray-500">
-                                                Question {index + 1}
+                                                Soal {index + 1}
                                               </span>
                                               <span
                                                 className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -694,8 +668,8 @@ export default function TryoutHistoryPage() {
                                                 }`}
                                               >
                                                 {isCorrect
-                                                  ? "Correct"
-                                                  : "Incorrect"}
+                                                  ? "Benar"
+                                                  : "Salah"}
                                               </span>
                                             </div>
 
@@ -706,7 +680,7 @@ export default function TryoutHistoryPage() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                                               <div>
                                                 <span className="text-gray-500 font-medium">
-                                                  Your Answer:
+                                                  Jawaban Anda:
                                                 </span>
                                                 <p
                                                   className={`font-semibold ${
@@ -723,12 +697,12 @@ export default function TryoutHistoryPage() {
                                                           `option${userAnswer.selectedAnswer}` as keyof QuestionType
                                                         ] as string
                                                       }`
-                                                    : "No answer recorded"}
+                                                    : "Tidak ada jawaban"}
                                                 </p>
                                               </div>
                                               <div>
                                                 <span className="text-gray-500 font-medium">
-                                                  Correct Answer:
+                                                  Jawaban Benar:
                                                 </span>
                                                 <p className="font-semibold text-green-600">
                                                   {question.correctAnswer}.{" "}
@@ -744,7 +718,7 @@ export default function TryoutHistoryPage() {
                                             {question.explanation && (
                                               <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                                                 <span className="text-blue-800 font-medium text-sm">
-                                                  Explanation:
+                                                  Penjelasan:
                                                 </span>
                                                 <p className="text-blue-700 text-sm mt-1">
                                                   {question.explanation}

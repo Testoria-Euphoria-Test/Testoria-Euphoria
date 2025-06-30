@@ -164,7 +164,7 @@ export default function PackagePageDetail({
               className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              {isLoggedIn ? "Back to Dashboard" : "Back to Home"}
+              {isLoggedIn ? "Kembali ke Dashboard" : "Kembali ke Beranda"}
             </Link>
           </div>
         </div>
@@ -250,10 +250,10 @@ export default function PackagePageDetail({
                       <h3 className="text-lg font-semibold text-gray-900">
                         {packageData.creator?.name ||
                           packageData.creatorName ||
-                          "Unknown Creator"}
+                          "Pembuat Tidak Diketahui"}
                       </h3>
                       <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                        {packageData.creator?.role || "Creator"}
+                        {packageData.creator?.role || "Pembuat"}
                       </span>
                     </div>
 
@@ -261,13 +261,13 @@ export default function PackagePageDetail({
                       <div className="flex items-center text-gray-600">
                         <Mail className="w-4 h-4 mr-2" />
                         <span>
-                          {packageData.creator?.email || "Email not available"}
+                          {packageData.creator?.email || "Email tidak tersedia"}
                         </span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Award className="w-4 h-4 mr-2" />
                         <span>
-                          Role: {packageData.creator?.role || "Creator"}
+                          Peran: {packageData.creator?.role || "Creator"}
                         </span>
                       </div>
                     </div>
@@ -287,8 +287,8 @@ export default function PackagePageDetail({
                     </div>
                     <p className="text-gray-600">
                       {packageData.price === 0
-                        ? "Free access"
-                        : "One-time payment"}
+                        ? "Gratis Akses"
+                        : "Sekali Bayar"}
                     </p>
                   </div>
 
@@ -330,7 +330,7 @@ export default function PackagePageDetail({
                       <div className="flex justify-between">
                         <span className="text-gray-600">Kategori</span>
                         <span className="font-medium">
-                          {packageData.category?.name || packageData.categoryName || "Not categorized"}
+                          {packageData.category?.name || packageData.categoryName || "Tidak dikategorikan"}
                         </span>
                       </div>
                       <div className="flex justify-between">

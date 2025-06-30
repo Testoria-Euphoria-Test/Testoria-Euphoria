@@ -26,21 +26,73 @@ export default function ButtonPayment({
 }) {
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>({
     hasPurchased: false,
   });
   const router = useRouter();
 
-  // ✅ Check payment status when component mounts
+  // Check authentication and payment status when component mounts
   useEffect(() => {
-    checkPaymentStatus();
+    checkAuthAndPaymentStatus();
   }, [packageId, packagePrice]);
 
-  const checkPaymentStatus = async () => {
+  const checkAuthAndPaymentStatus = async () => {
     try {
       setCheckingStatus(true);
 
-      // Check if user has already paid for this package
+      // Check authentication first
+      const authResponse = await fetch("/api/auth/check", {
+        credentials: "include",
+      });
+
+      if (authResponse.ok) {
+        setIsAuthenticated(true);
+
+        // If authenticated, check payment status
+        await checkPaymentStatus();
+      } else {
+        setIsAuthenticated(false);
+        setPaymentStatus({ hasPurchased: false });
+      }
+    } catch (error) {
+      console.error("Error checking auth and payment status:", error);
+      setIsAuthenticated(false);
+      setPaymentStatus({ hasPurchased: false });
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  const checkPaymentStatus = async () => {
+    try {
+      // For free packages, check if user has access (maybe through user-answers or results)
+      if (packagePrice === 0) {
+        const userAnswersResponse = await fetch(
+          `/api/user-answers?packageId=${packageId}`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (userAnswersResponse.ok) {
+          const userAnswersData = await userAnswersResponse.json();
+          const hasAccess =
+            userAnswersData.userAnswers &&
+            userAnswersData.userAnswers.length > 0;
+
+          setPaymentStatus({
+            hasPurchased: hasAccess,
+            paymentStatus: hasAccess ? "free_access" : undefined,
+            paymentDate: hasAccess ? new Date().toISOString() : undefined,
+          });
+        } else {
+          setPaymentStatus({ hasPurchased: false });
+        }
+        return;
+      }
+
+      // For paid packages, check payment records
       const response = await fetch("/api/payments", {
         credentials: "include",
       });
@@ -63,21 +115,74 @@ export default function ButtonPayment({
         } else {
           setPaymentStatus({ hasPurchased: false });
         }
-      } else if (response.status === 401) {
-        // User not authenticated, but don't redirect automatically in check
-        setPaymentStatus({ hasPurchased: false });
       } else {
         setPaymentStatus({ hasPurchased: false });
       }
     } catch (error) {
       console.error("Error checking payment status:", error);
       setPaymentStatus({ hasPurchased: false });
-    } finally {
-      setCheckingStatus(false);
     }
   };
 
-  const handlePay = async () => {
+  const handleFreePackage = async () => {
+    if (!isAuthenticated) {
+      toast.error(
+        "Silakan login terlebih dahulu untuk mengakses package gratis"
+      );
+      router.push("/login");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Grant access to free package by creating a record or just redirect to tryout
+      // You might want to create a record in the database to track free package access
+      const response = await fetch("/api/packages/access", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          packageId,
+          accessType: "free",
+        }),
+      });
+
+      if (response.ok) {
+        setPaymentStatus({
+          hasPurchased: true,
+          paymentStatus: "free_access",
+          paymentDate: new Date().toISOString(),
+        });
+
+        toast.success("Package gratis berhasil diakses!");
+
+        // Delay redirect to let user see the state change
+        setTimeout(() => {
+          router.push(`/packages/${packageId}/tryout`);
+        }, 1000);
+      } else if (response.status === 401) {
+        toast.error("Silakan login terlebih dahulu");
+        router.push("/login");
+      } else {
+        throw new Error("Failed to access free package");
+      }
+    } catch (error) {
+      console.error("Error accessing free package:", error);
+      toast.error("Terjadi kesalahan saat mengakses package gratis");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaidPackage = async () => {
+    if (!isAuthenticated) {
+      toast.error("Silakan login terlebih dahulu untuk melakukan pembayaran");
+      router.push("/login");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -93,8 +198,9 @@ export default function ButtonPayment({
 
       if (!resCreate.ok) {
         if (resCreate.status === 401) {
-          // User not authenticated, redirect to login
-          toast.error("Silakan login terlebih dahulu untuk melakukan pembayaran");
+          toast.error(
+            "Silakan login terlebih dahulu untuk melakukan pembayaran"
+          );
           router.push("/login");
           return;
         }
@@ -155,7 +261,6 @@ export default function ButtonPayment({
             }),
           });
 
-
           setPaymentStatus({
             hasPurchased: true,
             paymentStatus: "paid",
@@ -190,7 +295,7 @@ export default function ButtonPayment({
       });
     } catch (err) {
       console.error("Payment error:", err);
-      
+
       // Check if it's an authentication error
       if (err instanceof Error && err.message.includes("401")) {
         toast.error("Silakan login terlebih dahulu untuk melakukan pembayaran");
@@ -202,6 +307,14 @@ export default function ButtonPayment({
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClick = () => {
+    if (packagePrice === 0) {
+      handleFreePackage();
+    } else {
+      handlePaidPackage();
     }
   };
 
@@ -235,7 +348,7 @@ export default function ButtonPayment({
     });
   };
 
-
+  // Loading state
   if (checkingStatus) {
     return (
       <button
@@ -250,34 +363,52 @@ export default function ButtonPayment({
     );
   }
 
+  // Not authenticated - show login button
+  if (!isAuthenticated) {
+    return (
+      <button
+        onClick={() => router.push("/login")}
+        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition duration-200 flex-1"
+      >
+        Login untuk {packagePrice === 0 ? "Akses" : "Beli"}
+      </button>
+    );
+  }
 
-if (paymentStatus.hasPurchased) {
-  return (
-    <div className="flex-1">
-      <div>
+  // Already purchased - show access button
+  if (paymentStatus.hasPurchased) {
+    return (
+      <div className="flex-1">
         <button
           onClick={() => router.push(`/packages/${packageId}/tryout`)}
           className="w-full bg-green-500 text-white px-3 py-3 rounded text-sm hover:bg-green-600 transition duration-200"
         >
-          Akses Package
+          {paymentStatus.paymentStatus === "free_access"
+            ? "Akses Package"
+            : "Akses Package"}
         </button>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-  // ✅ Show "Bayar Sekarang" if not purchased
+  // Show appropriate button based on package price
   return (
     <button
-      onClick={handlePay}
+      onClick={handleClick}
       disabled={loading}
-      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-200 flex-1"
+      className={`px-4 py-2 rounded transition duration-200 flex-1 ${
+        packagePrice === 0
+          ? "bg-green-500 text-white hover:bg-green-600"
+          : "bg-blue-500 text-white hover:bg-blue-600"
+      }`}
     >
       {loading ? (
         <div className="flex items-center justify-center">
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
           Processing...
         </div>
+      ) : packagePrice === 0 ? (
+        "Ambil Gratis"
       ) : (
         "Bayar Sekarang"
       )}

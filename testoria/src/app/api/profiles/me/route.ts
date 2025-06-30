@@ -28,6 +28,26 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    // Get user info from middleware headers (requires auth)
+    const userId = request.headers.get("x-user-id");
+
+    if (!userId) {
+      throw { message: "Unauthorized - Authentication required", status: 401 };
+    }
+
+    const body: ProfileInput = await request.json();
+
+    // Create new profile for user
+    const result = await ProfileModel.create(userId, body);
+
+    return Response.json(result);
+  } catch (error) {
+    return errorHandler(error);
+  }
+}
+
 export async function PUT(request: Request) {
   try {
     // Get user info from middleware headers (requires auth)

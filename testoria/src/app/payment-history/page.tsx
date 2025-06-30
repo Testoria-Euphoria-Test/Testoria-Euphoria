@@ -1,4 +1,3 @@
-// /app/payment-history/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -85,7 +84,7 @@ export default function PaymentHistoryPage() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading payment history...</p>
+            <p className="mt-4 text-gray-600">Memuat riwayat pembayaran...</p>
           </div>
         </div>
       </div>
@@ -98,13 +97,13 @@ export default function PaymentHistoryPage() {
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
           <div className="text-center max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-2">Kesalahan</h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchPaymentHistory}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             >
-              Try Again
+              Coba Lagi
             </button>
           </div>
         </div>
@@ -124,7 +123,7 @@ export default function PaymentHistoryPage() {
               className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
+              Kembali ke Dashboard
             </Link>
           </div>
         </div>
@@ -135,14 +134,14 @@ export default function PaymentHistoryPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Payment History
+                    Riwayat Pembayaran
                   </h1>
                   <p className="text-gray-600">
-                    Track all your payment transactions and purchase history.
+                    Lacak semua transaksi pembayaran dan riwayat pembelian Anda.
                   </p>
                 </div>
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {paymentHistory.length} transactions
+                  {paymentHistory.length} transaksi
                 </span>
               </div>
 
@@ -152,17 +151,17 @@ export default function PaymentHistoryPage() {
                     <CreditCard className="w-12 h-12 text-gray-400" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    No Payment History
+                    Tidak Ada Riwayat Pembayaran
                   </h3>
                   <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                    You haven&apos;t made any payments yet. Start by purchasing a
-                    package to see your payment history here.
+                    Anda belum melakukan pembayaran apapun. Mulai dengan membeli
+                    paket untuk melihat riwayat pembayaran Anda di sini.
                   </p>
                   <Link
                     href="/dashboard-customer"
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
                   >
-                    Browse Packages
+                    Jelajahi Paket
                   </Link>
                 </div>
               ) : (
@@ -177,7 +176,7 @@ export default function PaymentHistoryPage() {
                           <div className="flex items-center space-x-3 mb-3">
                             <CreditCard className="w-5 h-5 text-gray-400" />
                             <h4 className="text-lg font-semibold text-gray-900">
-                              Package Purchase
+                              Pembelian Paket
                             </h4>
                             <span
                               className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${getStatusBadge(
@@ -188,10 +187,10 @@ export default function PaymentHistoryPage() {
                                 payment.status.slice(1)}
                             </span>
                           </div>
-                          
+
                           <div className="mb-4">
                             <span className="text-gray-500 font-medium text-sm">
-                              Package:
+                              Paket:
                             </span>
                             <h3 className="text-xl font-bold text-blue-600 mt-1">
                               {payment.package?.title}
@@ -201,18 +200,16 @@ export default function PaymentHistoryPage() {
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                             <div>
                               <span className="text-gray-500 font-medium">
-                                Amount:
+                                Jumlah:
                               </span>
                               <p className="font-bold text-gray-900">
                                 {formatCurrency(payment.amount)}
                               </p>
                             </div>
-                            <div>
-                            
-                            </div>
+                            <div></div>
                             <div>
                               <span className="text-gray-500 font-medium">
-                                Date:
+                                Tanggal:
                               </span>
                               <p className="font-semibold text-gray-900">
                                 {formatDateTime(payment.paymentDate)}
