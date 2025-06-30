@@ -12,6 +12,11 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  Image,
+  Plus,
+  X,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
@@ -29,6 +34,7 @@ interface FormData {
   duration: number;
   price: number;
   file: File | null;
+  images: string[]; // Array of image URLs for package cover slideshow
 }
 
 export default function CreatePackagePage() {
@@ -43,9 +49,11 @@ export default function CreatePackagePage() {
     duration: 60,
     price: 0,
     file: null,
+    images: [], // Initialize empty images array
   });
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [newImageUrl, setNewImageUrl] = useState(""); // For adding new image URLs
 
   // Load categories on component mount
   useEffect(() => {
@@ -127,6 +135,59 @@ export default function CreatePackagePage() {
     }
   };
 
+  const handleAddImage = () => {
+    if (!newImageUrl.trim()) {
+      toast.error('Please enter a valid image URL');
+      return;
+    }
+
+    // Simple URL validation
+    try {
+      new URL(newImageUrl);
+    } catch {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+
+    if (formData.images.includes(newImageUrl)) {
+      toast.error('This image URL is already added');
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, newImageUrl]
+    }));
+    setNewImageUrl("");
+    toast.success('Image URL added successfully');
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    toast.success('Image removed successfully');
+  };
+
+  const handleMoveImageUp = (index: number) => {
+    if (index === 0) return;
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+      return { ...prev, images: newImages };
+    });
+  };
+
+  const handleMoveImageDown = (index: number) => {
+    if (index === formData.images.length - 1) return;
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+      return { ...prev, images: newImages };
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -164,6 +225,7 @@ export default function CreatePackagePage() {
       submitFormData.append('categoryId', formData.categoryId);
       submitFormData.append('duration', formData.duration.toString());
       submitFormData.append('price', formData.price.toString());
+      submitFormData.append('images', JSON.stringify(formData.images)); // Add images array
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -346,6 +408,111 @@ export default function CreatePackagePage() {
                   <p className="text-sm text-gray-500 mt-1">
                     Isi 0 untuk paket gratis
                   </p>
+                </div>
+
+                {/* Package Cover Images */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Image className="w-4 h-4 inline mr-1" />
+                    Package Cover Images (Optional)
+                  </label>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Add image URLs that will be displayed as a slideshow on your package card. If no images are provided, a default cover will be shown.
+                  </p>
+                  
+                  {/* Add Image URL Input */}
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="url"
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddImage();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddImage}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Images List */}
+                  {formData.images.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700">Added Images ({formData.images.length}):</p>
+                      {formData.images.map((imageUrl, index) => (
+                        <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+                          {/* Image Preview */}
+                          <img
+                            src={imageUrl}
+                            alt={`Package cover ${index + 1}`}
+                            className="w-12 h-12 object-cover rounded"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAyMEMxNiAxOC44OTU0IDE2Ljg5NTQgMTggMTggMThDMTkuMTA0NiAxOCAyMCAxOC44OTU0IDIwIDIwQzIwIDIxLjEwNDYgMTkuMTA0NiAyMiAxOCAyMkMxNi44OTU0IDIyIDE2IDIxLjEwNDYgMTYgMjBaIiBmaWxsPSIjOUI5Qjk5Ii8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNOCAxMkM4IDEwLjg5NTQgOC44OTU0MyAxMCAxMCAxMEgzMEMzMS4xMDQ2IDEwIDMyIDEwLjg5NTQgMzIgMTJWMjhDMzIgMjkuMTA0NiAzMS4xMDQ2IDMwIDMwIDMwSDEwQzguODk1NDMgMzAgOCAyOS4xMDQ2IDggMjhWMTJaTTEwIDEySDMwVjI0LjU4NTlMMjYuNzA3MSAyMS4yOTI5QzI2LjMxNjYgMjAuOTAyNCAyNS42ODM0IDIwLjkwMjQgMjUuMjkyOSAyMS4yOTI5TDIwIDI2LjU4NTlMMTUuNzA3MSAxNy4yOTI5QzE1LjMxNjYgMTYuOTAyNCAxNC42ODM0IDE2LjkwMjQgMTQuMjkyOSAxNy4yOTI5TDEwIDIxLjU4NTlWMTJaIiBmaWxsPSIjOUI5Qjk5Ii8+Cjwvc3ZnPgo=';
+                            }}
+                          />
+                          
+                          {/* URL Text */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              Image {index + 1}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {imageUrl}
+                            </p>
+                          </div>
+
+                          {/* Move Controls */}
+                          <div className="flex flex-col gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveImageUp(index)}
+                              disabled={index === 0}
+                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Move up"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveImageDown(index)}
+                              disabled={index === formData.images.length - 1}
+                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Move down"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Remove Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                            title="Remove image"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {formData.images.length === 0 && (
+                    <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
+                      <Image className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">No images added yet</p>
+                      <p className="text-xs text-gray-400">Package will use default cover image</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* File Upload */}

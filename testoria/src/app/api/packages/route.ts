@@ -85,6 +85,7 @@ export async function POST(req: Request) {
     const description = formData.get("description")?.toString() || "";
     const contents = formData.get("contents")?.toString();
     const pdfImages = formData.get("pdfImages")?.toString();
+    const images = formData.get("images")?.toString(); // New images field for package covers
 
     // Validate required fields
     if (!file) {
@@ -176,6 +177,7 @@ export async function POST(req: Request) {
     // Parse optional JSON fields
     let parsedContents: any[] = [];
     let parsedPdfImages: string[] = [];
+    let parsedImages: string[] = [];
 
     try {
       if (contents) {
@@ -184,8 +186,11 @@ export async function POST(req: Request) {
       if (pdfImages) {
         parsedPdfImages = JSON.parse(pdfImages);
       }
+      if (images) {
+        parsedImages = JSON.parse(images);
+      }
     } catch (parseError) {
-      throw { message: "Invalid JSON format for contents or pdfImages", status: 400 };
+      throw { message: "Invalid JSON format for contents, pdfImages, or images", status: 400 };
     }
 
     // Create package data with proper typing
@@ -200,6 +205,8 @@ export async function POST(req: Request) {
       // Use generated images if available, otherwise use provided images, or fallback to empty array
       pdfImages: generatedPdfImages.length > 0 ? generatedPdfImages : 
                  parsedPdfImages.length > 0 ? parsedPdfImages : [],
+      // Package cover images for slideshow
+      images: parsedImages || [],
       // Use AI-processed questions if available, otherwise use provided content, or placeholder for pending processing
       contents: allQuestions.length > 0 ? allQuestions :
                 parsedContents.length > 0 ? parsedContents : 
