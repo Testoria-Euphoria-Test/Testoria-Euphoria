@@ -13,6 +13,7 @@ import {
   DollarSign,
   Star,
   Download,
+  RefreshCw,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
@@ -78,8 +79,10 @@ export default function DashboardCreatorPage() {
 
   // Modal states  
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showReuploadModal, setShowReuploadModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [reuploadFile, setReuploadFile] = useState<File | null>(null);
 
   // AI Processing states
   const [processingPackageId, setProcessingPackageId] = useState<string | null>(null);
@@ -324,6 +327,66 @@ export default function DashboardCreatorPage() {
     setShowDeleteModal(true);
   };
 
+  const handleReuploadPDF = (pkg: Package) => {
+    setSelectedPackage(pkg);
+    setShowReuploadModal(true);
+  };
+
+  const handleReuploadFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast.error('Please select a PDF file');
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        toast.error('File size must be less than 50MB');
+        return;
+      }
+      setReuploadFile(file);
+    }
+  };
+
+  const confirmReupload = async () => {
+    if (!selectedPackage || !reuploadFile) return;
+    
+    setIsProcessing(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', reuploadFile);
+
+      const response = await fetch(`/api/packages/${selectedPackage._id}/reupload`, {
+        method: 'PATCH',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to reupload PDF');
+      }
+
+      const result = await response.json();
+      
+      // Update package in state if needed
+      setPackages(prev => prev.map(pkg => 
+        pkg._id === selectedPackage._id 
+          ? { ...pkg, sourcePdf: [result.data.newPdfUrl], pdfImages: result.data.pdfImagesGenerated, updatedAt: new Date() }
+          : pkg
+      ));
+      
+      toast.success(`PDF reuploaded successfully! Generated ${result.data.pdfImagesGenerated} page images.`);
+      setShowReuploadModal(false);
+      setSelectedPackage(null);
+      setReuploadFile(null);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reupload PDF';
+      toast.error(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!selectedPackage) return;
     
@@ -345,14 +408,6 @@ export default function DashboardCreatorPage() {
       // Remove package from state
       setPackages(prev => prev.filter(pkg => pkg._id !== selectedPackage._id));
       
-      // Update creator profile stats
-      if (creatorProfile) {
-        setCreatorProfile(prev => prev ? {
-          ...prev,
-          totalPackages: prev.totalPackages - 1
-        } : null);
-      }
-      
       toast.success('Package deleted successfully');
       setShowDeleteModal(false);
       setSelectedPackage(null);
@@ -363,8 +418,6 @@ export default function DashboardCreatorPage() {
       setIsProcessing(false);
     }
   };
-
-
 
   // AI Processing handlers
   const handleProcessAIAndGenerateQuestions = async (pkg: Package) => {
@@ -415,8 +468,6 @@ export default function DashboardCreatorPage() {
       setProcessingPackageId(null);
     }
   };
-
-
 
   return (
     <div>
@@ -532,7 +583,7 @@ export default function DashboardCreatorPage() {
                     </button>
                   </div>
 
-                  {packages.length === 0 ? (
+                  {packages.length === 0 && (
                     <div className="text-center py-12">
                       <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No packages yet</h3>
@@ -544,7 +595,9 @@ export default function DashboardCreatorPage() {
                         Create Your First Package
                       </button>
                     </div>
-                  ) : (
+                  )}
+                  
+                  {packages.length > 0 && (
                     <div className="grid gap-6">
                       {packages.map((pkg) => (
                         <div
@@ -636,6 +689,15 @@ export default function DashboardCreatorPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                   </svg>
                                 )}
+                              </button>
+
+                              {/* Reupload PDF Button */}
+                              <button
+                                onClick={() => handleReuploadPDF(pkg)}
+                                className="text-orange-600 hover:text-orange-900 p-2 hover:bg-orange-50 rounded-lg transition-colors"
+                                title="Reupload PDF"
+                              >
+                                <RefreshCw className="w-5 h-5" />
                               </button>
 
                               <button
@@ -817,6 +879,97 @@ export default function DashboardCreatorPage() {
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reupload PDF Modal */}
+      {showReuploadModal && selectedPackage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Reupload PDF
+              </h3>
+              <p className="text-gray-600">
+                Replace the PDF file for "{selectedPackage.title}". This will clear existing processed content.
+              </p>
+            </div>
+
+            {/* File Upload Area */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select New PDF File
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 hover:bg-orange-50 transition-all">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleReuploadFileChange}
+                  className="hidden"
+                  id="reupload-file"
+                />
+                <label htmlFor="reupload-file" className="cursor-pointer">
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    {reuploadFile ? reuploadFile.name : 'Click to select PDF file'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Max 50MB • PDF format only
+                  </p>
+                  {reuploadFile && (
+                    <p className="text-xs text-green-600 mt-1">
+                      ✓ {(reuploadFile.size / (1024 * 1024)).toFixed(2)}MB selected
+                    </p>
+                  )}
+                </label>
+              </div>
+            </div>
+
+            {/* Warning */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Important Notice
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>This will replace the current PDF file</li>
+                      <li>All existing AI processed content will be cleared</li>
+                      <li>You'll need to run AI processing again after upload</li>
+                      <li>Questions created from the old PDF will remain until you regenerate them</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3">
+              <button
+                onClick={confirmReupload}
+                disabled={isProcessing || !reuploadFile}
+                className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? 'Uploading...' : 'Reupload PDF'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowReuploadModal(false);
+                  setSelectedPackage(null);
+                  setReuploadFile(null);
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

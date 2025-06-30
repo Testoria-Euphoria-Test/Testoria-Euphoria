@@ -52,6 +52,8 @@ interface Question {
   optionE?: string;
   correctAnswer: string;
   explanation?: string;
+  passage?: string; // Reading passage for the question(s)
+  imagePrompt?: string; // Description of images needed for the question
   images: string[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -66,6 +68,8 @@ interface QuestionFormData {
   optionE: string;
   correctAnswer: string;
   explanation: string;
+  passage: string; // Reading passage for the question(s)
+  imagePrompt: string; // Description of images needed for the question
 }
 
 export default function PackageDetailPage() {
@@ -97,6 +101,8 @@ export default function PackageDetailPage() {
     optionE: "",
     correctAnswer: "",
     explanation: "",
+    passage: "",
+    imagePrompt: "",
   });
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [newQuestionData, setNewQuestionData] = useState<QuestionFormData>({
@@ -108,6 +114,8 @@ export default function PackageDetailPage() {
     optionE: "",
     correctAnswer: "",
     explanation: "",
+    passage: "",
+    imagePrompt: "",
   });
 
   // Load data on component mount
@@ -240,6 +248,8 @@ export default function PackageDetailPage() {
       optionE: question.optionE || "",
       correctAnswer: question.correctAnswer,
       explanation: question.explanation || "",
+      passage: question.passage || "",
+      imagePrompt: question.imagePrompt || "",
     });
   };
 
@@ -290,6 +300,8 @@ export default function PackageDetailPage() {
       optionE: "",
       correctAnswer: "",
       explanation: "",
+      passage: "",
+      imagePrompt: "",
     });
   };
 
@@ -357,6 +369,8 @@ export default function PackageDetailPage() {
         optionE: "",
         correctAnswer: "",
         explanation: "",
+        passage: "",
+        imagePrompt: "",
       });
       setShowAddQuestion(false);
       toast.success('Question created successfully');
@@ -838,6 +852,28 @@ export default function PackageDetailPage() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                           </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Reading Passage (Optional)</label>
+                            <textarea
+                              value={editQuestionData.passage}
+                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, passage: e.target.value }))}
+                              rows={3}
+                              placeholder="Enter the reading passage if this question is based on a text..."
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Image Prompt (Optional)</label>
+                            <textarea
+                              value={editQuestionData.imagePrompt}
+                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, imagePrompt: e.target.value }))}
+                              rows={2}
+                              placeholder="Describe what type of image/diagram should be created for this question..."
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
                         </div>
                       ) : (
                         /* View Mode */
@@ -884,6 +920,22 @@ export default function PackageDetailPage() {
                                 <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                   <p className="text-sm text-blue-800">
                                     <span className="font-medium">Explanation:</span> {question.explanation}
+                                  </p>
+                                </div>
+                              )}
+
+                              {question.passage && (
+                                <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                  <p className="text-sm text-purple-800">
+                                    <span className="font-medium">Reading Passage:</span> {question.passage}
+                                  </p>
+                                </div>
+                              )}
+
+                              {question.imagePrompt && (
+                                <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                  <p className="text-sm text-orange-800">
+                                    <span className="font-medium">Image Prompt:</span> {question.imagePrompt}
                                   </p>
                                 </div>
                               )}
@@ -1023,6 +1075,28 @@ export default function PackageDetailPage() {
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Optional explanation for the correct answer..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Reading Passage (Optional)</label>
+                <textarea
+                  value={newQuestionData.passage}
+                  onChange={(e) => setNewQuestionData(prev => ({ ...prev, passage: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter the reading passage if this question is based on a text..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Image Prompt (Optional)</label>
+                <textarea
+                  value={newQuestionData.imagePrompt}
+                  onChange={(e) => setNewQuestionData(prev => ({ ...prev, imagePrompt: e.target.value }))}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Describe what type of image/diagram should be created for this question..."
                 />
               </div>
 

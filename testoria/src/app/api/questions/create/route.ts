@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
             optionE: body.optionE || "",
             correctAnswer: body.correctAnswer,
             explanation: body.explanation || "",
+            passage: body.passage || "",
+            imagePrompt: body.imagePrompt || "",
             images: [] // Empty array for now, images can be added later
         };
 

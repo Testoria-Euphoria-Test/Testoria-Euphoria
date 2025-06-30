@@ -58,6 +58,8 @@ export async function PUT(
             optionE: body.optionE || "",
             correctAnswer: body.correctAnswer,
             explanation: body.explanation || "",
+            passage: body.passage || "",
+            imagePrompt: body.imagePrompt || "",
             updatedAt: new Date().toISOString()
         };
 
