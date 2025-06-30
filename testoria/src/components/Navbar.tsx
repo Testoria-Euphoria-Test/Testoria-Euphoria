@@ -37,8 +37,21 @@ export default function Navbar({ showUserActions = true }: NavbarProps) {
               />
             </Link>
           </div>
-
-          {/* User Actions */}
+          {/* Hanya tampilkan tombol My-Paket jika role creator */}
+          {userRole === "creator" && (
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard-creator">
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  My-Paket
+                </button>
+              </Link>
+              <Link href="/packages">
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  List Paket
+                </button>
+              </Link>
+            </div>
+          )}
           {showUserActions ? (
             <div className="flex items-center space-x-2">
               {userRole !== "admin" && <ButtonProfile />}
