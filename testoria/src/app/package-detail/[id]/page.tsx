@@ -18,6 +18,10 @@ import {
   Target,
   CheckCircle2,
   AlertTriangle,
+  ImagePlus,
+  Wand2,
+  Link,
+  Eye,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
@@ -117,6 +121,14 @@ export default function PackageDetailPage() {
     passage: "",
     imagePrompt: "",
   });
+
+  // Image management states
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [currentQuestionForImage, setCurrentQuestionForImage] = useState<string | null>(null);
+  const [manualImageUrl, setManualImageUrl] = useState("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [viewingImageUrl, setViewingImageUrl] = useState("");
 
   // Load data on component mount
   useEffect(() => {
@@ -430,6 +442,142 @@ export default function PackageDetailPage() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Image management functions
+  const handleGenerateImage = async (questionId: string, imagePrompt: string) => {
+    if (!imagePrompt.trim()) {
+      toast.error('Please provide an image prompt first');
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    try {
+      const response = await fetch('/api/questions/generate-image', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId,
+          imagePrompt: imagePrompt.trim()
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate image');
+      }
+
+      const result = await response.json();
+      
+      // Add the generated image to the question's images array
+      const imageUrl = result.data.cloudinaryUrl;
+      await handleAddManualImage(questionId, imageUrl);
+      
+      toast.success('Image generated and added successfully!');
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate image';
+      toast.error(errorMessage);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleAddManualImage = async (questionId: string, imageUrl: string) => {
+    if (!imageUrl.trim()) {
+      toast.error('Please provide an image URL');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/questions/add-image', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId,
+          imageUrl: imageUrl.trim()
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add image');
+      }
+
+      // Update local state
+      setQuestions(prev => prev.map(q =>
+        q._id === questionId
+          ? { ...q, images: [...(q.images || []), imageUrl.trim()] }
+          : q
+      ));
+
+      toast.success('Image added successfully!');
+      setManualImageUrl("");
+      setShowImageModal(false);
+      setCurrentQuestionForImage(null);
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add image';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleRemoveImage = async (questionId: string, imageUrl: string) => {
+    if (!confirm('Are you sure you want to remove this image?')) return;
+
+    try {
+      const response = await fetch('/api/questions/add-image', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId,
+          imageUrl
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to remove image');
+      }
+
+      // Update local state
+      setQuestions(prev => prev.map(q =>
+        q._id === questionId
+          ? { ...q, images: (q.images || []).filter(url => url !== imageUrl) }
+          : q
+      ));
+
+      toast.success('Image removed successfully!');
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove image';
+      toast.error(errorMessage);
+    }
+  };
+
+  const openImageModal = (questionId: string) => {
+    setCurrentQuestionForImage(questionId);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    setCurrentQuestionForImage(null);
+    setManualImageUrl("");
+  };
+
+  const viewImage = (imageUrl: string) => {
+    setViewingImageUrl(imageUrl);
+    setShowImageViewer(true);
   };
 
   // Currency formatter
@@ -780,6 +928,28 @@ export default function PackageDetailPage() {
                             />
                           </div>
 
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Reading Passage (Optional)</label>
+                            <textarea
+                              value={editQuestionData.passage}
+                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, passage: e.target.value }))}
+                              rows={3}
+                              placeholder="Enter the reading passage if this question is based on a text..."
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Image Prompt (Optional)</label>
+                            <textarea
+                              value={editQuestionData.imagePrompt}
+                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, imagePrompt: e.target.value }))}
+                              rows={2}
+                              placeholder="Describe what type of image/diagram should be created for this question..."
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">Option A</label>
@@ -852,28 +1022,6 @@ export default function PackageDetailPage() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                           </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Reading Passage (Optional)</label>
-                            <textarea
-                              value={editQuestionData.passage}
-                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, passage: e.target.value }))}
-                              rows={3}
-                              placeholder="Enter the reading passage if this question is based on a text..."
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Image Prompt (Optional)</label>
-                            <textarea
-                              value={editQuestionData.imagePrompt}
-                              onChange={(e) => setEditQuestionData(prev => ({ ...prev, imagePrompt: e.target.value }))}
-                              rows={2}
-                              placeholder="Describe what type of image/diagram should be created for this question..."
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
                         </div>
                       ) : (
                         /* View Mode */
@@ -884,6 +1032,10 @@ export default function PackageDetailPage() {
                                 Question #{index + 1}
                               </h4>
 
+                              <p className="text-gray-700 mb-4 leading-relaxed">
+                                {question.questionText}
+                              </p>
+
                               {question.passage && (
                                 <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
                                   <p className="text-sm text-purple-800">
@@ -892,6 +1044,87 @@ export default function PackageDetailPage() {
                                 </div>
                               )}
 
+                              {/* Images Section - Moved to right after reading passage */}
+                              <div className="mb-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h5 className="text-sm font-medium text-gray-700">
+                                    Question Images ({question.images?.length || 0})
+                                  </h5>
+                                  {isOwner && (
+                                    <div className="flex items-center space-x-2">
+                                      {question.imagePrompt && (
+                                        <button
+                                          onClick={() => handleGenerateImage(question._id, question.imagePrompt!)}
+                                          disabled={isGeneratingImage}
+                                          className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 disabled:opacity-50 flex items-center space-x-1"
+                                          title="Generate image from prompt"
+                                        >
+                                          {isGeneratingImage ? (
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                                          ) : (
+                                            <Wand2 className="w-3 h-3" />
+                                          )}
+                                          <span>Generate</span>
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => openImageModal(question._id)}
+                                        className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center space-x-1"
+                                        title="Add manual image URL"
+                                      >
+                                        <ImagePlus className="w-3 h-3" />
+                                        <span>Add Image</span>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {question.images && question.images.length > 0 ? (
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {question.images.map((imageUrl, imgIndex) => (
+                                      <div key={imgIndex} className="relative group">
+                                        <img
+                                          src={imageUrl}
+                                          alt={`Question image ${imgIndex + 1}`}
+                                          className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80"
+                                          onClick={() => viewImage(imageUrl)}
+                                        />
+                                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <div className="flex space-x-1">
+                                            <button
+                                              onClick={() => viewImage(imageUrl)}
+                                              className="bg-blue-600 text-white p-1 rounded text-xs hover:bg-blue-700"
+                                              title="View image"
+                                            >
+                                              <Eye className="w-3 h-3" />
+                                            </button>
+                                            {isOwner && (
+                                              <button
+                                                onClick={() => handleRemoveImage(question._id, imageUrl)}
+                                                className="bg-red-600 text-white p-1 rounded text-xs hover:bg-red-700"
+                                                title="Remove image"
+                                              >
+                                                <X className="w-3 h-3" />
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                    <ImagePlus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-500">No images added yet</p>
+                                    {isOwner && question.imagePrompt && (
+                                      <p className="text-xs text-gray-400 mt-1">
+                                        Click "Generate" to create an image from the prompt
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
                               {question.imagePrompt && (
                                 <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
                                   <p className="text-sm text-orange-800">
@@ -899,10 +1132,6 @@ export default function PackageDetailPage() {
                                   </p>
                                 </div>
                               )}
-
-                              <p className="text-gray-700 mb-4 leading-relaxed">
-                                {question.questionText}
-                              </p>
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                                 <div className={`p-3 rounded-lg border ${question.correctAnswer === 'A' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
@@ -1117,6 +1346,102 @@ export default function PackageDetailPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Management Modal */}
+      {showImageModal && currentQuestionForImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Add Image to Question</h3>
+                <button
+                  onClick={closeImageModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image URL
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="url"
+                    value={manualImageUrl}
+                    onChange={(e) => setManualImageUrl(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <button
+                    onClick={() => handleAddManualImage(currentQuestionForImage, manualImageUrl)}
+                    disabled={!manualImageUrl.trim()}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
+                  >
+                    <Link className="w-4 h-4" />
+                    <span>Add</span>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter a direct link to an image (JPG, PNG, GIF, etc.)
+                </p>
+              </div>
+
+              {(() => {
+                const question = questions.find(q => q._id === currentQuestionForImage);
+                return question?.imagePrompt && (
+                  <div className="border-t pt-4">
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                      <p className="text-sm text-purple-800 mb-2">
+                        <span className="font-medium">Image Prompt:</span> {question.imagePrompt}
+                      </p>
+                      <button
+                        onClick={() => handleGenerateImage(currentQuestionForImage, question.imagePrompt!)}
+                        disabled={isGeneratingImage}
+                        className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center space-x-2"
+                      >
+                        {isGeneratingImage ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-4 h-4" />
+                            <span>Generate Image with AI</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Viewer Modal */}
+      {showImageViewer && viewingImageUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button
+              onClick={() => setShowImageViewer(false)}
+              className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 z-10"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={viewingImageUrl}
+              alt="Question image"
+              className="w-full h-full object-contain rounded-lg"
+            />
           </div>
         </div>
       )}
