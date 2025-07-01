@@ -2,14 +2,27 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function NavbarLanding() {
+  // Cek token di cookies
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Cek cookies secara client-side
+    if (typeof document !== "undefined") {
+      const cookies = document.cookie.split(";").map((c) => c.trim());
+      const tokenCookie = cookies.find((c) => c.startsWith("token="));
+      setIsLoggedIn(!tokenCookie);
+    }
+  }, []);
+
   return (
     <nav className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 shadow-xl border-b border-blue-800/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" >
+          <Link href="/">
             <div className="flex items-center space-x-3">
               <Image
                 src="/testoria.svg"
@@ -23,20 +36,23 @@ export default function NavbarLanding() {
           <div className="hidden md:flex items-center space-x-8"></div>
 
           {/* Desktop User Actions */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-white hover:text-blue-600 font-medium transition-colors duration-200"
-            >
-              Masuk
-            </Link>
-            <Link
-              href="/register"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            >
-              Daftar
-            </Link>
-          </div>
+          {/* //jika user sudah login maka tombol masuk dan daftar tidak perlu ditampilkan */}
+          {!isLoggedIn && (
+            <div className="hidden md:flex items-center space-x-4">
+              <Link
+                href="/login"
+                className="px-4 py-2 text-white hover:text-blue-600 font-medium transition-colors duration-200"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>
