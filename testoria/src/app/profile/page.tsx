@@ -39,8 +39,9 @@ function CertificateImage({ src, alt, index }: { src: string; alt: string; index
             src={src}
             alt={alt}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-contain group-hover:scale-105 transition-transform duration-300"
             onError={() => setImageError(true)}
+            priority={index < 3} // Prioritize loading of first 3 certificates
         />
     );
 }
@@ -188,8 +189,8 @@ export default function ProfilePage() {
             <div className="min-h-screen bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center space-x-4">
+                    <div className="flex items-start justify-between mb-8">
+                        <div className="space-y-4">
                             <button
                                 onClick={() => router.back()}
                                 className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
@@ -317,21 +318,11 @@ export default function ProfilePage() {
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <>
-                                                                    <CertificateImage
-                                                                        src={cert}
-                                                                        alt={`Certificate ${index + 1}`}
-                                                                        index={index}
-                                                                    />
-                                                                    {/* Overlay */}
-                                                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
-                                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                                            </svg>
-                                                                        </div>
-                                                                    </div>
-                                                                </>
+                                                                <CertificateImage
+                                                                    src={cert}
+                                                                    alt={`Certificate ${index + 1}`}
+                                                                    index={index}
+                                                                />
                                                             )}
                                                         </div>
 

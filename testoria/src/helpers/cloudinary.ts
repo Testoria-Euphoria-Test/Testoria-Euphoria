@@ -123,3 +123,13 @@ export class CloudinaryHelper {
 }
 
 export default CloudinaryHelper;
+
+// Standalone export functions for easier importing
+export const uploadToCloudinary = (buffer: Buffer, options?: { folder?: string; transformation?: any[] }) => {
+    const folder = options?.folder || 'uploads';
+    return CloudinaryHelper.uploadImage(buffer, folder);
+};
+
+export const deleteFromCloudinary = (publicId: string) => {
+    return CloudinaryHelper.deleteImage(publicId);
+};

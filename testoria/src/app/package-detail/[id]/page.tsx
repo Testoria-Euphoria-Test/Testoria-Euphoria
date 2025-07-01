@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import toast, { Toaster } from 'react-hot-toast';
 import {
   ArrowLeft,
   Package,
@@ -22,9 +23,9 @@ import {
   Eye,
   ChevronUp,
   ChevronDown,
+  Upload,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import toast, { Toaster } from 'react-hot-toast';
 
 // Types
 interface Package {
@@ -128,8 +129,12 @@ export default function PackageDetailPage() {
   const [currentQuestionForImage, setCurrentQuestionForImage] = useState<string | null>(null);
   const [manualImageUrl, setManualImageUrl] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  // Image management states
-  const [newImageUrl, setNewImageUrl] = useState("");
+  const [isUploadingQuestionImage, setIsUploadingQuestionImage] = useState(false);
+  const [questionImagePreview, setQuestionImagePreview] = useState<string | null>(null);
+  // Package image upload states
+  const [isUploadingPackageImage, setIsUploadingPackageImage] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState("");
 
@@ -254,47 +259,151 @@ export default function PackageDetailPage() {
   };
 
   // Package images management handlers
-  const handleAddPackageImage = () => {
-    if (!newImageUrl.trim()) {
-      toast.error('Please enter a valid image URL');
+  const handleUploadPackageImage = async (file: File) => {
+    if (!file) {
+      toast.error('Please select an image file');
       return;
     }
 
-    // Simple URL validation
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    // Create preview
+    const previewUrl = URL.createObjectURL(file);
+    setUploadPreview(previewUrl);
+
+    setIsUploadingPackageImage(true);
     try {
-      new URL(newImageUrl);
-    } catch {
-      toast.error('Please enter a valid URL');
-      return;
-    }
+      const formData = new FormData();
+      formData.append('image', file);
 
-    const currentImages = editPackageData.images || [];
-    if (currentImages.includes(newImageUrl)) {
-      toast.error('This image URL is already added');
-      return;
-    }
+      const response = await fetch('/api/packages/upload-image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
 
-    setEditPackageData(prev => ({
-      ...prev,
-      images: [...currentImages, newImageUrl]
-    }));
-    setNewImageUrl("");
-    toast.success('Image URL added successfully');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload image');
+      }
+
+      const result = await response.json();
+      const imageUrl = result.data.imageUrl;
+
+      // Check if image already exists
+      const currentImages = editPackageData.images || [];
+      if (currentImages.includes(imageUrl)) {
+        toast.error('This image is already added');
+        return;
+      }
+
+      // Add to package images
+      setEditPackageData(prev => ({
+        ...prev,
+        images: [...currentImages, imageUrl]
+      }));
+
+      toast.success('Image uploaded and added successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      toast.error(errorMessage);
+    } finally {
+      setIsUploadingPackageImage(false);
+      // Clean up preview
+      if (uploadPreview) {
+        URL.revokeObjectURL(uploadPreview);
+        setUploadPreview(null);
+      }
+    }
   };
 
-  const handleRemovePackageImage = (index: number) => {
+  const handlePackageImageFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleUploadPackageImage(file);
+    }
+    // Reset input value to allow same file selection again
+    event.target.value = '';
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleUploadPackageImage(file);
+    } else {
+      toast.error('Please drop a valid image file');
+    }
+  };
+
+  const handleRemovePackageImage = async (index: number) => {
     const currentImages = editPackageData.images || [];
-    setEditPackageData(prev => ({
-      ...prev,
-      images: currentImages.filter((_, i) => i !== index)
-    }));
-    toast.success('Image removed successfully');
+    const imageUrl = currentImages[index];
+
+    if (!imageUrl) return;
+
+    if (!confirm('Are you sure you want to remove this image? This action cannot be undone.')) return;
+
+    try {
+      // Call delete API to remove from Cloudinary
+      const response = await fetch('/api/packages/delete-image', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl })
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to delete from Cloudinary, but continuing with local removal');
+      }
+
+      // Remove from local state regardless of Cloudinary deletion result
+      setEditPackageData(prev => ({
+        ...prev,
+        images: currentImages.filter((_, i) => i !== index)
+      }));
+
+      toast.success('Image removed successfully');
+    } catch (error) {
+      console.error('Error removing image:', error);
+      // Still remove from local state even if API call fails
+      setEditPackageData(prev => ({
+        ...prev,
+        images: currentImages.filter((_, i) => i !== index)
+      }));
+      toast.success('Image removed from list (cleanup may be pending)');
+    }
   };
 
   const handleMovePackageImageUp = (index: number) => {
     const currentImages = editPackageData.images || [];
     if (index === 0) return;
-    
+
     const newImages = [...currentImages];
     [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
     setEditPackageData(prev => ({ ...prev, images: newImages }));
@@ -303,7 +412,7 @@ export default function PackageDetailPage() {
   const handleMovePackageImageDown = (index: number) => {
     const currentImages = editPackageData.images || [];
     if (index === currentImages.length - 1) return;
-    
+
     const newImages = [...currentImages];
     [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
     setEditPackageData(prev => ({ ...prev, images: newImages }));
@@ -380,7 +489,7 @@ export default function PackageDetailPage() {
 
   const handleDeleteQuestion = async (questionId: string) => {
     if (!confirm('Apa kamu yakiin ingin menghapus pertanyaan ini?')) return;
-    
+
     setIsProcessing(true);
     try {
       const response = await fetch(`/api/questions/${questionId}`, {
@@ -532,13 +641,13 @@ export default function PackageDetailPage() {
       }
 
       const result = await response.json();
-      
+
       // Add the generated image to the question's images array
       const imageUrl = result.data.cloudinaryUrl;
       await handleAddManualImage(questionId, imageUrl);
-      
+
       toast.success('Image generated and added successfully!');
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate image';
       toast.error(errorMessage);
@@ -582,11 +691,78 @@ export default function PackageDetailPage() {
       setManualImageUrl("");
       setShowImageModal(false);
       setCurrentQuestionForImage(null);
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to add image';
       toast.error(errorMessage);
     }
+  };
+
+  // Handle question image file upload
+  const handleUploadQuestionImage = async (questionId: string, file: File) => {
+    if (!file) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    // Create preview
+    const previewUrl = URL.createObjectURL(file);
+    setQuestionImagePreview(previewUrl);
+
+    setIsUploadingQuestionImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/questions/upload-image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload image');
+      }
+
+      const result = await response.json();
+      const imageUrl = result.data.imageUrl;
+
+      // Add to question images using the existing API
+      await handleAddManualImage(questionId, imageUrl);
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      toast.error(errorMessage);
+    } finally {
+      setIsUploadingQuestionImage(false);
+      // Clean up preview
+      if (questionImagePreview) {
+        URL.revokeObjectURL(questionImagePreview);
+        setQuestionImagePreview(null);
+      }
+    }
+  };
+
+  const handleQuestionImageFileSelect = (questionId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleUploadQuestionImage(questionId, file);
+    }
+    // Reset input value to allow same file selection again
+    event.target.value = '';
   };
 
   const handleRemoveImage = async (questionId: string, imageUrl: string) => {
@@ -618,7 +794,7 @@ export default function PackageDetailPage() {
       ));
 
       toast.success('Image removed successfully!');
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to remove image';
       toast.error(errorMessage);
@@ -634,6 +810,11 @@ export default function PackageDetailPage() {
     setShowImageModal(false);
     setCurrentQuestionForImage(null);
     setManualImageUrl("");
+    // Clean up question image preview if exists
+    if (questionImagePreview) {
+      URL.revokeObjectURL(questionImagePreview);
+      setQuestionImagePreview(null);
+    }
   };
 
   const viewImage = (imageUrl: string) => {
@@ -796,106 +977,134 @@ export default function PackageDetailPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Package Cover Images
                     </label>
-                    {isEditingPackage ? (
-                      <div className="space-y-4">
-                        <p className="text-sm text-gray-500">
-                          Add image URLs that will be displayed as a slideshow on your package card.
-                        </p>
-                        
-                        {/* Add Image URL Input */}
-                        <div className="flex gap-2">
-                          <input
-                            type="url"
-                            value={newImageUrl}
-                            onChange={(e) => setNewImageUrl(e.target.value)}
-                            placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleAddPackageImage();
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={handleAddPackageImage}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
+                    {isEditingPackage ? (<div className="space-y-4">
+                      <p className="text-sm text-gray-500">
+                        Upload images that will be displayed as a slideshow on your package card.
+                      </p>
 
-                        {/* Images List */}
-                        {(editPackageData.images && editPackageData.images.length > 0) ? (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-gray-700">
-                              Added Images ({editPackageData.images.length}):
-                            </p>
-                            {editPackageData.images.map((imageUrl, index) => (
-                              <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
-                                {/* Image Preview */}
+                      {/* Upload Image Area */}
+                      <div
+                        className={`flex gap-2 ${isDragOver ? 'opacity-75' : ''
+                          }`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
+                        <input
+                          type="file"
+                          id="package-image-upload"
+                          accept="image/*"
+                          onChange={handlePackageImageFileSelect}
+                          className="hidden"
+                          disabled={isUploadingPackageImage}
+                        />
+                        <label
+                          htmlFor="package-image-upload"
+                          className={`flex-1 flex items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${isUploadingPackageImage
+                            ? 'opacity-50 cursor-not-allowed border-gray-300 bg-gray-50'
+                            : isDragOver
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                            }`}
+                        >
+                          {isUploadingPackageImage ? (
+                            <div className="flex flex-col items-center space-y-3">
+                              {uploadPreview && (
                                 <img
-                                  src={imageUrl}
-                                  alt={`Package cover ${index + 1}`}
-                                  className="w-12 h-12 object-cover rounded"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAyMEMxNiAxOC44OTU0IDE2Ljg5NTQgMTggMTggMThDMTkuMTA0NiAxOCAyMCAxOC44OTU0IDIwIDIwQzIwIDIxLjEwNDYgMTkuMTA0NiAyMiAxOCAyMkMxNi44OTU0IDIyIDE2IDIxLjEwNDYgMTYgMjBaIiBmaWxsPSIjOUI5Qjk5Ii8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNOCAxMkM4IDEwLjg5NTQgOC44OTU0MyAxMCAxMCAxMEgzMEMzMS4xMDQ2IDEwIDMyIDEwLjg5NTQgMzIgMTJWMjhDMzIgMjkuMTA0NiAzMS4xMDQ2IDMwIDMwIDMwSDEwQzguODk1NDMgMzAgOCAyOS4xMDQ2IDggMjhWMTJaTTEwIDEySDMwVjI0LjU4NTlMMjYuNzA3MSAyMS4yOTI5QzI2LjMxNjYgMjAuOTAyNCAyNS42ODM0IDIwLjkwMjQgMjUuMjkyOSAyMS4yOTI5TDIwIDI2LjU4NTlMMTUuNzA3MSAxNy4yOTI5QzE1LjMxNjYgMTYuOTAyNCAxNC42ODM0IDE2LjkwMjQgMTQuMjkyOSAxNy4yOTI5TDEwIDIxLjU4NTlWMTJaIiBmaWxsPSIjOUI5Qjk5Ii8+Cjwvc3ZnPgo=';
-                                  }}
+                                  src={uploadPreview}
+                                  alt="Upload preview"
+                                  className="w-16 h-16 object-cover rounded-lg opacity-75"
                                 />
-                                
-                                {/* URL Text */}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    Image {index + 1}
-                                  </p>
-                                  <p className="text-xs text-gray-500 truncate">
-                                    {imageUrl}
-                                  </p>
-                                </div>
+                              )}
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                              <span className="text-sm text-gray-600">Uploading image...</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center space-y-2">
+                              <Upload className={`w-6 h-6 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
+                              <div className="text-center">
+                                <span className={`text-sm font-medium ${isDragOver ? 'text-blue-600' : 'text-gray-600'}`}>
+                                  Click to upload or drag & drop
+                                </span>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {isDragOver ? 'Drop your image here' : 'PNG, JPG, WebP up to 5MB'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </label>
+                      </div>
 
-                                {/* Move Controls */}
-                                <div className="flex flex-col gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMovePackageImageUp(index)}
-                                    disabled={index === 0}
-                                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Move up"
-                                  >
-                                    <ChevronUp className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMovePackageImageDown(index)}
-                                    disabled={index === (editPackageData.images?.length || 0) - 1}
-                                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Move down"
-                                  >
-                                    <ChevronDown className="w-3 h-3" />
-                                  </button>
-                                </div>
+                      {/* Images List */}
+                      {(editPackageData.images && editPackageData.images.length > 0) ? (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-gray-700">
+                            Added Images ({editPackageData.images.length}):
+                          </p>
+                          {editPackageData.images.map((imageUrl, index) => (
+                            <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+                              {/* Image Preview */}
+                              <img
+                                src={imageUrl}
+                                alt={`Package cover ${index + 1}`}
+                                className="w-12 h-12 object-cover rounded"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAyMEMxNiAxOC44OTU0IDE2Ljg5NTQgMTggMTggMThDMTkuMTA0NiAxOCAyMCAxOC44OTU0IDIwIDIwQzIwIDIxLjEwNDYgMTkuMTA0NiAyMiAxOCAyMkMxNi44OTU0IDIyIDE2IDIxLjEwNDYgMTYgMjBaIiBmaWxsPSIjOUI5Qjk5Ii8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNOCAxMkM4IDEwLjg5NTQgOC44OTU0MyAxMCAxMCAxMEgzMEMzMS4xMDQ2IDEwIDMyIDEwLjg5NTQgMzIgMTJWMjhDMzIgMjkuMTA0NiAzMS4xMDQ2IDMwIDMwIDMwSDEwQzguODk1NDMgMzAgOCAyOS4xMDQ2IDggMjhWMTJaTTEwIDEySDMwVjI0LjU4NTlMMjYuNzA3MSAyMS4yOTI5QzI2LjMxNjYgMjAuOTAyNCAyNS42ODM0IDIwLjkwMjQgMjUuMjkyOSAyMS4yOTI5TDIwIDI2LjU4NTlMMTUuNzA3MSAxNy4yOTI5QzE1LjMxNjYgMTYuOTAyNCAxNC42ODM0IDE2LjkwMjQgMTQuMjkyOSAxNy4yOTI5TDEwIDIxLjU4NTlWMTJaIiBmaWxsPSIjOUI5Qjk5Ii8+Cjwvc3ZnPgo=';
+                                }}
+                              />
 
-                                {/* Remove Button */}
+                              {/* URL Text */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  Image {index + 1}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {imageUrl}
+                                </p>
+                              </div>
+
+                              {/* Move Controls */}
+                              <div className="flex flex-col gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => handleRemovePackageImage(index)}
-                                  className="p-1 text-red-400 hover:text-red-600 transition-colors"
-                                  title="Remove image"
+                                  onClick={() => handleMovePackageImageUp(index)}
+                                  disabled={index === 0}
+                                  className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Move up"
                                 >
-                                  <X className="w-4 h-4" />
+                                  <ChevronUp className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMovePackageImageDown(index)}
+                                  disabled={index === (editPackageData.images?.length || 0) - 1}
+                                  className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Move down"
+                                >
+                                  <ChevronDown className="w-3 h-3" />
                                 </button>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
-                            <ImagePlus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm text-gray-500">No images added yet</p>
-                            <p className="text-xs text-gray-400">Package will use default cover</p>
-                          </div>
-                        )}
-                      </div>
+
+                              {/* Remove Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePackageImage(index)}
+                                className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                                title="Remove image"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
+                          <ImagePlus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-500">No images added yet</p>
+                          <p className="text-xs text-gray-400">Package will use default cover</p>
+                        </div>
+                      )}
+                    </div>
                     ) : (
                       <div>
                         {(packageData.images && packageData.images.length > 0) ? (
@@ -1299,7 +1508,7 @@ export default function PackageDetailPage() {
                                     </div>
                                   )}
                                 </div>
-                                
+
                                 {question.images && question.images.length > 0 ? (
                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {question.images.map((imageUrl, imgIndex) => (
@@ -1587,44 +1796,71 @@ export default function PackageDetailPage() {
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-6">
+              {/* File Upload Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URL
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Upload Image File
                 </label>
-                <div className="flex space-x-2">
+                <div className="flex flex-col space-y-3">
                   <input
-                    type="url"
-                    value={manualImageUrl}
-                    onChange={(e) => setManualImageUrl(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://example.com/image.jpg"
+                    type="file"
+                    id={`question-image-upload-${currentQuestionForImage}`}
+                    accept="image/*"
+                    onChange={(e) => handleQuestionImageFileSelect(currentQuestionForImage, e)}
+                    className="hidden"
+                    disabled={isUploadingQuestionImage}
                   />
-                  <button
-                    onClick={() => handleAddManualImage(currentQuestionForImage, manualImageUrl)}
-                    disabled={!manualImageUrl.trim()}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
+                  <label
+                    htmlFor={`question-image-upload-${currentQuestionForImage}`}
+                    className={`flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${isUploadingQuestionImage
+                        ? 'opacity-50 cursor-not-allowed border-gray-300 bg-gray-50'
+                        : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                      }`}
                   >
-                    <Link className="w-4 h-4" />
-                    <span>Add</span>
-                  </button>
+                    {isUploadingQuestionImage ? (
+                      <div className="flex flex-col items-center space-y-3">
+                        {questionImagePreview && (
+                          <img
+                            src={questionImagePreview}
+                            alt="Upload preview"
+                            className="w-16 h-16 object-cover rounded-lg opacity-75"
+                          />
+                        )}
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <span className="text-sm text-gray-600">Uploading image...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center space-y-2">
+                        <Upload className="w-8 h-8 text-gray-400" />
+                        <div className="text-center">
+                          <span className="text-sm font-medium text-gray-600">
+                            Click to upload or drag & drop
+                          </span>
+                          <p className="text-xs text-gray-400 mt-1">
+                            PNG, JPG, WebP up to 5MB
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </label>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Enter a direct link to an image (JPG, PNG, GIF, etc.)
-                </p>
               </div>
 
+
+
+              {/* AI Generate Section */}
               {(() => {
                 const question = questions.find(q => q._id === currentQuestionForImage);
                 return question?.imagePrompt && (
                   <div className="border-t pt-4">
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                      <p className="text-sm text-purple-800 mb-2">
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <p className="text-sm text-purple-800 mb-3">
                         <span className="font-medium">Image Prompt:</span> {question.imagePrompt}
                       </p>
                       <button
                         onClick={() => handleGenerateImage(currentQuestionForImage, question.imagePrompt!)}
-                        disabled={isGeneratingImage}
+                        disabled={isGeneratingImage || isUploadingQuestionImage}
                         className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center space-x-2"
                       >
                         {isGeneratingImage ? (
@@ -1639,6 +1875,9 @@ export default function PackageDetailPage() {
                           </>
                         )}
                       </button>
+                      <p className="text-xs text-purple-600 mt-2 text-center">
+                        AI will generate an image based on the prompt and automatically add it to the question
+                      </p>
                     </div>
                   </div>
                 );
