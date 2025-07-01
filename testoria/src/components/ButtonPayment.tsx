@@ -573,9 +573,9 @@ export default function ButtonPayment({
     return (
       <button
         onClick={() => router.push("/login")}
-        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition duration-200 flex-1"
+        className="w-full bg-blue-500 text-white px-4 py-2  hover:bg-blue-400 transition duration-200 flex-1 rounded-2xl font-bold "
       >
-        Login untuk {packagePrice === 0 ? "Akses" : "Beli"}
+        {packagePrice === 0 ? "Akses" : "Beli"}
       </button>
     );
   }
@@ -586,11 +586,11 @@ export default function ButtonPayment({
       <div className="flex-1 ">
         <button
           onClick={() => router.push(`/packages/${packageId}/tryout`)}
-          className="w-full bg-green-500 text-white px-3 py-3 text-sm hover:bg-green-600 transition duration-200 font-bold rounded-lg h-"
+          className="w-full bg-green-500 text-white px-3 py-3 text-sm hover:bg-green-600 transition duration-200 font-bold rounded-2xl "
         >
           {paymentStatus.paymentStatus === "free_access"
-            ? "Akses Package"
-            : "Akses Package"}
+            ? "Akses Paket"
+            : "Akses Paket"}
         </button>
       </div>
     );
@@ -600,23 +600,23 @@ export default function ButtonPayment({
   if (paymentStatus.isPending) {
     return (
       <div className="flex h-full ">
-          <button
-            onClick={handleContinuePendingPayment}
-            disabled={loading}
-            className="w-full bg-amber-500 text-white px-3 py-2 rounded-lg text-sm font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 shadow-sm"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center space-x-2 ">
-                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Memproses...</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center  font-bold ">
-                Lanjutkan Pembayaran
-              </div>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={handleContinuePendingPayment}
+          disabled={loading}
+          className="w-full bg-amber-400 text-white px-3 py-3 text-sm hover:bg-amber-600 transition duration-200 font-bold rounded-2xl"
+        >
+          {loading ? (
+            <div className="flex items-center justify-center ">
+              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Memproses...</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center text-white h-2">
+              <span>Lanjutkan Pembayaran</span>
+            </div>
+          )}
+        </button>
+      </div>
     );
   }
 
@@ -625,21 +625,22 @@ export default function ButtonPayment({
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`px-4 py-2 rounded transition duration-200 flex-1 ${
+      className={`w-full py-3 px-4 rounded-2xl transition-all duration-300 font-bold text-sm transform hover:scale-105 shadow-lg hover:shadow-xl ${
         packagePrice === 0
-          ? "bg-green-500 text-white hover:bg-green-600"
-          : "bg-blue-500 text-white hover:bg-blue-600"
+          ? " bg-green-500 text-white hover:from-green-600 hover:to-emerald-700"
+          : " bg-blue-600  text-white hover:from-blue-700 hover:to-purple-700"
+          // w-full bg-blue-900 text-white font-semibold py-3 rounded-2xl hover:bg-blue-800 transition-all duration-300
       }`}
     >
       {loading ? (
         <div className="flex items-center justify-center">
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-          Processing...
+          <span>Processing...</span>
         </div>
       ) : packagePrice === 0 ? (
-        "Ambil Gratis"
+        "Akses Paket "
       ) : (
-        "Bayar Sekarang"
+        "Beli Sekarang"
       )}
     </button>
   );

@@ -5,15 +5,15 @@ import {
   Package,
   Search,
   BookOpen,
-  Grid3X3,
-  List,
   CreditCard,
   FileText,
-  ExternalLink,
+  Filter,
+  BookDashedIcon,
 } from "lucide-react";
 import PackageCard from "@/components/PackageCard";
 import Navbar from "@/components/Navbar";
 import { PackageResponse } from "@/types/package";
+import Link from "next/link";
 
 interface Category {
   _id: string;
@@ -27,10 +27,8 @@ interface DashboardPackage extends PackageResponse {
 }
 
 export default function DashboardCustomerPage() {
-  const [activeTab, setActiveTab] = useState("browse");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [viewMode, setViewMode] = useState("grid");
   const [sortBy, setSortBy] = useState("popular");
 
   // State untuk data dari API
@@ -45,7 +43,7 @@ export default function DashboardCustomerPage() {
       try {
         setLoading(true);
 
-        const response = await fetch("/api/packages?published=true", {
+        const response = await fetch("/api/packages", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -160,8 +158,13 @@ export default function DashboardCustomerPage() {
     },
   ];
 
-  // ✅ Improved category filtering logic
+  // ✅ Improved filtering logic - include isPublished filter
   const filteredPackages = packages.filter((pkg) => {
+    // First check if package is published
+    if (!pkg.isPublished) {
+      return false;
+    }
+
     const matchesSearch =
       pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (pkg.creatorName &&
@@ -220,14 +223,6 @@ export default function DashboardCustomerPage() {
     }
   });
 
-  const handleNavigation = (item: (typeof navigationItems)[0]) => {
-    if (item.type === "tab") {
-      setActiveTab(item.id);
-    } else if (item.type === "button" && item.href) {
-      window.location.href = item.href;
-    }
-  };
-
   // ✅ Helper function to get category name for display
   const getSelectedCategoryName = () => {
     if (selectedCategory === "all") return null;
@@ -238,10 +233,12 @@ export default function DashboardCustomerPage() {
     return (
       <div>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Memuat paket...</p>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 via-white to-indigo-200">
+          <div className="flex flex-col items-center gap-6">
+            <div className="w-16 h-16 border-4 border-blue-400 border-t-blue-600 rounded-full animate-spin"></div>
+            <span className="text-blue-700 font-semibold text-lg tracking-wide">
+              Memuat paket...
+            </span>
           </div>
         </div>
       </div>
@@ -252,15 +249,16 @@ export default function DashboardCustomerPage() {
     return (
       <div>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-2">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-100 via-white to-orange-100">
+          <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl px-8 py-10 flex flex-col items-center border border-red-200">
+            <Package className="w-12 h-12 text-red-500 mb-4 animate-bounce" />
+            <h2 className="text-2xl font-bold text-red-600 mb-2">
               Terjadi Kesalahan
             </h2>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <p className="text-gray-600 mb-6">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-400 text-white rounded-xl hover:from-red-600 hover:to-orange-500 transition-all duration-300 shadow"
             >
               Coba Lagi
             </button>
@@ -271,188 +269,203 @@ export default function DashboardCustomerPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Main Content Area */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            {/* ✅ Updated Navigation - Mix of tabs and buttons */}
-            <div className="border-b border-gray-100 bg-gray-50/50">
-              <nav className="flex space-x-0 overflow-x-auto px-6">
-                {navigationItems.map((item) => {
-                  const IconComponent = item.icon;
-                  const isActive = activeTab === item.id && item.type === "tab";
+      {/* Navigation Section */}
+      <div className="flex justify-center gap-4 mb-8 mt-4 bg-white">
+        <Link
+          href="/dashboard-customer"
+          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium shadow-sm"
+        >
+          <BookDashedIcon className="w-5 h-5 mr-2" />
+          Dashboard
+        </Link>
+        <Link
+          href="/my-package"
+          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+        >
+          <BookOpen className="w-5 h-5 mr-2" />
+          My-Paket
+        </Link>
+        <Link
+          href="/payment-history"
+          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+        >
+          <CreditCard className="w-5 h-5 mr-2" />
+          Riwayat Pembayaran
+        </Link>
+        <Link
+          href="/tryout-history"
+          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+        >
+          <FileText className="w-5 h-5 mr-2" />
+          Riwayat Tryout
+        </Link>
+      </div>
 
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavigation(item)}
-                      className={`py-4 px-6 border-b-3 font-semibold text-sm flex items-center whitespace-nowrap transition-all duration-200 ${
-                        isActive
-                          ? "border-blue-600 text-blue-600 bg-white rounded-t-xl -mb-px"
-                          : item.type === "button"
-                          ? "border-transparent text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-t-xl"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-white/50 rounded-t-xl"
-                      }`}
-                    >
-                      <IconComponent className="w-5 h-5 mr-2" />
-                      {item.label}
-                      {item.type === "button" && (
-                        <ExternalLink className="w-4 h-4 ml-2 opacity-60" />
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
+      {/* Filters Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 ">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 " />
+              <input
+                type="text"
+                placeholder="Search packages..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="text-gray-600 pl-12 pr-4 py-3 w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200  "
+              />
             </div>
-
-            {/* ✅ Only show filters for browse tab */}
-            {activeTab === "browse" && (
-              <div className="p-6 border-b border-gray-100 bg-gray-50/30">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                  <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                    {/* Search */}
-                    <div className="relative">
-                      <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Cari paket..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-12 pr-4 py-3 w-full sm:w-80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white text-gray-600"
-                      />
-                    </div>
-
-                    {/* ✅ Improved Category Filter */}
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium min-w-[200px] text-gray-400"
-                    >
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex items-center space-x-4">
-                    {/* Sort */}
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white font-medium text-gray-400"
-                    >
-                      <option value="popular">Paling Populer</option>
-                      <option value="newest">Terbaru</option>
-                      <option value="oldest">Terlama</option>
-                      <option value="title">Judul A-Z</option>
-                      <option value="price-low">Harga: Termurah</option>
-                      <option value="price-high">Harga: Termahal</option>
-                    </select>
-
-                    {/* View Mode */}
-                    <div className="flex border border-gray-200 rounded-xl shadow-sm bg-white overflow-hidden">
-                      <button
-                        onClick={() => setViewMode("grid")}
-                        className={`p-3 transition-all duration-200 ${
-                          viewMode === "grid"
-                            ? "bg-blue-50 text-blue-600 border-r border-blue-200"
-                            : "text-gray-500 hover:bg-gray-50 border-r border-gray-200"
-                        }`}
-                      >
-                        <Grid3X3 className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setViewMode("list")}
-                        className={`p-3 transition-all duration-200 ${
-                          viewMode === "list"
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-500 hover:bg-gray-50"
-                        }`}
-                      >
-                        <List className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ✅ Content - Only Browse Packages */}
-            <div className="p-6">
-              {/* Browse Packages Content */}
-              {activeTab === "browse" && (
-                <div
-                  className={
-                    viewMode === "grid"
-                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                      : "space-y-4"
-                  }
-                >
-                  {sortedPackages.length > 0 ? (
-                    sortedPackages.map((packageItem) => (
-                      <PackageCard
-                        key={packageItem._id}
-                        package={{
-                          _id: packageItem._id,
-                          title: packageItem.title,
-                          description: packageItem.description,
-                          duration: packageItem.duration,
-                          price: packageItem.price,
-                          categoryId: packageItem.categoryId,
-                          creatorId: packageItem.creatorId,
-                          sourcePdf: packageItem.sourcePdf,
-                          pdfImages: packageItem.pdfImages,
-                          images: packageItem.images || [], // Include images field with fallback
-                          contents: packageItem.contents,
-                          isPublished: packageItem.isPublished,
-                          rating: packageItem.rating || 0,
-                          createdAt: packageItem.createdAt,
-                          updatedAt: packageItem.updatedAt,
-                          categoryName: packageItem.categoryName,
-                          creatorName: packageItem.creatorName,
-                          averageRating: packageItem.averageRating || 0,
-                          ratings: packageItem.ratings || [],
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-16">
-                      <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <Package className="w-12 h-12 text-gray-400" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                        {searchTerm || selectedCategory !== "all"
-                          ? "Paket tidak ditemukan"
-                          : "Belum ada paket"}
-                      </h3>
-                      <p className="text-gray-600 text-lg max-w-md mx-auto mb-4">
-                        {searchTerm || selectedCategory !== "all"
-                          ? "Coba ubah kata kunci pencarian atau filter untuk menemukan paket yang sesuai."
-                          : "Belum ada paket yang tersedia saat ini. Silakan cek kembali nanti."}
-                      </p>
-                      {(searchTerm || selectedCategory !== "all") && (
-                        <button
-                          onClick={() => {
-                            setSelectedCategory("all");
-                            setSearchTerm("");
-                          }}
-                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Hapus Filter
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Category Filter */}
+            <div className="relative min-w-[200px]">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="text-gray-400 w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white appearance-none cursor-pointer pr-10"
+              >
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <Filter className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none " />
+            </div>
+            {/* Sort */}
+            <div className="min-w-[180px]">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="text-gray-400 w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+              >
+                <option value="popular">Most Popular</option>
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="title">Title A-Z</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+              </select>
             </div>
           </div>
+
+          {/* Active filters display */}
+          {(searchTerm || selectedCategory !== "all") && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {searchTerm && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                  Search: "{searchTerm}"
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="ml-2 hover:text-blue-600 font-bold"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {selectedCategory !== "all" && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                  Category: {getSelectedCategoryName()}
+                  <button
+                    onClick={() => setSelectedCategory("all")}
+                    className="ml-2 hover:text-green-600 font-bold"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      </section>
+
+      {/* Results Summary */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <p className="text-gray-600">
+            Showing{" "}
+            <span className="font-semibold text-gray-900">
+              {sortedPackages.length}
+            </span>{" "}
+            packages
+            {selectedCategory !== "all" && (
+              <span>
+                {" "}
+                in{" "}
+                <span className="font-semibold">
+                  {getSelectedCategoryName()}
+                </span>
+              </span>
+            )}
+          </p>
+        </div>
+      </section>
+
+      {/* Packages Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        {sortedPackages.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {sortedPackages.map((packageItem, index) => (
+              <div
+                key={packageItem._id}
+                className="animate-fadeInUp opacity-0 transition-all duration-500 ease-out transform translate-y-10 h-full"
+                style={{
+                  animationDelay: `${index * 0.15}s`,
+                  animationFillMode: "forwards",
+                }}
+              >
+                <PackageCard package={packageItem} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Package className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              {searchTerm || selectedCategory !== "all"
+                ? "No packages found"
+                : "No packages available"}
+            </h3>
+            <p className="text-gray-600 max-w-md mx-auto mb-6">
+              {searchTerm || selectedCategory !== "all"
+                ? "Try adjusting your search or filters to find what you're looking for."
+                : "There are no packages available at the moment. Please check back later."}
+            </p>
+            {(searchTerm || selectedCategory !== "all") && (
+              <button
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setSelectedCategory("all");
+                  setSearchTerm("");
+                }}assName="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium"
+              > Clear All Filters
+                Clear All Filters
+              </button>
+            )}v>
+          </div>
+        )}ction>
+      </section>
+      {/* Enhanced animations */}
+      {/* Enhanced animations */}
+      <style jsx>{`fadeInUp {
+        @keyframes fadeInUp {
+          from {ity: 0;
+            opacity: 0;translateY(30px) scale(0.95);
+            transform: translateY(30px) scale(0.95);
+          }o {
+          to {acity: 1;
+            opacity: 1;translateY(0) scale(1);
+            transform: translateY(0) scale(1);
+          }
+        }animate-fadeInUp {
+        .animate-fadeInUp {Up 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+          animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }/style>
+      `}</style>
     </div>
   );
 }

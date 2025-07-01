@@ -13,7 +13,7 @@ export default function NavbarLanding() {
     if (typeof document !== "undefined") {
       const cookies = document.cookie.split(";").map((c) => c.trim());
       const tokenCookie = cookies.find((c) => c.startsWith("token="));
-      setIsLoggedIn(!tokenCookie);
+      setIsLoggedIn(!!tokenCookie);
     }
   }, []);
 

@@ -130,8 +130,8 @@ export default function MyPackage() {
           Belum Ada Paket
         </h3>
         <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-          Anda belum membeli paket apapun. Jelajahi paket yang tersedia
-          untuk memulai persiapan tes Anda.
+          Anda belum membeli paket apapun. Jelajahi paket yang tersedia untuk
+          memulai persiapan tes Anda.
         </p>
         <button
           onClick={() => (window.location.href = "/dashboard-customer")}
@@ -161,7 +161,7 @@ export default function MyPackage() {
           return (
             <div
               key={paymentItem._id}
-              className="bg-white rounded-2xl border border-gray-100 hover:shadow-lg transition-all duration-200 overflow-hidden group"
+              className="bg-white rounded-2xl border border-gray-100 hover:shadow-lg transition-all duration-200 overflow-hidden group justify-between flex flex-col h-full"
             >
               {/* Package Header */}
               <div className="p-6 border-b border-gray-50">
@@ -196,14 +196,12 @@ export default function MyPackage() {
                     <Clock className="w-4 h-4 mr-2" />
                     <span>{safeNumber(packageData.duration)} menit</span>
                   </div>
-                  <div className="flex items-center text-gray-500">
-
-                  </div>
+                  <div className="flex items-center text-gray-500"></div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="p-6">
+              <div className="p-6 items-end">
                 <div className="space-y-3">
                   <button
                     onClick={() => handleStartTryout(packageData._id)}
@@ -213,10 +211,10 @@ export default function MyPackage() {
                     Mulai Tryout
                   </button>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="flex gap-2 ">
                     <button
                       onClick={() => handleViewDetail(packageData._id)}
-                      className="py-2 px-3 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                      className="flex-1 h-11 py-2 px-3 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                     >
                       Lihat Detail
                     </button>
@@ -224,7 +222,7 @@ export default function MyPackage() {
                       onClick={() =>
                         (window.location.href = `/packages/${packageData._id}/results`)
                       }
-                      className="py-2 px-3 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                      className="flex-1 h-11 py-2 px-3 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                     >
                       Lihat Hasil
                     </button>
@@ -235,8 +233,6 @@ export default function MyPackage() {
           );
         })}
       </div>
-
-
     </div>
   );
 }

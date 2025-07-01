@@ -60,55 +60,59 @@ export default function PendingPaymentCard({
   };
 
   return (
-    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-4 shadow-sm">
+    <div className="bg-white rounded-2xl p-6 shadow-lg border border-yellow-200">
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-            <Clock className="w-4 h-4 text-white" />
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center">
+            <Clock className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm">
+            <h4 className="font-bold text-blue-900 text-lg">
               Pembayaran Pending
             </h4>
-            <p className="text-xs text-gray-600">{getTimeElapsed(createdAt)}</p>
+            <p className="text-sm text-gray-600">{getTimeElapsed(createdAt)}</p>
           </div>
         </div>
-        <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
 
       {/* Package Info */}
-      <div className="mb-3">
-        <p className="text-sm font-medium text-gray-800 mb-1">{packageTitle}</p>
-        <p className="text-lg font-bold text-gray-900">
+      <div className="mb-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
+        <p className="text-md font-medium text-blue-800 mb-1">{packageTitle}</p>
+        <p className="text-xl font-bold text-blue-900">
           {formatCurrency(amount)}
         </p>
       </div>
 
       {/* Expandable Details */}
-      <div className="mb-3">
+      <div className="mb-5">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-gray-600 hover:text-gray-800 flex items-center space-x-1"
+          className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-2"
         >
-          <AlertCircle className="w-3 h-3" />
+          <AlertCircle className="w-4 h-4" />
           <span>{expanded ? "Sembunyikan detail" : "Lihat detail"}</span>
         </button>
 
         {expanded && (
-          <div className="mt-2 p-2 bg-white rounded-lg border border-yellow-200">
-            <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-gray-500">Payment ID:</span>
-                <p className="font-mono text-gray-800 break-all">{paymentId}</p>
+                <span className="text-gray-500 block mb-1">Payment ID:</span>
+                <p className="font-mono text-gray-800 break-all bg-white p-2 rounded border border-gray-200 text-xs">
+                  {paymentId}
+                </p>
               </div>
               <div>
-                <span className="text-gray-500">Dibuat:</span>
-                <p className="text-gray-800">{formatDateTime(createdAt)}</p>
+                <span className="text-gray-500 block mb-1">Dibuat:</span>
+                <p className="text-gray-800 font-medium">
+                  {formatDateTime(createdAt)}
+                </p>
               </div>
             </div>
-            <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
-              <p className="text-xs text-yellow-800">
+            <div className="mt-3 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
+              <p className="text-sm text-yellow-800">
                 💡 <strong>Tips:</strong> Pembayaran ini masih menunggu
                 konfirmasi. Klik &quot;Lanjutkan Pembayaran&quot; untuk
                 menyelesaikan transaksi.
@@ -122,7 +126,7 @@ export default function PendingPaymentCard({
       <button
         onClick={onContinuePayment}
         disabled={loading}
-        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+        className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl text-md font-semibold hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
       >
         {loading ? (
           <div className="flex items-center justify-center space-x-2">
@@ -131,14 +135,14 @@ export default function PendingPaymentCard({
           </div>
         ) : (
           <div className="flex items-center justify-center space-x-2">
-            <CreditCard className="w-4 h-4" />
+            <CreditCard className="w-5 h-5" />
             <span>Lanjutkan Pembayaran</span>
           </div>
         )}
       </button>
 
       {/* Footer Warning */}
-      <p className="text-xs text-gray-500 text-center mt-2">
+      <p className="text-xs text-gray-500 text-center mt-3">
         Pembayaran akan otomatis dibatalkan setelah 24 jam
       </p>
     </div>
