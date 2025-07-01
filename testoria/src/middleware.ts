@@ -22,15 +22,14 @@ export async function middleware(request: Request) {
         if (url.pathname === '/api/categories' && (method === 'GET' || method === 'POST')) {
             return NextResponse.next();
         }
-      
+
         // Allow public GET requests for individual category viewing
         if (url.pathname.startsWith('/api/categories/') && method === 'GET') {
             return NextResponse.next();
         }
-        
+
         // Allow public GET requests for individual profile viewing (creators)
         if (url.pathname.startsWith('/api/profiles/') &&
-            url.pathname !== '/api/profiles/me' &&
             method === 'GET') {
             return NextResponse.next();
         }
@@ -54,27 +53,27 @@ export async function middleware(request: Request) {
         const cookieStore = await cookies();
         const authorization = cookieStore.get('Authorization');
         const userRoleCookie = cookieStore.get('x-user-role');
-        
+
         if (!authorization) {
             throw { message: "Please login first", status: 401 };
         }
-        
+
         const [type, token] = authorization.value.split(' ');
         if (type !== 'Bearer' || !token) {
             throw { message: "Invalid token format", status: 401 };
         }
-        
+
         const decoded = await verifyTokenAsync<{ email: string, _id: string }>(token);
-        
+
         const requestHeaders = new Headers(request.headers)
         requestHeaders.set('x-user-id', decoded._id);
         requestHeaders.set('x-user-email', decoded.email);
-        
+
         // Set user role from cookie if available
         if (userRoleCookie?.value) {
             requestHeaders.set('x-user-role', userRoleCookie.value);
         }
-        
+
         const response = NextResponse.next({
             request: {
                 headers: requestHeaders,
@@ -94,6 +93,7 @@ export const config = {
         '/api/categories/:path*',
         '/api/categories',
         '/api/profiles/:path*',
+        '/api/profile/:path*',
         '/api/packages/:path*',
         '/api/payments/:path*',
         '/api/questions/:path*',
@@ -102,6 +102,6 @@ export const config = {
         '/api/test-ai/:path*',
         '/api/creator/:path*',
         '/api/admin/:path*'
-        
+
     ],
 }

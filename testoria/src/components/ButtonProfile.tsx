@@ -29,7 +29,7 @@ export default function ButtonProfile() {
 
   return (
     <Link
-      href="/profile/me"
+      href="/profile"
       className="p-2 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200 backdrop-blur-sm border border-white/10 hover:border-white/20"
       title="Profile"
     >
