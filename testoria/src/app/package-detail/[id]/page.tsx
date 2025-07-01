@@ -462,18 +462,18 @@ export default function PackageDetailPage() {
     setIsProcessing(true);
     try {
       // Step 1: Process AI
-      const processResponse = await fetch(`/api/packages/${packageData._id}/process`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      // const processResponse = await fetch(`/api/packages/${packageData._id}/process`, {
+      //   method: 'PATCH',
+      //   credentials: 'include',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   }
+      // });
 
-      if (!processResponse.ok) {
-        const errorData = await processResponse.json();
-        throw new Error(errorData.message || 'Failed to process AI');
-      }
+      // if (!processResponse.ok) {
+      //   const errorData = await processResponse.json();
+      //   throw new Error(errorData.message || 'Failed to process AI');
+      // }
 
       // Step 2: Generate questions
       const questionsResponse = await fetch('/api/questions', {

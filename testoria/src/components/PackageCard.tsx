@@ -8,8 +8,7 @@ import { useState, useEffect } from "react";
 
 // Extended package type for display with populated fields
 interface PackageCardProps {
-  package: PackageResponse 
-  ;
+  package: PackageResponse;
 }
 
 export default function PackageCard({ package: pkg }: PackageCardProps) {
@@ -20,8 +19,13 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
   // Get images array, fallback to empty array if not available
   const images = pkg.images && pkg.images.length > 0 ? pkg.images : [];
   const hasImages = images.length > 0;
-  console.log(pkg);
-  
+  console.log("Package debug:", {
+    id: pkg._id,
+    title: pkg.title,
+    averageRating: pkg.averageRating,
+    ratings: pkg.ratings,
+  });
+
   // Auto-slide functionality
   useEffect(() => {
     if (!hasImages || images.length <= 1) return;
@@ -52,15 +56,13 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
     return `${duration}m`;
   };
 
-  const questionCount = pkg.contents?.length || 50; // Static fallback
+  const questionCount = pkg.contents?.length || 50; 
 
   const handleImageLoad = () => {
-    setIsImageLoading(false);
     setImageError(false);
   };
 
   const handleImageError = () => {
-    setIsImageLoading(false);
     setImageError(true);
   };
 
@@ -79,24 +81,17 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
               src={images[currentImageIndex]}
               alt={pkg.title}
               className="w-full h-full object-cover transition-all duration-300"
-              onLoad={handleImageLoad}
-              onError={handleImageError}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
               <BookOpen className="w-16 h-16 text-blue-400" />
             </div>
           )}
-          {isImageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/40">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            </div>
-          )}
         </div>
         {/* Badge status */}
         <div className="absolute top-3 left-3">
           <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium shadow">
-            {pkg.categoryName}
+            {(pkg as any).categoryName || "Category"}
           </span>
         </div>
         {/* Badge gratis */}
@@ -108,11 +103,14 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
           </div>
         )}
         {/* Ikon aksi (opsional, contoh: favorit/tautan) */}
-        {/* <div className="absolute top-3 right-12">
-          <button className="bg-white/80 rounded-full p-2 shadow hover:bg-gray-100 transition">
-            <Heart className="w-4 h-4 text-gray-500" />
-          </button>
-        </div> */}
+        <div className="absolute top-3 right-12 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
+          <div className="flex items-center gap-1 text-xs font-medium text-gray-700">
+            <span>⭐️</span>
+            <span>
+              {pkg.averageRating ? pkg.averageRating.toFixed(1) : "0.0"}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Konten utama */}
@@ -126,7 +124,7 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
           </div>
         </div>
         <div className="text-xs text-gray-500 mb-2 truncate">
-          {pkg.creatorName}
+          {(pkg as any).creatorName || "Creator"}
         </div>
         <div className="text-sm text-gray-600 mb-3 line-clamp-2">
           {pkg.description}
