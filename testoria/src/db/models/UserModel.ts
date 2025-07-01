@@ -31,6 +31,7 @@ class UserModel {
             email: newUser.email,
             password: await hashPassword(newUser.password),
             role: newUser.role || 'customer',
+            balance: newUser.role === 'creator' ? 0 : undefined, // Initialize balance for creators
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -75,6 +76,69 @@ class UserModel {
         }
 
         return user;
+    }
+
+    // Balance management methods for creators
+    static async addBalance(userId: string, amount: number) {
+        if (!ObjectId.isValid(userId)) {
+            throw { message: "Invalid user ID", status: 400 };
+        }
+
+        if (amount <= 0) {
+            throw { message: "Amount must be positive", status: 400 };
+        }
+
+        // Check if user is a creator
+        const user = await this.findById(userId);
+        if (user.role !== 'creator') {
+            throw { message: "Only creators can have balance", status: 400 };
+        }
+
+        const result = await this.collection().updateOne(
+            { _id: new ObjectId(userId) },
+            { 
+                $inc: { balance: amount },
+                $set: { updatedAt: new Date().toISOString() }
+            }
+        );
+
+        if (result.modifiedCount === 0) {
+            throw { message: "Failed to update balance", status: 500 };
+        }
+
+        return { message: "Balance updated successfully", amount };
+    }
+
+    static async getBalance(userId: string) {
+        if (!ObjectId.isValid(userId)) {
+            throw { message: "Invalid user ID", status: 400 };
+        }
+
+        const user = await this.findById(userId);
+        
+        if (user.role !== 'creator') {
+            throw { message: "Only creators have balance", status: 400 };
+        }
+
+        return user.balance || 0;
+    }
+
+    static async initializeCreatorBalance(userId: string) {
+        if (!ObjectId.isValid(userId)) {
+            throw { message: "Invalid user ID", status: 400 };
+        }
+
+        const result = await this.collection().updateOne(
+            { _id: new ObjectId(userId), role: 'creator', balance: { $exists: false } },
+            { 
+                $set: { 
+                    balance: 0,
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        );
+
+        return result.modifiedCount > 0;
     }
 }
 

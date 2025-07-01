@@ -53,6 +53,7 @@ export async function middleware(request: Request) {
         // For all other protected routes, require authentication
         const cookieStore = await cookies();
         const authorization = cookieStore.get('Authorization');
+        const userRoleCookie = cookieStore.get('x-user-role');
         
         if (!authorization) {
             throw { message: "Please login first", status: 401 };
@@ -68,6 +69,11 @@ export async function middleware(request: Request) {
         const requestHeaders = new Headers(request.headers)
         requestHeaders.set('x-user-id', decoded._id);
         requestHeaders.set('x-user-email', decoded.email);
+        
+        // Set user role from cookie if available
+        if (userRoleCookie?.value) {
+            requestHeaders.set('x-user-role', userRoleCookie.value);
+        }
         
         const response = NextResponse.next({
             request: {
@@ -93,7 +99,9 @@ export const config = {
         '/api/questions/:path*',
         '/api/user-answers/:path*',
         '/api/results/:path*',
-        '/api/test-ai/:path*'
+        '/api/test-ai/:path*',
+        '/api/creator/:path*',
+        '/api/admin/:path*'
         
     ],
 }
