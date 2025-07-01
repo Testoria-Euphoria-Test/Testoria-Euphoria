@@ -13,11 +13,17 @@ import {
 } from "lucide-react";
 import PackageCard from "@/components/PackageCard";
 import Navbar from "@/components/Navbar";
-import PackageResponse from "@/types/PackageResponse";
+import { PackageResponse } from "@/types/package";
 
 interface Category {
   _id: string;
   name: string;
+}
+
+// Extended package type for dashboard display
+interface DashboardPackage extends PackageResponse {
+  categoryName?: string;
+  creatorName?: string;
 }
 
 export default function DashboardCustomerPage() {
@@ -28,7 +34,7 @@ export default function DashboardCustomerPage() {
   const [sortBy, setSortBy] = useState("popular");
 
   // State untuk data dari API
-  const [packages, setPackages] = useState<PackageResponse[]>([]);
+  const [packages, setPackages] = useState<DashboardPackage[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,8 +107,8 @@ export default function DashboardCustomerPage() {
         // ✅ Validate and filter valid categories
         const validCategories = categories
           .filter(Boolean) // Remove null/undefined
-          .filter((cat) => cat._id && cat.name) // Must have _id and name
-          .map((cat) => ({ _id: String(cat._id), name: String(cat.name) })); // Ensure strings
+          .filter((cat: any) => cat._id && cat.name) // Must have _id and name
+          .map((cat: any) => ({ _id: String(cat._id), name: String(cat.name) })); // Ensure strings
 
         if (validCategories.length > 0) {
           setCategories([
@@ -396,6 +402,7 @@ export default function DashboardCustomerPage() {
                           creatorId: packageItem.creatorId,
                           sourcePdf: packageItem.sourcePdf,
                           pdfImages: packageItem.pdfImages,
+                          images: packageItem.images || [], // Include images field with fallback
                           contents: packageItem.contents,
                           isPublished: packageItem.isPublished,
                           createdAt: packageItem.createdAt,
