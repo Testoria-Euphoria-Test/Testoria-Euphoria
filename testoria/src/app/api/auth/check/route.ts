@@ -6,13 +6,21 @@ export async function GET(request: Request) {
         // Get user info from middleware headers (requires auth)
         const userId = request.headers.get('x-user-id');
         const userEmail = request.headers.get('x-user-email');
+        const userRole = request.headers.get('x-user-role');
 
         if (!userId) {
             throw { message: "Unauthorized - Authentication required", status: 401 };
         }
 
-        // Get user details including role
-        const user = await UserModel.findById(userId);
+        // If we have the role from middleware, use it; otherwise fetch from DB as fallback
+        let role = userRole;
+        if (!role) {
+            const user = await UserModel.findById(userId);
+            if (!user) {
+                throw { message: "User not found", status: 401 };
+            }
+            role = user.role;
+        }
 
         return Response.json({
             success: true,
@@ -20,7 +28,7 @@ export async function GET(request: Request) {
             data: {
                 userId,
                 userEmail,
-                userRole: user.role
+                userRole: role
             }
         });
 

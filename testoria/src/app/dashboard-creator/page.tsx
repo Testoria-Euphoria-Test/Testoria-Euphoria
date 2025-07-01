@@ -14,6 +14,7 @@ import {
   Star,
   Download,
   RefreshCw,
+  Wallet,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
@@ -30,6 +31,7 @@ interface CreatorProfile {
   totalPackages: number;
   totalStudents: number;
   totalEarnings: number;
+  balance: number; // Current balance
   rating: number;
   joinDate: string;
 }
@@ -53,22 +55,10 @@ interface Package {
   creatorName?: string;
 }
 
-interface UploadedPDF {
-  _id: string;
-  fileName: string;
-  fileSize: string;
-  uploadDate: string;
-  packageId?: string;
-  packageTitle?: string;
-  status: "processing" | "ready" | "error";
-}
-
 export default function DashboardCreatorPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("packages");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +66,8 @@ export default function DashboardCreatorPage() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number>(0);
+  const [earnings, setEarnings] = useState<any>(null);
 
   // Modal states  
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -91,6 +83,96 @@ export default function DashboardCreatorPage() {
   useEffect(() => {
     loadCreatorData();
   }, []);
+
+  // Sync balance with earnings when earnings data changes
+  useEffect(() => {
+    if (earnings && earnings.totalEarnings > 0 && balance === 0) {
+      setBalance(earnings.totalEarnings);
+      setCreatorProfile(prev => prev ? {...prev, balance: earnings.totalEarnings} : null);
+    }
+  }, [earnings, balance]);
+
+  // Manual refresh function
+  const refreshAllData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch both balance and earnings
+      await Promise.all([
+        fetchBalance(),
+        fetchEarnings()
+      ]);
+      
+      // If balance is still 0 but we have earnings, sync them
+      setTimeout(() => {
+        if (balance === 0 && earnings && earnings.totalEarnings > 0) {
+          setBalance(earnings.totalEarnings);
+          setCreatorProfile(prev => prev ? {...prev, balance: earnings.totalEarnings} : null);
+        }
+      }, 500);
+      
+      toast.success('Data refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+      toast.error('Failed to refresh data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch balance data
+  const fetchBalance = async () => {
+    try {
+      const response = await fetch('/api/creator/balance', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const currentBalance = data.data.balance || 0;
+        setBalance(currentBalance);
+        
+        // Update creator profile with balance
+        setCreatorProfile(prev => prev ? {...prev, balance: currentBalance} : null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch balance:', error);
+    }
+  };
+
+  // Fetch earnings data
+  const fetchEarnings = async () => {
+    try {
+      const response = await fetch('/api/creator/earnings', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEarnings(data.data);
+        
+        // Update creator profile with total earnings
+        const totalEarnings = data.data.totalEarnings || 0;
+        setCreatorProfile(prev => prev ? {...prev, totalEarnings} : null);
+        
+        // Update balance if it's not already set (balance should reflect available withdrawn amount)
+        // Note: earnings are cumulative, balance is what's available to withdraw
+        if (balance === 0 && totalEarnings > 0) {
+          setBalance(totalEarnings); // In a real app, balance might be different from total earnings
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch earnings:', error);
+    }
+  };
 
   const loadCreatorData = useCallback(async () => {
     setLoading(true);
@@ -156,14 +238,17 @@ export default function DashboardCreatorPage() {
       const fetchedPackages = packagesData.data || [];
       setPackages(fetchedPackages);
 
+      // Fetch balance and earnings data
+      await fetchBalance();
+      await fetchEarnings();
+
       // Calculate stats from packages
       const totalPackages = fetchedPackages.length;
       const publishedPackages = fetchedPackages.filter((pkg: Package) => pkg.isPublished);
       const totalStudents = 0; // This would come from enrollment data
-      const totalEarnings = 0; // This would come from sales data
       const avgRating = 0; // This would come from review data
 
-      // Set creator profile with calculated stats
+      // Set creator profile with calculated stats (will be updated with real earnings data)
       setCreatorProfile({
         _id: authData.data.userId, // Use the actual user ID from auth
         name: "Creator", // This would come from user profile API
@@ -173,7 +258,8 @@ export default function DashboardCreatorPage() {
         bio: "",
         totalPackages,
         totalStudents,
-        totalEarnings,
+        totalEarnings: 0, // Will be updated by earnings data
+        balance: 0, // Will be updated by balance data
         rating: avgRating,
         joinDate: new Date().toISOString(),
       });
@@ -186,37 +272,6 @@ export default function DashboardCreatorPage() {
       setLoading(false);
     }
   }, []);
-
-  // Mock data for uploaded PDFs
-  const [uploadedPDFs, setUploadedPDFs] = useState<UploadedPDF[]>([
-    {
-      _id: "pdf1",
-      fileName: "UTBK_Matematika_Soal_Bank.pdf",
-      fileSize: "2.5 MB",
-      uploadDate: "2024-01-10T10:00:00Z",
-      packageId: "pkg1",
-      packageTitle: "UTBK Saintek 2024 - Matematika Dasar",
-      status: "ready",
-    },
-    {
-      _id: "pdf2",
-      fileName: "Pembahasan_UTBK_Soshum.pdf",
-      fileSize: "3.2 MB",
-      uploadDate: "2024-02-15T10:00:00Z",
-      packageId: "pkg2",
-      packageTitle: "UTBK Soshum 2024 - Ekonomi & Geografi",
-      status: "ready",
-    },
-    {
-      _id: "pdf3",
-      fileName: "Draft_Olimpiade_Math.pdf",
-      fileSize: "1.8 MB",
-      uploadDate: "2024-03-01T10:00:00Z",
-      packageId: "pkg3",
-      packageTitle: "Matematika Olimpiade SMA",
-      status: "processing",
-    },
-  ]);
 
   // Currency formatter
   const formatCurrency = (amount: number) => {
@@ -250,7 +305,7 @@ export default function DashboardCreatorPage() {
     {
       label: "Total Pendapatan",
       value: formatCurrency(creatorProfile?.totalEarnings || 0),
-      change: "+28% bulan ini",
+      change: `${earnings?.totalSales || 0} penjualan`,
       icon: DollarSign,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
@@ -269,7 +324,7 @@ export default function DashboardCreatorPage() {
 
   const navigationTabs = [
     { id: "packages", label: "Paket Saya", icon: Package },
-    { id: "uploads", label: "Upload Materi", icon: FileText },
+    { id: "earnings", label: "Pendapatan", icon: DollarSign },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -282,33 +337,6 @@ export default function DashboardCreatorPage() {
       error: "bg-red-100 text-red-700 border-red-200",
     };
     return statusClasses[status as keyof typeof statusClasses] || "bg-gray-100 text-gray-700 border-gray-200";
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      // Simulate upload progress
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          // Add to uploaded files
-          const newPDF: UploadedPDF = {
-            _id: `pdf${Date.now()}`,
-            fileName: file.name,
-            fileSize: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-            uploadDate: new Date().toISOString(),
-            status: "processing",
-          };
-          setUploadedPDFs(prev => [...prev, newPDF]);
-          setSelectedFile(null);
-          setUploadProgress(0);
-        }
-      }, 200);
-    }
   };
 
   const handleSaveProfile = () => {
@@ -723,123 +751,164 @@ export default function DashboardCreatorPage() {
                 </div>
               )}
 
-              {/* Upload PDF Tab */}
-              {activeTab === "uploads" && !loading && !error && (
+              {/* Earnings Tab */}
+              {activeTab === "earnings" && !loading && !error && (
                 <div className="space-y-8">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      Upload Materi Pembelajaran
-                    </h3>
-                    <p className="text-gray-600">
-                      Upload file PDF untuk meningkatkan paket Anda dengan materi tambahan.
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        Analisis Pendapatan
+                      </h3>
+                      <p className="text-gray-600">
+                        Detail pendapatan dari penjualan paket tryout Anda.
+                      </p>
+                    </div>
+                    <button
+                      onClick={refreshAllData}
+                      disabled={loading}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                      Refresh Data
+                    </button>
                   </div>
 
-                  {/* Upload Area */}
-                  <div className="bg-gray-50 rounded-xl p-8">
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        id="pdf-upload"
-                      />
-                      <label htmlFor="pdf-upload" className="cursor-pointer">
-                        <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <p className="text-xl font-semibold text-gray-900 mb-2">
-                          Upload PDF Files
+                  {/* Balance Summary */}
+                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-emerald-100 text-sm font-medium">Saldo Tersedia</h4>
+                        <p className="text-3xl font-bold">
+                          {formatCurrency(earnings?.totalEarnings || balance || 0)}
                         </p>
-                        <p className="text-gray-600 mb-2">
-                          Drag and drop your PDF files here, or click to browse
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Maximum file size: 10MB • Supported format: PDF
-                        </p>
-                      </label>
+                        <p className="text-emerald-100 text-sm mt-1">Dapat ditarik kapan saja</p>
+                      </div>
+                      <div className="bg-white bg-opacity-20 rounded-full p-3">
+                        <Wallet className="w-8 h-8" />
+                      </div>
                     </div>
+                  </div>
 
-                    {/* Upload Progress */}
-                    {selectedFile && uploadProgress > 0 && (
-                      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-semibold text-blue-900">
-                            Uploading: {selectedFile.name}
-                          </span>
-                          <span className="text-sm font-semibold text-blue-600">
-                            {uploadProgress}%
-                          </span>
+                  {/* Earnings Overview */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white border border-gray-200 rounded-xl p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-gray-500 text-sm font-medium">Total Pendapatan</h4>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {formatCurrency(earnings?.totalEarnings || 0)}
+                          </p>
+                          <p className="text-gray-400 text-xs mt-1">
+                            Dari {earnings?.totalSales || 0} penjualan
+                          </p>
                         </div>
-                        <div className="w-full bg-blue-200 rounded-full h-3">
-                          <div
-                            className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                            style={{ width: `${uploadProgress}%` }}
-                          ></div>
+                        <div className="bg-purple-50 rounded-full p-3">
+                          <DollarSign className="w-6 h-6 text-purple-600" />
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Uploaded Files List */}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                      Materi yang Sudah Upload  
-                    </h4>
-                    <div className="space-y-4">
-                      {uploadedPDFs.map((pdf) => (
-                        <div
-                          key={pdf._id}
-                          className="bg-gray-50 rounded-xl p-6 border border-gray-200"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div className="p-3 bg-red-100 rounded-lg">
-                                <FileText className="w-6 h-6 text-red-600" />
-                              </div>
-                              <div>
-                                <h5 className="font-semibold text-gray-900">
-                                  {pdf.fileName}
-                                </h5>
-                                <p className="text-sm text-gray-600">
-                                  {pdf.fileSize} • Uploaded{" "}
-                                  {new Date(pdf.uploadDate).toLocaleDateString(
-                                    "id-ID"
-                                  )}
-                                </p>
-                                {pdf.packageTitle && (
-                                  <p className="text-sm text-blue-600 font-medium">
-                                    📎 Linked to: {pdf.packageTitle}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-3">
-                              <span
-                                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(
-                                  pdf.status
-                                )}`}
-                              >
-                                {pdf.status}
-                              </span>
-                              <button
-                                className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Download"
-                              >
-                                <Download className="w-4 h-4" />
-                              </button>
-                              <button
-                                className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 rounded-xl p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-gray-500 text-sm font-medium">Total Penjualan</h4>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {earnings?.totalSales || 0}
+                          </p>
                         </div>
-                      ))}
+                        <div className="bg-blue-50 rounded-full p-3">
+                          <Package className="w-6 h-6 text-blue-600" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-xl p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-gray-500 text-sm font-medium">Rata-rata per Paket</h4>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {formatCurrency(
+                              earnings?.totalSales > 0 
+                                ? (earnings?.totalEarnings || 0) / earnings.totalSales 
+                                : 0
+                            )}
+                          </p>
+                        </div>
+                        <div className="bg-green-50 rounded-full p-3">
+                          <Star className="w-6 h-6 text-green-600" />
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Package Sales Details */}
+                  {earnings && earnings.packageSales && earnings.packageSales.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                      <div className="px-6 py-4 border-b border-gray-200">
+                        <h4 className="text-lg font-semibold text-gray-900">Penjualan per Paket</h4>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nama Paket
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Jumlah Terjual
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total Pendapatan
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Penjualan Terakhir
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {earnings.packageSales.map((sale: any, index: number) => (
+                              <tr key={sale.packageId || index} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {sale.packageTitle}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">{sale.totalSales}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-green-600">
+                                    {formatCurrency(sale.totalEarnings)}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-500">
+                                    {sale.latestSale 
+                                      ? new Date(sale.latestSale).toLocaleDateString('id-ID')
+                                      : '-'
+                                    }
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No earnings message */}
+                  {(!earnings || !earnings.packageSales || earnings.packageSales.length === 0) && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+                      <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h4 className="text-xl font-semibold text-gray-900 mb-2">
+                        Belum Ada Pendapatan
+                      </h4>
+                      <p className="text-gray-600">
+                        Anda belum memiliki penjualan paket. Buat dan terbitkan paket pertama Anda untuk mulai mendapatkan pendapatan.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

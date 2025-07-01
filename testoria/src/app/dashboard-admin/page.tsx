@@ -14,6 +14,8 @@ import {
   Plus,
   Check,
   X,
+  DollarSign,
+  Wallet,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
@@ -63,7 +65,6 @@ interface AdminStats {
   totalPackages: number;
   totalCategories: number;
   activeCreators: number;
-  publishedPackages: number;
   pendingPackages: number;
   totalRevenue: number;
   users: User[];
@@ -84,6 +85,7 @@ export default function DashboardAdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [adminRevenue, setAdminRevenue] = useState<any>(null);
 
   // New category form state
   const [newCategory, setNewCategory] = useState({ name: "", description: "", icon: "" });
@@ -130,6 +132,33 @@ export default function DashboardAdminPage() {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  // Fetch admin revenue when component mounts and when needed
+  useEffect(() => {
+    if (!loading) {
+      fetchAdminRevenue();
+    }
+  }, [loading]);
+
+  // Fetch admin revenue data
+  const fetchAdminRevenue = async () => {
+    try {
+      const response = await fetch('/api/admin/revenue', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAdminRevenue(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch admin revenue:', error);
+    }
+  };
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -186,7 +215,6 @@ export default function DashboardAdminPage() {
         totalPackages: packages.length,
         totalCategories: categories.length,
         activeCreators: enrichedUsers.filter((u: any) => u.role === 'creator' && u.status === 'active').length,
-        publishedPackages: packages.filter((p: any) => p.isPublished).length,
         pendingPackages: packages.filter((p: any) => !p.isPublished).length,
         totalRevenue: packages.reduce((sum: number, p: any) => sum + (p.price * (p.totalStudents || 0)), 0),
         users: enrichedUsers,
@@ -198,6 +226,9 @@ export default function DashboardAdminPage() {
       setUsers(enrichedUsers);
       setPackages(packages);
       setCategories(categories);
+
+      // Fetch admin revenue data
+      await fetchAdminRevenue();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       console.error('Error loading dashboard data:', err);
@@ -259,7 +290,6 @@ export default function DashboardAdminPage() {
         setStats({
           ...stats,
           totalPackages: packages.length,
-          publishedPackages: packages.filter((p: any) => p.isPublished).length,
           pendingPackages: packages.filter((p: any) => !p.isPublished).length,
           packages
         });
@@ -508,7 +538,6 @@ export default function DashboardAdminPage() {
           setStats({
             ...stats,
             totalPackages: updatedPackages.length,
-            publishedPackages: updatedPackages.filter((p: any) => p.isPublished).length,
             pendingPackages: updatedPackages.filter((p: any) => !p.isPublished).length,
             packages: updatedPackages
           });
@@ -659,7 +688,6 @@ export default function DashboardAdminPage() {
           setStats({
             ...stats,
             totalPackages: packages.length,
-            publishedPackages: packages.filter((p: any) => p.isPublished).length,
             pendingPackages: packages.filter((p: any) => !p.isPublished).length,
             packages
           });
@@ -669,6 +697,14 @@ export default function DashboardAdminPage() {
       console.error('Error clearing package filters:', err);
       toast.error('Gagal menghapus filter paket');
     }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
   const statsData = stats ? [
@@ -687,28 +723,20 @@ export default function DashboardAdminPage() {
       color: "text-green-600",
     },
     {
+      label: "Admin Revenue (30%)",
+      value: formatCurrency(adminRevenue?.totalAdminRevenue || 0),
+      change: `${adminRevenue?.totalTransactions || 0} transaksi`,
+      icon: DollarSign,
+      color: "text-emerald-600",
+    },
+    {
       label: "Active Creators",
       value: stats.activeCreators.toString(),
       change: "+15%",
       icon: BarChart3,
       color: "text-purple-600",
     },
-    {
-      label: "Published Packages",
-      value: stats.publishedPackages.toString(),
-      change: "+23%",
-      icon: Settings,
-      color: "text-orange-600",
-    },
   ] : [];
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const getStatusBadge = (status: string) => {
     const statusClasses = {
@@ -829,6 +857,14 @@ export default function DashboardAdminPage() {
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard Admin</h1>
+              <p className="text-gray-600">Kelola pengguna, paket, dan analisis platform</p>
+            </div>
+          </div>
+
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {statsData.map((stat, index) => {
@@ -838,7 +874,6 @@ export default function DashboardAdminPage() {
                 "Total Users": "Total Pengguna",
                 "Total Packages": "Total Paket",
                 "Active Creators": "Creator Aktif",
-                "Published Packages": "Paket Terpublikasi",
               };
               return (
                 <div
@@ -874,15 +909,15 @@ export default function DashboardAdminPage() {
                   { id: "users", label: "Kelola Pengguna" },
                   { id: "packages", label: "Kelola Paket" },
                   { id: "categories", label: "Kelola Kategori" },
+                  { id: "revenue", label: "Laporan Pendapatan" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                      activeTab === tab.id
+                    className={`py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
                         ? "border-blue-600 text-blue-600"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -940,13 +975,13 @@ export default function DashboardAdminPage() {
                       {(searchTerm ||
                         roleFilter !== "all" ||
                         statusFilter !== "all") && (
-                        <button
-                          onClick={clearUserFilters}
-                          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                          Hapus Filter
-                        </button>
-                      )}
+                          <button
+                            onClick={clearUserFilters}
+                            className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                          >
+                            Hapus Filter
+                          </button>
+                        )}
                     </div>
 
                     {/* Results Count */}
@@ -1122,13 +1157,13 @@ export default function DashboardAdminPage() {
                       {(searchTerm ||
                         packageCategoryFilter !== "all" ||
                         packageStatusFilter !== "all") && (
-                        <button
-                          onClick={clearPackageFilters}
-                          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                          Hapus Filter
-                        </button>
-                      )}
+                          <button
+                            onClick={clearPackageFilters}
+                            className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                          >
+                            Hapus Filter
+                          </button>
+                        )}
                     </div>
 
                     {/* Results Count */}
@@ -1228,11 +1263,10 @@ export default function DashboardAdminPage() {
                               ) : (
                                 <div className="flex items-center space-x-2">
                                   <span
-                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                      pkg.isPublished
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${pkg.isPublished
                                         ? "bg-green-100 text-green-800"
                                         : "bg-yellow-100 text-yellow-800"
-                                    }`}
+                                      }`}
                                   >
                                     {pkg.isPublished ? "Terpublikasi" : "Draft"}
                                   </span>
@@ -1348,6 +1382,131 @@ export default function DashboardAdminPage() {
                       ))
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Revenue Tab */}
+              {activeTab === "revenue" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Total Admin Revenue */}
+                    <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-emerald-100 text-sm font-medium">Total Pendapatan Admin</h4>
+                          <p className="text-3xl font-bold">{formatCurrency(adminRevenue?.totalAdminRevenue || 0)}</p>
+                          <p className="text-emerald-100 text-sm mt-1">30% dari setiap transaksi</p>
+                        </div>
+                        <div className="bg-white bg-opacity-20 rounded-full p-3">
+                          <DollarSign className="w-8 h-8" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Total Transactions */}
+                    <div className="bg-white border border-gray-200 rounded-xl p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-gray-500 text-sm font-medium">Total Transaksi</h4>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {adminRevenue?.totalTransactions || 0}
+                          </p>
+                        </div>
+                        <div className="bg-blue-50 rounded-full p-3">
+                          <BarChart3 className="w-6 h-6 text-blue-600" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Average Revenue per Transaction */}
+                    <div className="bg-white border border-gray-200 rounded-xl p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-gray-500 text-sm font-medium">Rata-rata per Transaksi</h4>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {formatCurrency(adminRevenue?.averageRevenuePerTransaction || 0)}
+                          </p>
+                        </div>
+                        <div className="bg-purple-50 rounded-full p-3">
+                          <Package className="w-6 h-6 text-purple-600" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Revenue Details Table */}
+                  {adminRevenue && adminRevenue.packageBreakdown && adminRevenue.packageBreakdown.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                      <div className="px-6 py-4 border-b border-gray-200">
+                        <h4 className="text-lg font-semibold text-gray-900">Detail Pendapatan per Paket</h4>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nama Paket
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Creator
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total Harga
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Bagian Admin (30%)
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tanggal
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {adminRevenue.packageBreakdown.map((item: any, index: number) => (
+                              <tr key={index} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {item.packageTitle}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">{item.creatorName}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">
+                                    {formatCurrency(item.totalAmount)}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-emerald-600">
+                                    {formatCurrency(item.adminShare)}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-500">
+                                    {new Date(item.date).toLocaleDateString('id-ID')}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No revenue message */}
+                  {(!adminRevenue || !adminRevenue.packageBreakdown || adminRevenue.packageBreakdown.length === 0) && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+                      <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h4 className="text-xl font-semibold text-gray-900 mb-2">
+                        Belum Ada Pendapatan
+                      </h4>
+                      <p className="text-gray-600">
+                        Belum ada transaksi yang menghasilkan pendapatan untuk admin.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
