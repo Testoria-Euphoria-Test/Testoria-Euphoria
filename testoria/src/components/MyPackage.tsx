@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Package, Calendar, Clock, User } from "lucide-react";
+import { Package, Clock, User } from "lucide-react";
 
 // ✅ Update interface sesuai struktur data dari API
 interface PaymentWithPackage {
@@ -24,9 +24,6 @@ interface PaymentWithPackage {
     updatedAt: string;
     pdfImages: string[];
     sourcePdf: string[];
-    // Optional fields yang mungkin ada dari lookup/populate
-    categoryName?: string;
-    creatorName?: string;
   };
 }
 

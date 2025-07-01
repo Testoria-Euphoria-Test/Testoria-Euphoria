@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"; // ✅ Add Next.js router
 import { QuestionType } from "@/types/question";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, AlertCircle, Star } from "lucide-react";
 
 interface Package {
   _id: string;
@@ -34,6 +34,35 @@ export default function TryoutPage({
   const [error, setError] = useState<string | null>(null);
   const [checkingCompletion, setCheckingCompletion] = useState(true); // ✅ New state for completion check
   const [redirecting, setRedirecting] = useState(false); // ✅ State for redirect message
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
+
+  // Fungsi submit rating
+  const handleSubmitRating = async () => {
+    if (!rating) return;
+    setRatingLoading(true);
+    setRatingError(null);
+    try {
+      const res = await fetch(`/api/packages/${id}/rating`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ rating }),
+      });
+      if (!res.ok) {
+        throw new Error("Gagal mengirim rating");
+      }
+      setShowRatingModal(false);
+      setRedirecting(true);
+      router.push(`/packages/${id}/results`);
+    } catch {
+      setRatingError("Gagal mengirim rating. Silakan coba lagi.");
+    } finally {
+      setRatingLoading(false);
+    }
+  };
 
   // ✅ Wrap handleFinishTryout dengan useCallback untuk menghindari re-render
   const handleFinishTryout = useCallback(async () => {
@@ -93,11 +122,8 @@ export default function TryoutPage({
           console.error("Failed to save result");
         }
 
-        // Redirect to results page after 3 seconds
-        setTimeout(() => {
-          setRedirecting(true);
-          router.push(`/packages/${id}/results`);
-        }, 3000);
+        // Show rating modal instead of direct redirect
+        setShowRatingModal(true);
       } else {
         // Check if response is JSON before parsing
         const contentType = response.headers.get("content-type");
@@ -116,7 +142,7 @@ export default function TryoutPage({
       setError("Failed to save your answers. Please try again.");
       setIsFinished(false); // Allow user to retry
     }
-  }, [userAnswers, questions, id, router]);
+  }, [userAnswers, questions, id]);
 
   // Fetch questions and package data
   useEffect(() => {
@@ -421,7 +447,9 @@ export default function TryoutPage({
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-red-600 mb-2">Terjadi Kesalahan</h2>
+          <h2 className="text-xl font-bold text-red-600 mb-2">
+            Terjadi Kesalahan
+          </h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <Link
             href="/my-package"
@@ -477,18 +505,76 @@ export default function TryoutPage({
   // Finish screen
   if (isFinished) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-lg text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Tryout Selesai!
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Jawaban Anda telah disimpan. Anda akan diarahkan ke halaman hasil sebentar lagi.
-          </p>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+      <>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-lg text-center">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Tryout Selesai!
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Jawaban Anda telah disimpan. Silakan berikan rating untuk paket
+              ini.
+            </p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
         </div>
-      </div>
+
+        {/* Modal Rating */}
+        {showRatingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 shadow-lg relative">
+              <h3 className="text-xl font-bold mb-4 text-gray-900">
+                Beri Rating Paket
+              </h3>
+              <p className="text-gray-600 mb-4 text-sm">
+                Bagaimana pengalaman Anda dengan paket tryout ini?
+              </p>
+              <div className="flex items-center justify-center mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className="focus:outline-none mx-1"
+                  >
+                    <Star
+                      className={`w-8 h-8 ${
+                        star <= rating
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                      fill={star <= rating ? "#facc15" : "none"}
+                    />
+                  </button>
+                ))}
+              </div>
+              {ratingError && (
+                <div className="text-red-500 text-sm mb-2 text-center">
+                  {ratingError}
+                </div>
+              )}
+              <button
+                onClick={handleSubmitRating}
+                disabled={ratingLoading || rating === 0}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-2"
+              >
+                {ratingLoading ? "Mengirim..." : "Kirim Rating"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowRatingModal(false);
+                  setRedirecting(true);
+                  router.push(`/packages/${id}/results`);
+                }}
+                className="w-full text-gray-500 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Lewati
+              </button>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -501,9 +587,7 @@ export default function TryoutPage({
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             Tidak Ada Soal
           </h2>
-          <p className="text-gray-600">
-            Paket ini belum memiliki soal.
-          </p>
+          <p className="text-gray-600">Paket ini belum memiliki soal.</p>
           <div className="mt-4 text-sm text-gray-500">
             <p>Info Debug:</p>
             <p>ID Paket: {id}</p>
@@ -530,7 +614,8 @@ export default function TryoutPage({
       cloudinaryImages:
         (currentQuestion.images?.length || 0) - filteredImages.length,
       filteredImageCount: filteredImages.length,
-      hasPassage: !!currentQuestion.passage && currentQuestion.passage.trim() !== '',
+      hasPassage:
+        !!currentQuestion.passage && currentQuestion.passage.trim() !== "",
       passageLength: currentQuestion.passage?.length || 0,
       passagePreview: currentQuestion.passage?.substring(0, 100) + "...",
       optionA: !!currentQuestion.optionA,
@@ -594,8 +679,9 @@ export default function TryoutPage({
                   <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{
-                      width: `${((currentQuestionIndex + 1) / questions.length) * 100
-                        }%`,
+                      width: `${
+                        ((currentQuestionIndex + 1) / questions.length) * 100
+                      }%`,
                     }}
                   ></div>
                 </div>
@@ -628,39 +714,44 @@ export default function TryoutPage({
                 )}
 
               {/* Question Images if available */}
-              {currentQuestion?.images &&
-                currentQuestion.images.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                      </svg>
-                      Question Images
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {currentQuestion.images.map((imageUrl, imageIndex) => (
-                        <div key={imageIndex} className="relative">
-                          <Image
-                            src={imageUrl}
-                            alt={`Question image ${imageIndex + 1}`}
-                            width={600}
-                            height={400}
-                            className="rounded-lg shadow-sm w-full h-auto object-contain border border-gray-200 bg-white"
-                            onError={(e) => {
-                              console.error(
-                                `Failed to load image: ${imageUrl}`
-                              );
-                              // Hide broken images
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                            loading="lazy"
-                          />
-                        </div>
-                      ))}
-                    </div>
+              {currentQuestion?.images && currentQuestion.images.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Question Images
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentQuestion.images.map((imageUrl, imageIndex) => (
+                      <div key={imageIndex} className="relative">
+                        <Image
+                          src={imageUrl}
+                          alt={`Question image ${imageIndex + 1}`}
+                          width={600}
+                          height={400}
+                          className="rounded-lg shadow-sm w-full h-auto object-contain border border-gray-200 bg-white"
+                          onError={(e) => {
+                            console.error(`Failed to load image: ${imageUrl}`);
+                            // Hide broken images
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Question */}
               <div className="mb-6">
@@ -677,17 +768,19 @@ export default function TryoutPage({
                     {currentQuestion.optionA && (
                       <button
                         onClick={() => handleAnswerSelect("A")}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === "A"
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          userAnswers[currentQuestionIndex] === "A"
                             ? "border-blue-600 bg-blue-50 text-blue-900"
                             : "border-gray-200 hover:border-gray-300 bg-white"
-                          }`}
+                        }`}
                       >
                         <div className="flex items-start space-x-3">
                           <span
-                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${userAnswers[currentQuestionIndex] === "A"
+                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                              userAnswers[currentQuestionIndex] === "A"
                                 ? "bg-blue-600 text-white"
                                 : "bg-gray-200 text-gray-600"
-                              }`}
+                            }`}
                           >
                             A
                           </span>
@@ -702,17 +795,19 @@ export default function TryoutPage({
                     {currentQuestion.optionB && (
                       <button
                         onClick={() => handleAnswerSelect("B")}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === "B"
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          userAnswers[currentQuestionIndex] === "B"
                             ? "border-blue-600 bg-blue-50 text-blue-900"
                             : "border-gray-200 hover:border-gray-300 bg-white"
-                          }`}
+                        }`}
                       >
                         <div className="flex items-start space-x-3">
                           <span
-                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${userAnswers[currentQuestionIndex] === "B"
+                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                              userAnswers[currentQuestionIndex] === "B"
                                 ? "bg-blue-600 text-white"
                                 : "bg-gray-200 text-gray-600"
-                              }`}
+                            }`}
                           >
                             B
                           </span>
@@ -727,17 +822,19 @@ export default function TryoutPage({
                     {currentQuestion.optionC && (
                       <button
                         onClick={() => handleAnswerSelect("C")}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === "C"
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          userAnswers[currentQuestionIndex] === "C"
                             ? "border-blue-600 bg-blue-50 text-blue-900"
                             : "border-gray-200 hover:border-gray-300 bg-white"
-                          }`}
+                        }`}
                       >
                         <div className="flex items-start space-x-3">
                           <span
-                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${userAnswers[currentQuestionIndex] === "C"
+                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                              userAnswers[currentQuestionIndex] === "C"
                                 ? "bg-blue-600 text-white"
                                 : "bg-gray-200 text-gray-600"
-                              }`}
+                            }`}
                           >
                             C
                           </span>
@@ -752,17 +849,19 @@ export default function TryoutPage({
                     {currentQuestion.optionD && (
                       <button
                         onClick={() => handleAnswerSelect("D")}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === "D"
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          userAnswers[currentQuestionIndex] === "D"
                             ? "border-blue-600 bg-blue-50 text-blue-900"
                             : "border-gray-200 hover:border-gray-300 bg-white"
-                          }`}
+                        }`}
                       >
                         <div className="flex items-start space-x-3">
                           <span
-                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${userAnswers[currentQuestionIndex] === "D"
+                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                              userAnswers[currentQuestionIndex] === "D"
                                 ? "bg-blue-600 text-white"
                                 : "bg-gray-200 text-gray-600"
-                              }`}
+                            }`}
                           >
                             D
                           </span>
@@ -777,17 +876,19 @@ export default function TryoutPage({
                     {currentQuestion.optionE && (
                       <button
                         onClick={() => handleAnswerSelect("E")}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === "E"
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          userAnswers[currentQuestionIndex] === "E"
                             ? "border-blue-600 bg-blue-50 text-blue-900"
                             : "border-gray-200 hover:border-gray-300 bg-white"
-                          }`}
+                        }`}
                       >
                         <div className="flex items-start space-x-3">
                           <span
-                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${userAnswers[currentQuestionIndex] === "E"
+                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                              userAnswers[currentQuestionIndex] === "E"
                                 ? "bg-blue-600 text-white"
                                 : "bg-gray-200 text-gray-600"
-                              }`}
+                            }`}
                           >
                             E
                           </span>
@@ -849,18 +950,18 @@ export default function TryoutPage({
                     <div key={index} className="relative">
                       <button
                         onClick={() => setCurrentQuestionIndex(index)}
-                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${isCurrent
+                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                          isCurrent
                             ? "bg-blue-600 text-white"
                             : isAnswered
-                              ? "bg-green-100 text-green-800 border border-green-300"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                          }`}
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
                       >
                         {index + 1}
                       </button>
                       {/* Passage indicator */}
                       {hasPassage && (
-
                         <div
                           className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border border-white"
                           title="This question has a reading passage"
@@ -875,7 +976,6 @@ export default function TryoutPage({
                               d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
                               clipRule="evenodd"
                             />
-
                           </svg>
                         </div>
                       )}

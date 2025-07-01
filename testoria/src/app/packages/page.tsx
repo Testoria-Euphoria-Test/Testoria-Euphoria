@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Filter, Grid3X3, List, SlidersHorizontal } from "lucide-react";
 import PackageCard from "@/components/PackageCard";
-import type { Package } from "@/components/PackageCard";
 import { PackageResponse } from "@/types/package";
 import Navbar from "@/components/Navbar";
 
@@ -38,7 +37,7 @@ export default function PackagePage() {
       try {
         setLoading(true);
 
-        const response = await fetch("/api/packages", {
+        const response = await fetch("/api/packages?published=true", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -105,17 +104,6 @@ export default function PackagePage() {
 
     return sorted;
   }, [searchTerm, selectedCategory, selectedLevel, sortBy, packages]);
-
-  const handleBuyPackage = (packageId: string) => {
-    console.log("Buying package:", packageId);
-    // In real app, implement purchase logic
-  };
-
-  const handleViewPackage = (packageId: string) => {
-    console.log("Viewing package:", packageId);
-    // In real app, navigate to package detail
-    window.location.href = `/packages/${packageId}`;
-  };
 
   return (
     <div>
@@ -204,8 +192,6 @@ export default function PackagePage() {
               </div>
             </div>
           </div>
-
-          
 
           {/* Package Grid/List */}
           {filteredAndSortedPackages.length > 0 ? (

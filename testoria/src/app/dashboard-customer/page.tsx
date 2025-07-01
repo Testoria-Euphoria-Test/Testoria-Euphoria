@@ -45,7 +45,7 @@ export default function DashboardCustomerPage() {
       try {
         setLoading(true);
 
-        const response = await fetch("/api/packages", {
+        const response = await fetch("/api/packages?published=true", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -108,7 +108,10 @@ export default function DashboardCustomerPage() {
         const validCategories = categories
           .filter(Boolean) // Remove null/undefined
           .filter((cat: any) => cat._id && cat.name) // Must have _id and name
-          .map((cat: any) => ({ _id: String(cat._id), name: String(cat.name) })); // Ensure strings
+          .map((cat: any) => ({
+            _id: String(cat._id),
+            name: String(cat.name),
+          })); // Ensure strings
 
         if (validCategories.length > 0) {
           setCategories([
@@ -251,7 +254,9 @@ export default function DashboardCustomerPage() {
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
           <div className="text-center max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Terjadi Kesalahan</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-2">
+              Terjadi Kesalahan
+            </h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
@@ -270,7 +275,6 @@ export default function DashboardCustomerPage() {
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
           {/* Main Content Area */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             {/* ✅ Updated Navigation - Mix of tabs and buttons */}
@@ -405,10 +409,13 @@ export default function DashboardCustomerPage() {
                           images: packageItem.images || [], // Include images field with fallback
                           contents: packageItem.contents,
                           isPublished: packageItem.isPublished,
+                          rating: packageItem.rating || 0,
                           createdAt: packageItem.createdAt,
                           updatedAt: packageItem.updatedAt,
                           categoryName: packageItem.categoryName,
                           creatorName: packageItem.creatorName,
+                          averageRating: packageItem.averageRating || 0,
+                          ratings: packageItem.ratings || [],
                         }}
                       />
                     ))
