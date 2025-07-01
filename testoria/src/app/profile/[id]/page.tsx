@@ -153,9 +153,9 @@ export default function ProfileCreator({
         </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Main Profile Card */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-3 space-y-6">
               {/* Profile Header */}
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 {/* Cover Background */}
@@ -258,7 +258,7 @@ export default function ProfileCreator({
             </div>
 
             {/* Education & Certificates */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                   <GraduationCap className="w-5 h-5 text-blue-600" />
@@ -294,26 +294,66 @@ export default function ProfileCreator({
               {profileData?.certificates &&
                 profileData.certificates.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Sertifikat
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <Award className="w-5 h-5 text-green-600 mr-2" />
+                      Sertifikat ({profileData.certificates.length})
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       {profileData.certificates.map((cert, index) => (
                         <div
                           key={index}
-                          className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 hover:shadow-md transition-shadow"
+                          className="group bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer"
+                          onClick={() => window.open(cert, '_blank')}
                         >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Award className="w-5 h-5 text-green-600" />
+                          <div className="flex flex-col space-y-3">
+                            {/* Certificate Image */}
+                            <div className="relative w-full h-48 rounded-lg overflow-hidden bg-white border border-green-100">
+                              <Image
+                                src={cert}
+                                alt={`Sertifikat ${index + 1}`}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  // Fallback if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                                        <div class="text-center">
+                                          <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                          </svg>
+                                          <p class="text-sm text-gray-500">Sertifikat ${index + 1}</p>
+                                        </div>
+                                      </div>
+                                    `;
+                                  }
+                                }}
+                              />
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-green-900 truncate">
-                                {cert}
-                              </p>
-                              <p className="text-sm text-green-600 font-medium">
-                                Tersertifikasi
-                              </p>
+                            
+                            {/* Certificate Info */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                  <Award className="w-4 h-4 text-green-600" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-green-900">
+                                    Sertifikat {index + 1}
+                                  </p>
+                                  <p className="text-sm text-green-600">
+                                    Klik untuk melihat detail
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-green-600 group-hover:text-green-700 transition-colors">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </div>
                             </div>
                           </div>
                         </div>

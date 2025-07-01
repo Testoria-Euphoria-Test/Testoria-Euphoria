@@ -331,4 +331,90 @@ export default class ProfileModel {
       throw { message: "Failed to get profile with user info", status: 500 };
     }
   }
+
+  // Helper method to create or update profile
+  static async createOrUpdate(userId: string, updateData: Partial<ProfileInput>) {
+    try {
+      this.validateObjectId(userId);
+      
+      const existingProfile = await this.findByUserId(userId);
+      
+      if (existingProfile) {
+        // Update existing profile
+        await this.updateByUserId(userId, updateData);
+        return await this.findByUserId(userId);
+      } else {
+        // Create new profile
+        const profileData: ProfileInput = {
+          photoUrl: updateData.photoUrl || "",
+          education: updateData.education || "",
+          certificates: updateData.certificates || [],
+          bio: updateData.bio || ""
+        };
+        await this.create(userId, profileData);
+        return await this.findByUserId(userId);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Helper method to add certificate
+  static async addCertificate(userId: string, certificateUrl: string) {
+    try {
+      this.validateObjectId(userId);
+      
+      const result = await this.collection().updateOne(
+        { userId: new ObjectId(userId) },
+        { 
+          $push: { certificates: certificateUrl } as any,
+          $set: { updatedAt: new Date() }
+        }
+      );
+      
+      return result.modifiedCount > 0;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Helper method to remove certificate
+  static async removeCertificate(userId: string, certificateUrl: string) {
+    try {
+      this.validateObjectId(userId);
+      
+      const result = await this.collection().updateOne(
+        { userId: new ObjectId(userId) },
+        { 
+          $pull: { certificates: certificateUrl } as any,
+          $set: { updatedAt: new Date() }
+        }
+      );
+      
+      return result.modifiedCount > 0;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Helper method to update photo URL
+  static async updatePhotoUrl(userId: string, photoUrl: string) {
+    try {
+      this.validateObjectId(userId);
+      
+      const result = await this.collection().updateOne(
+        { userId: new ObjectId(userId) },
+        { 
+          $set: {
+            photoUrl,
+            updatedAt: new Date()
+          }
+        }
+      );
+      
+      return result.modifiedCount > 0;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
