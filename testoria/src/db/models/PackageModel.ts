@@ -75,41 +75,96 @@ class PackageModel {
      */
     static async findAll(filters?: { categoryId?: string; creatorId?: string; search?: string; status?: string }) {
         try {
-            const query: any = {};
+            const matchQuery: Record<string, unknown> = {};
 
             // Add filters
             if (filters?.categoryId) {
                 this.validateObjectId(filters.categoryId);
-                query.categoryId = new ObjectId(filters.categoryId);
+                matchQuery.categoryId = new ObjectId(filters.categoryId);
             }
 
             if (filters?.creatorId) {
                 this.validateObjectId(filters.creatorId);
-                query.creatorId = new ObjectId(filters.creatorId);
-            }
-
-            if (filters?.search) {
-                query.$or = [
-                    { title: { $regex: filters.search, $options: 'i' } },
-                    { description: { $regex: filters.search, $options: 'i' } }
-                ];
+                matchQuery.creatorId = new ObjectId(filters.creatorId);
             }
 
             // Add status filter
             if (filters?.status) {
                 if (filters.status === 'published') {
-                    query.isPublished = true;
+                    matchQuery.isPublished = true;
                 } else if (filters.status === 'draft') {
-                    query.isPublished = false;
+                    matchQuery.isPublished = false;
                 }
             }
 
-            const packages = await this.collection()
-                .find(query)
-                .sort({ createdAt: -1 })
-                .toArray();
+            const pipeline: Record<string, unknown>[] = [
+                { $match: matchQuery },
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "categoryId",
+                        foreignField: "_id",
+                        as: "category"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "creatorId",
+                        foreignField: "_id",
+                        as: "creator"
+                    }
+                },
+                { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } }
+            ];
 
-            return packages as unknown as PackageResponse[];
+            // Add search filter after lookups to search creator names
+            if (filters?.search) {
+                pipeline.push({
+                    $match: {
+                        $or: [
+                            { title: { $regex: filters.search, $options: 'i' } },
+                            { description: { $regex: filters.search, $options: 'i' } },
+                            { "creator.name": { $regex: filters.search, $options: 'i' } },
+                            { "category.name": { $regex: filters.search, $options: 'i' } }
+                        ]
+                    }
+                });
+            }
+
+            pipeline.push(
+                {
+                    $addFields: {
+                        categoryName: "$category.name",
+                        creatorName: "$creator.name"
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        title: 1,
+                        sourcePdf: 1,
+                        pdfImages: 1,
+                        images: 1,
+                        price: 1,
+                        contents: 1,
+                        duration: 1,
+                        description: 1,
+                        isPublished: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                        categoryId: 1,
+                        creatorId: 1,
+                        categoryName: 1,
+                        creatorName: 1
+                    }
+                },
+                { $sort: { createdAt: -1 } }
+            );
+
+            const packages = await this.collection().aggregate(pipeline).toArray();
+            return packages;
         } catch (error) {
             if (error && typeof error === 'object' && 'status' in error) {
                 throw error;

@@ -10,9 +10,12 @@ interface PaymentHistory {
   packageId: string;
   packageTitle: string;
   amount: number;
-  status: "completed" | "pending" | "failed";
-  paymentDate: string;
-  paymentMethod: string;
+  status: "paid" | "pending" | "failed";
+  paymentDate?: string;
+  createdAt: string;
+  package?: {
+    title: string;
+  };
 }
 
 export default function PaymentHistoryPage() {
@@ -66,7 +69,7 @@ export default function PaymentHistoryPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
+      case "paid":
         return "bg-gradient-to-r from-green-500 to-green-600 text-white";
       case "pending":
         return "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white";
@@ -74,6 +77,19 @@ export default function PaymentHistoryPage() {
         return "bg-gradient-to-r from-red-500 to-red-600 text-white";
       default:
         return "bg-gradient-to-r from-gray-500 to-gray-600 text-white";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "paid":
+        return "Berhasil";
+      case "pending":
+        return "Pending";
+      case "failed":
+        return "Gagal";
+      default:
+        return "Unknown";
     }
   };
 
@@ -183,8 +199,7 @@ export default function PaymentHistoryPage() {
                                 payment.status
                               )}`}
                             >
-                              {payment.status.charAt(0).toUpperCase() +
-                                payment.status.slice(1)}
+                              {getStatusText(payment.status)}
                             </span>
                           </div>
 
@@ -212,7 +227,11 @@ export default function PaymentHistoryPage() {
                                 Tanggal:
                               </span>
                               <p className="font-semibold text-gray-900">
-                                {formatDateTime(payment.paymentDate)}
+                                {payment.paymentDate
+                                  ? formatDateTime(payment.paymentDate)
+                                  : payment.status === "pending"
+                                  ? "Menunggu pembayaran"
+                                  : "Belum dibayar"}
                               </p>
                             </div>
                           </div>

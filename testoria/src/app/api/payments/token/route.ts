@@ -1,6 +1,8 @@
 // app/api/payments/token/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import midtransClient from "midtrans-client";
+
+// Import midtrans-client with proper typing
+import * as midtransClient from "midtrans-client";
 
 export async function POST(request: NextRequest) {
   try {
