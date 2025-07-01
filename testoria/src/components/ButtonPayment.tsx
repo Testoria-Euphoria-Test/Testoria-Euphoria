@@ -1,19 +1,47 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
 // Declare window.snap for TypeScript
 declare global {
   interface Window {
-    snap: any;
+    snap: {
+      pay: (
+        token: string,
+        callbacks: {
+          onSuccess: (result: MidtransResult) => void;
+          onPending: () => void;
+          onError: () => void;
+          onClose: () => void;
+        }
+      ) => void;
+    };
   }
 }
 
 interface PaymentStatus {
   hasPurchased: boolean;
   paymentStatus?: string;
+  paymentDate?: string;
+  isPending?: boolean;
+  pendingPaymentId?: string; // Add this to store pending payment ID
+}
+
+interface MidtransResult {
+  payment_type?: string;
+  transaction_id?: string;
+  transaction_status?: string;
+  order_id?: string;
+}
+
+interface PaymentRecord {
+  _id: string;
+  packageId: string;
+  status: string;
+  amount: number;
+  midtransOrderId: string;
   paymentDate?: string;
 }
 
@@ -32,39 +60,7 @@ export default function ButtonPayment({
   });
   const router = useRouter();
 
-  // Check authentication and payment status when component mounts
-  useEffect(() => {
-    checkAuthAndPaymentStatus();
-  }, [packageId, packagePrice]);
-
-  const checkAuthAndPaymentStatus = async () => {
-    try {
-      setCheckingStatus(true);
-
-      // Check authentication first
-      const authResponse = await fetch("/api/auth/check", {
-        credentials: "include",
-      });
-
-      if (authResponse.ok) {
-        setIsAuthenticated(true);
-
-        // If authenticated, check payment status
-        await checkPaymentStatus();
-      } else {
-        setIsAuthenticated(false);
-        setPaymentStatus({ hasPurchased: false });
-      }
-    } catch (error) {
-      console.error("Error checking auth and payment status:", error);
-      setIsAuthenticated(false);
-      setPaymentStatus({ hasPurchased: false });
-    } finally {
-      setCheckingStatus(false);
-    }
-  };
-
-  const checkPaymentStatus = async () => {
+  const checkPaymentStatus = useCallback(async () => {
     try {
       // For free packages, check if user has access (maybe through user-answers or results)
       if (packagePrice === 0) {
@@ -85,9 +81,10 @@ export default function ButtonPayment({
             hasPurchased: hasAccess,
             paymentStatus: hasAccess ? "free_access" : undefined,
             paymentDate: hasAccess ? new Date().toISOString() : undefined,
+            isPending: false,
           });
         } else {
-          setPaymentStatus({ hasPurchased: false });
+          setPaymentStatus({ hasPurchased: false, isPending: false });
         }
         return;
       }
@@ -100,29 +97,101 @@ export default function ButtonPayment({
       if (response.ok) {
         const payments = await response.json();
 
-        // Find if user has paid for this specific package
-        const paidPayment = payments.find(
-          (payment: any) =>
-            payment.packageId === packageId && payment.status === "paid"
+        // Find if user has any payment record for this specific package
+        const packagePayment = payments.find(
+          (payment: PaymentRecord) => payment.packageId === packageId
         );
 
-        if (paidPayment) {
-          setPaymentStatus({
-            hasPurchased: true,
-            paymentStatus: paidPayment.status,
-            paymentDate: paidPayment.paymentDate,
-          });
+        if (packagePayment) {
+          if (packagePayment.status === "paid") {
+            setPaymentStatus({
+              hasPurchased: true,
+              paymentStatus: packagePayment.status,
+              paymentDate: packagePayment.paymentDate,
+              isPending: false,
+            });
+          } else if (packagePayment.status === "pending") {
+            setPaymentStatus({
+              hasPurchased: false,
+              paymentStatus: packagePayment.status,
+              paymentDate: packagePayment.paymentDate,
+              isPending: true,
+              pendingPaymentId:
+                packagePayment.midtransOrderId || packagePayment._id, // Store payment ID for continuing payment
+            });
+          } else {
+            // failed or other status
+            setPaymentStatus({
+              hasPurchased: false,
+              isPending: false,
+            });
+          }
         } else {
-          setPaymentStatus({ hasPurchased: false });
+          setPaymentStatus({
+            hasPurchased: false,
+            isPending: false,
+          });
         }
       } else {
-        setPaymentStatus({ hasPurchased: false });
+        setPaymentStatus({
+          hasPurchased: false,
+          isPending: false,
+        });
       }
     } catch (error) {
       console.error("Error checking payment status:", error);
-      setPaymentStatus({ hasPurchased: false });
+      setPaymentStatus({ hasPurchased: false, isPending: false });
     }
-  };
+  }, [packageId, packagePrice]);
+
+  const checkAuthAndPaymentStatus = useCallback(async () => {
+    try {
+      setCheckingStatus(true);
+
+      // Check authentication first
+      const authResponse = await fetch("/api/auth/check", {
+        credentials: "include",
+      });
+
+      if (authResponse.ok) {
+        setIsAuthenticated(true);
+
+        // If authenticated, check payment status
+        await checkPaymentStatus();
+      } else {
+        setIsAuthenticated(false);
+        setPaymentStatus({ hasPurchased: false, isPending: false });
+      }
+    } catch (error) {
+      console.error("Error checking auth and payment status:", error);
+      setIsAuthenticated(false);
+      setPaymentStatus({ hasPurchased: false, isPending: false });
+    } finally {
+      setCheckingStatus(false);
+    }
+  }, [checkPaymentStatus]);
+
+  // Check authentication and payment status when component mounts
+  useEffect(() => {
+    checkAuthAndPaymentStatus();
+  }, [checkAuthAndPaymentStatus]);
+
+  // Auto-refresh payment status if pending
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (paymentStatus.isPending) {
+      interval = setInterval(() => {
+        checkPaymentStatus();
+      }, 10000); // Check every 10 seconds
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [paymentStatus.isPending, checkPaymentStatus]);
 
   const handleFreePackage = async () => {
     if (!isAuthenticated) {
@@ -244,7 +313,7 @@ export default function ButtonPayment({
 
       // 4. Call Midtrans Snap
       window.snap.pay(token, {
-        onSuccess: async (result: any) => {
+        onSuccess: async (result: MidtransResult) => {
           console.log("Payment Success:", result);
 
           // Update payment status
@@ -265,6 +334,7 @@ export default function ButtonPayment({
             hasPurchased: true,
             paymentStatus: "paid",
             paymentDate: new Date().toISOString(),
+            isPending: false,
           });
 
           toast.success("Pembayaran berhasil!", {
@@ -276,12 +346,18 @@ export default function ButtonPayment({
             router.push("/dashboard-customer?tab=my-packages");
           }, 1500);
         },
-        onPending: (result: any) => {
+        onPending: () => {
+          setPaymentStatus({
+            hasPurchased: false,
+            paymentStatus: "pending",
+            isPending: true,
+          });
+
           toast.success(
             "Pembayaran sedang diproses. Silakan tunggu konfirmasi."
           );
         },
-        onError: (result: any) => {
+        onError: () => {
           toast.error("Pembayaran gagal. Silakan coba lagi.", {
             duration: 3000,
           });
@@ -305,6 +381,135 @@ export default function ButtonPayment({
           "Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi."
         );
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinuePendingPayment = async () => {
+    if (!isAuthenticated) {
+      toast.error("Silakan login terlebih dahulu untuk melakukan pembayaran");
+      router.push("/login");
+      return;
+    }
+
+    if (!paymentStatus.pendingPaymentId) {
+      toast.error("Tidak dapat menemukan informasi pembayaran pending");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Get the pending payment details
+      const pendingResponse = await fetch("/api/payments", {
+        credentials: "include",
+      });
+
+      if (!pendingResponse.ok) {
+        throw new Error("Failed to get payment details");
+      }
+
+      const payments = await pendingResponse.json();
+      const pendingPayment = payments.find(
+        (payment: PaymentRecord) =>
+          payment.packageId === packageId && payment.status === "pending"
+      );
+
+      if (!pendingPayment) {
+        toast.error("Pembayaran pending tidak ditemukan");
+        // Refresh status to update UI
+        await checkPaymentStatus();
+        return;
+      }
+
+      // Get new Snap Token for the existing payment
+      const resToken = await fetch("/api/payments/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: pendingPayment.midtransOrderId,
+          grossAmount: pendingPayment.amount,
+        }),
+      });
+
+      if (!resToken.ok) {
+        throw new Error("Failed to get payment token");
+      }
+
+      const { token } = await resToken.json();
+      console.log("Token received for pending payment:", token);
+
+      // Check if Midtrans Snap is loaded
+      if (typeof window === "undefined") {
+        throw new Error("Window object not available");
+      }
+
+      if (!window.snap) {
+        await loadMidtransScript();
+      }
+
+      if (!window.snap) {
+        throw new Error("Midtrans Snap not loaded. Please refresh the page.");
+      }
+
+      // Call Midtrans Snap with the same handlers
+      window.snap.pay(token, {
+        onSuccess: async (result: MidtransResult) => {
+          console.log("Payment Success:", result);
+
+          // Update payment status via webhook simulation
+          await fetch("/api/payments/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              order_id: pendingPayment.midtransOrderId,
+              transaction_status: "settlement",
+              gross_amount: pendingPayment.amount.toString(),
+              settlement_time: new Date().toISOString(),
+              payment_type: result.payment_type || "unknown",
+              transaction_id:
+                result.transaction_id || pendingPayment.midtransOrderId,
+            }),
+          });
+
+          setPaymentStatus({
+            hasPurchased: true,
+            paymentStatus: "paid",
+            paymentDate: new Date().toISOString(),
+            isPending: false,
+          });
+
+          toast.success("Pembayaran berhasil!", {
+            duration: 3000,
+          });
+
+          setTimeout(() => {
+            router.push("/dashboard-customer?tab=my-packages");
+          }, 1500);
+        },
+        onPending: () => {
+          toast.success(
+            "Pembayaran sedang diproses. Silakan tunggu konfirmasi."
+          );
+        },
+        onError: () => {
+          toast.error("Pembayaran gagal. Silakan coba lagi.", {
+            duration: 3000,
+          });
+        },
+        onClose: () => {
+          console.log("Payment popup closed");
+          toast.error("Pembayaran dibatalkan.", {
+            duration: 3000,
+          });
+        },
+      });
+    } catch (err) {
+      console.error("Continue payment error:", err);
+      toast.error(
+        "Terjadi kesalahan saat melanjutkan pembayaran. Silakan coba lagi."
+      );
     } finally {
       setLoading(false);
     }
@@ -378,16 +583,40 @@ export default function ButtonPayment({
   // Already purchased - show access button
   if (paymentStatus.hasPurchased) {
     return (
-      <div className="flex-1">
+      <div className="flex-1 ">
         <button
           onClick={() => router.push(`/packages/${packageId}/tryout`)}
-          className="w-full bg-green-500 text-white px-3 py-3 rounded text-sm hover:bg-green-600 transition duration-200"
+          className="w-full bg-green-500 text-white px-3 py-3 text-sm hover:bg-green-600 transition duration-200 font-bold rounded-lg h-"
         >
           {paymentStatus.paymentStatus === "free_access"
             ? "Akses Package"
             : "Akses Package"}
         </button>
       </div>
+    );
+  }
+
+  // Payment is pending - show enhanced status with option to continue payment
+  if (paymentStatus.isPending) {
+    return (
+      <div className="flex h-full ">
+          <button
+            onClick={handleContinuePendingPayment}
+            disabled={loading}
+            className="w-full bg-amber-500 text-white px-3 py-2 rounded-lg text-sm font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 shadow-sm"
+          >
+            {loading ? (
+              <div className="flex items-center justify-center space-x-2 ">
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Memproses...</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center  font-bold ">
+                Lanjutkan Pembayaran
+              </div>
+            )}
+          </button>
+        </div>
     );
   }
 

@@ -16,8 +16,8 @@ class PaymentModel {
       userId: new ObjectId(data.userId),
       packageId: new ObjectId(data.packageId),
       amount: data.amount,
-      status: "paid" as PaymentStatus,
-      paymentDate: new Date().toISOString(),
+      status: "pending" as PaymentStatus, // Start with pending status
+      paymentDate: undefined, // Will be set when payment is successful
       midtransOrderId: data.midtransOrderId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -41,16 +41,20 @@ class PaymentModel {
     status: PaymentStatus,
     paymentDate?: string
   ) {
-    const updateData: any = {
+    const updateData: {
+      status: PaymentStatus;
+      updatedAt: string;
+      paymentDate?: string;
+    } = {
       status,
       updatedAt: new Date().toISOString(),
     };
 
-    // ✅ Set paymentDate only when payment is successful
+    // Set paymentDate only when payment is successful
     if (status === "paid" && paymentDate) {
       updateData.paymentDate = paymentDate;
     } else if (status === "paid" && !paymentDate) {
-      // ✅ Fallback to current time if not provided
+      // Fallback to current time if not provided
       updateData.paymentDate = new Date().toISOString();
     }
 
@@ -123,7 +127,7 @@ class PaymentModel {
     const payment = await this.collection().findOne({
       userId: new ObjectId(userId),
       packageId: new ObjectId(packageId),
-      status: "paid", 
+      status: "paid",
     });
 
     return payment;
@@ -268,6 +272,9 @@ class PaymentModel {
       console.error("Error fetching admin revenue:", error);
       throw error;
     }
+
+  static async findByMidtransOrderId(midtransOrderId: string) {
+    return this.collection().findOne({ midtransOrderId });
   }
 }
 

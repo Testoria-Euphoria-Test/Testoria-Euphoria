@@ -195,9 +195,10 @@ export default function DashboardAdminPage() {
           _id: pkg._id,
           title: pkg.title,
           categoryId: pkg.categoryId,
-          categoryName: pkg.category?.name || 'Unknown Category',
+          categoryName: pkg.categoryName,
           creatorId: pkg.creatorId,
-          creatorName: pkg.creator?.name || pkg.creator?.email || 'Unknown Creator', // Prefer name, fallback to email
+          creatorName:
+            pkg.creator?.name || pkg.creator?.email || "Unknown Creator", // Prefer name, fallback to email
           duration: pkg.duration,
           description: pkg.description,
           createdAt: pkg.createdAt,
@@ -205,7 +206,7 @@ export default function DashboardAdminPage() {
           rating: pkg.rating || 0,
           isPublished: pkg.isPublished,
           totalQuestions: pkg.contents?.length || 0,
-          totalStudents: pkg.totalStudents || 0
+          totalStudents: pkg.totalStudents || 0,
         };
       });
 
@@ -269,9 +270,9 @@ export default function DashboardAdminPage() {
           _id: pkg._id,
           title: pkg.title,
           categoryId: pkg.categoryId,
-          categoryName: pkg.category?.name || 'Unknown Category',
+          categoryName: pkg.categoryName,
           creatorId: pkg.creatorId,
-          creatorName: pkg.creator?.name || pkg.creator?.email || 'Unknown Creator',
+          creatorName: pkg.creatorName,
           duration: pkg.duration,
           description: pkg.description,
           createdAt: pkg.createdAt,
@@ -279,7 +280,7 @@ export default function DashboardAdminPage() {
           rating: pkg.rating || 0,
           isPublished: pkg.isPublished,
           totalQuestions: pkg.contents?.length || 0,
-          totalStudents: pkg.totalStudents || 0
+          totalStudents: pkg.totalStudents || 0,
         };
       });
 
@@ -669,9 +670,9 @@ export default function DashboardAdminPage() {
           _id: pkg._id,
           title: pkg.title,
           categoryId: pkg.categoryId,
-          categoryName: pkg.category?.name || 'Unknown Category',
+          categoryName: pkg.creatorCategory,
           creatorId: pkg.creatorId,
-          creatorName: pkg.creator?.name || pkg.creator?.email || 'Unknown Creator',
+          creatorName: pkg.creatorName,
           duration: pkg.duration,
           description: pkg.description,
           createdAt: pkg.createdAt,
@@ -679,7 +680,7 @@ export default function DashboardAdminPage() {
           rating: pkg.rating || 0,
           isPublished: pkg.isPublished,
           totalQuestions: pkg.contents?.length || 0,
-          totalStudents: pkg.totalStudents || 0
+          totalStudents: pkg.totalStudents || 0,
         }));
 
         setPackages(packages);

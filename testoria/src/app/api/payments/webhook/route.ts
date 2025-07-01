@@ -4,10 +4,12 @@ import { verifyMidtransSignature } from "@/helpers/midtrans";
 
 const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY!;
 
+// This is the webhook endpoint that Midtrans will call
+// URL should be: https://r1fnwz2s-3000.asse.devtunnels.ms/api/payments/webhook
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log("📨 Midtrans Webhook Notification received:", body);
+    console.log("📨 Midtrans Webhook received:", body);
 
     const {
       order_id,
@@ -58,9 +60,7 @@ export async function POST(req: NextRequest) {
       }
       console.log("✅ Signature verified for order:", order_id);
     } else {
-      console.log(
-        "🔧 Development mode: Skipping signature verification or no signature provided"
-      );
+      console.log("🔧 Development mode: Skipping signature verification");
     }
 
     // Check if payment exists
@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("💥 Payment notification error:", error);
+    console.error("💥 Payment webhook error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     const isDevelopment = process.env.NODE_ENV === "development";
