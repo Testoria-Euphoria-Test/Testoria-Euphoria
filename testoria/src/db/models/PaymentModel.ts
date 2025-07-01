@@ -272,6 +272,7 @@ class PaymentModel {
       console.error("Error fetching admin revenue:", error);
       throw error;
     }
+  }
 
   static async findByMidtransOrderId(midtransOrderId: string) {
     return this.collection().findOne({ midtransOrderId });
