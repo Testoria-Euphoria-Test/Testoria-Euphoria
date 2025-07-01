@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import {
   FileText,
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle,
-  XCircle,
+  BookDashedIcon,
+  BookOpen,
+  CreditCard,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
@@ -455,20 +454,39 @@ export default function TryoutHistoryPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Link
-              href="/dashboard-customer"
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Kembali ke Dashboard
-            </Link>
-          </div>
+      <div className="min-h-screen bg-white">
+        {/* Navigation Section */}
+        <div className="flex justify-center gap-4 mb-8 mt-4 bg-white ">
+          <Link
+            href="/dashboard-customer"
+            className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg ho transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+          >
+            <BookDashedIcon className="w-5 h-5 mr-2" />
+            Dashboard
+          </Link>
+          <Link
+            href="/my-package"
+            className="inline-flex items-center px-6 py-3  bg-white text-gray-700 rounded-lg  transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+          >
+            <BookOpen className="w-5 h-5 mr-2" />
+            My-Paket
+          </Link>
+          <Link
+            href="/payment-history"
+            className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg  transition-all duration-300 font-medium shadow-sm"
+          >
+            <CreditCard className="w-5 h-5 mr-2" />
+            Riwayat Pembayaran
+          </Link>
+          <Link
+            href="/tryout-history"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg  transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+          >
+            <FileText className="w-5 h-5 mr-2" />
+            Riwayat Tryout
+          </Link>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -480,7 +498,8 @@ export default function TryoutHistoryPage() {
                     Riwayat Tryout
                   </h1>
                   <p className="text-gray-600">
-                    Tinjau performa tes Anda dan pantau perkembangan Anda dari waktu ke waktu.
+                    Tinjau performa tes Anda dan pantau perkembangan Anda dari
+                    waktu ke waktu.
                   </p>
                 </div>
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -497,7 +516,8 @@ export default function TryoutHistoryPage() {
                     Tidak Ada Riwayat Tryout
                   </h3>
                   <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                    Anda belum menyelesaikan tryout apapun. Mulai latihan untuk melihat hasil Anda di sini.
+                    Anda belum menyelesaikan tryout apapun. Mulai latihan untuk
+                    melihat hasil Anda di sini.
                   </p>
                   <Link
                     href="/dashboard-customer"
@@ -576,7 +596,7 @@ export default function TryoutHistoryPage() {
                               onClick={() =>
                                 (window.location.href = `/packages/${tryout.packageId}/results`)
                               }
-                              className="self-start sm:ml-4 flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="self-start sm:ml-4 flex items-center space-x-2 px-3 py-2 text-sm  hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors bg-blue-600 text-white"
                             >
                               <div>Lihat Detail</div>
                             </button>
