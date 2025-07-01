@@ -12,6 +12,8 @@ export default async function Home() {
   const response = await data.json();
   const packages = response.data as PackageResponse[];
 
+
+
   return (
     <>
       <NavbarLanding />
