@@ -184,12 +184,12 @@ export default async function Home() {
             {packages
               ?.slice(0, 6)
               .map((pkg) => <PackageCard key={pkg._id} package={pkg} />) || (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-500 text-lg">
-                  Belum ada paket try out tersedia.
-                </p>
-              </div>
-            )}
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-500 text-lg">
+                    Belum ada paket try out tersedia.
+                  </p>
+                </div>
+              )}
           </div>
         </div>
       </section>

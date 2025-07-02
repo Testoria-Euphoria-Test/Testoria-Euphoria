@@ -2,20 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import ButtonLogout from "./ButtonLogout";
+import { Menu, X } from "lucide-react";
+import { getDashboardUrl } from "@/helpers/auth";
+import { useAuthState } from "@/hooks/useAuthState";
 
 export default function NavbarLanding() {
-  // Cek token di cookies
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    // Cek cookies secara client-side
-    if (typeof document !== "undefined") {
-      const cookies = document.cookie.split(";").map((c) => c.trim());
-      const tokenCookie = cookies.find((c) => c.startsWith("token="));
-      setIsLoggedIn(!!tokenCookie);
-    }
-  }, []);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isLoggedIn, userRole, loading } = useAuthState();
 
   return (
     <nav className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 shadow-xl border-b border-blue-800/30">
@@ -32,12 +27,38 @@ export default function NavbarLanding() {
               />
             </div>
           </Link>
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8"></div>
 
           {/* Desktop User Actions */}
-          {/* //jika user sudah login maka tombol masuk dan daftar tidak perlu ditampilkan */}
-          {!isLoggedIn && (
+          {loading ? (
+            // Loading state
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="w-20 h-8 bg-gray-600 animate-pulse rounded"></div>
+              <div className="w-20 h-8 bg-gray-600 animate-pulse rounded"></div>
+            </div>
+          ) : isLoggedIn ? (
+            // Authenticated user navigation
+            <div className="hidden md:flex items-center space-x-4">
+              <Link
+                href={getDashboardUrl(userRole)}
+                className="px-4 py-2 text-white hover:text-blue-400 font-medium transition-colors duration-200"
+              >
+                Dashboard
+              </Link>
+              {userRole === "creator" && (
+                <Link
+                  href="/profile"
+                  className="px-4 py-2 text-white hover:text-blue-400 font-medium transition-colors duration-200"
+                >
+                  Profile
+                </Link>
+              )}
+              <ButtonLogout />
+            </div>
+          ) : (
+            // Unauthenticated user navigation
             <div className="hidden md:flex items-center space-x-4">
               <Link
                 href="/login"
@@ -53,7 +74,70 @@ export default function NavbarLanding() {
               </Link>
             </div>
           )}
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-white p-2"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-slate-800 border-t border-blue-800/30">
+            <div className="px-4 py-4 space-y-4">
+              {loading ? (
+                <div className="space-y-2">
+                  <div className="w-full h-8 bg-gray-600 animate-pulse rounded"></div>
+                  <div className="w-full h-8 bg-gray-600 animate-pulse rounded"></div>
+                </div>
+              ) : isLoggedIn ? (
+                <div className="space-y-4">
+                  <Link
+                    href={getDashboardUrl(userRole)}
+                    className="block px-4 py-2 text-white hover:text-blue-400 font-medium transition-colors duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  {userRole === "creator" && (
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-white hover:text-blue-400 font-medium transition-colors duration-200"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                  )}
+                  <div className="px-4">
+                    <ButtonLogout />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Link
+                    href="/login"
+                    className="block px-4 py-2 text-white hover:text-blue-400 font-medium transition-colors duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Masuk
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Daftar
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

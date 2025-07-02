@@ -6,7 +6,50 @@ import { NextResponse } from "next/server";
 export async function middleware(request: Request) {
     try {
         const url = new URL(request.url);
-        const method = request.method;
+        const method = request.method;        // Handle root path redirect for authenticated users
+        if (url.pathname === '/' && method === 'GET') {
+            const cookieStore = await cookies();
+            const authorization = cookieStore.get('Authorization');
+            const userRoleCookie = cookieStore.get('user-role');
+            
+            console.log("=== MIDDLEWARE ROOT PATH CHECK ===");
+            console.log("Middleware: Root path accessed");
+            console.log("Middleware: Auth cookie exists:", !!authorization);
+            console.log("Middleware: Auth cookie value:", authorization?.value ? authorization.value.substring(0, 30) + "..." : "NONE");
+            console.log("Middleware: Role cookie:", userRoleCookie?.value || "NONE");
+            
+            if (authorization?.value && userRoleCookie?.value) {
+                const role = userRoleCookie.value;
+                let dashboardUrl = "/dashboard-customer"; // default
+                
+                switch (role) {
+                    case "admin":
+                        dashboardUrl = "/dashboard-admin";
+                        break;
+                    case "creator":
+                        dashboardUrl = "/dashboard-creator";
+                        break;
+                    case "customer":
+                        dashboardUrl = "/dashboard-customer";
+                        break;
+                }
+                
+                console.log("Middleware: *** REDIRECTING *** authenticated user to:", dashboardUrl);
+                console.log("Middleware: User role:", role);
+                console.log("=== END MIDDLEWARE REDIRECT ===");
+                return NextResponse.redirect(new URL(dashboardUrl, request.url));
+            }
+            
+            console.log("Middleware: User not authenticated, allowing access to landing page");
+            console.log("=== END MIDDLEWARE CHECK ===");
+            return NextResponse.next(); // Allow access to home page for unauthenticated users
+        }
+
+        // Allow public access to auth pages
+        if (url.pathname === '/login' || url.pathname === '/register') {
+            console.log("Middleware: Public auth page accessed:", url.pathname);
+            return NextResponse.next();
+        }
 
         // Allow public GET requests for published packages
         if (url.pathname === '/api/packages' && method === 'GET') {
@@ -88,6 +131,9 @@ export async function middleware(request: Request) {
 
 export const config = {
     matcher: [
+        '/', // Handle root path redirects
+        '/login', // Handle login page access
+        '/register', // Handle register page access
         '/api/users/:path*',
         '/api/auth/:path*',
         '/api/categories/:path*',
@@ -102,6 +148,5 @@ export const config = {
         '/api/test-ai/:path*',
         '/api/creator/:path*',
         '/api/admin/:path*'
-
     ],
 }

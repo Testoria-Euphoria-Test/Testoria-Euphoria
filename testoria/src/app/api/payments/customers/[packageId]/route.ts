@@ -5,21 +5,22 @@ import { ObjectId } from "mongodb";
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { packageId: string } }
+    { params }: { params: Promise<{ packageId: string }> }
 ) {
     try {
         // Get user info from middleware headers (requires auth)
         const userId = request.headers.get('x-user-id');
 
+        // Await params before accessing properties
+        const { packageId } = await params;
+
         console.log('Customer API - User ID from header:', userId);
-        console.log('Customer API - Package ID:', params.packageId);
+        console.log('Customer API - Package ID:', packageId);
 
         if (!userId) {
             console.log('Customer API - No user ID found');
             return NextResponse.json({ message: "Unauthorized - Authentication required" }, { status: 401 });
         }
-
-        const { packageId } = params;
 
         // Verify that the user is the creator of this package
         const packageData = await PackageModel.findById(packageId);
