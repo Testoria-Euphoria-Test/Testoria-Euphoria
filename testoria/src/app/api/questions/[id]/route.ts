@@ -36,9 +36,13 @@ export async function PUT(
             return NextResponse.json({ error: "Package not found" }, { status: 404 });
         }
 
-        // Check if user owns the package
-        if (pkg.creatorId.toString() !== userId) {
-            return NextResponse.json({ error: "Unauthorized: You can only edit questions for your own packages" }, { status: 403 });
+        // Check if user owns the package or is admin
+        const userRole = req.headers.get('x-user-role');
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ error: "Unauthorized: You can only edit questions for your own packages or you must be an admin" }, { status: 403 });
         }
 
         // Validate required fields
@@ -110,9 +114,13 @@ export async function DELETE(
             return NextResponse.json({ error: "Package not found" }, { status: 404 });
         }
 
-        // Check if user owns the package
-        if (pkg.creatorId.toString() !== userId) {
-            return NextResponse.json({ error: "Unauthorized: You can only delete questions for your own packages" }, { status: 403 });
+        // Check if user owns the package or is admin
+        const userRole = req.headers.get('x-user-role');
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ error: "Unauthorized: You can only delete questions for your own packages or you must be an admin" }, { status: 403 });
         }
 
         // Delete question

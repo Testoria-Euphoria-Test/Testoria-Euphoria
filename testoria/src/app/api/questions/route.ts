@@ -29,9 +29,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Package not found" }, { status: 404 });
         }
 
-        // Check if user owns the package (creator)
-        if (pkg.creatorId.toString() !== userId) {
-            return NextResponse.json({ error: "Unauthorized: You can only create questions for your own packages" }, { status: 403 });
+        // Check if user owns the package (creator) or is admin
+        const userRole = req.headers.get('x-user-role');
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ error: "Unauthorized: You can only create questions for your own packages or you must be an admin" }, { status: 403 });
         }
 
         // Check if package has content

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   Package,
@@ -73,6 +74,7 @@ interface AdminStats {
 }
 
 export default function DashboardAdminPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
@@ -337,6 +339,11 @@ export default function DashboardAdminPage() {
       console.error('Error updating package status:', err);
       toast.error('Failed to update package status');
     }
+  };
+
+  // Handle package click to navigate to detail page
+  const handlePackageClick = (packageId: string) => {
+    router.push(`/package-detail/${packageId}`);
   };
 
   // Handle user role/status update
@@ -712,28 +719,24 @@ export default function DashboardAdminPage() {
     {
       label: "Total Users",
       value: stats.totalUsers.toString(),
-      change: "+12%",
       icon: Users,
       color: "text-blue-600",
     },
     {
       label: "Total Packages",
       value: stats.totalPackages.toString(),
-      change: "+8%",
       icon: Package,
       color: "text-green-600",
     },
     {
-      label: "Admin Revenue (30%)",
+      label: "Platform Revenue (30%)",
       value: formatCurrency(adminRevenue?.totalAdminRevenue || 0),
-      change: `${adminRevenue?.totalTransactions || 0} transaksi`,
       icon: DollarSign,
       color: "text-emerald-600",
     },
     {
       label: "Active Creators",
       value: stats.activeCreators.toString(),
-      change: "+15%",
       icon: BarChart3,
       color: "text-purple-600",
     },
@@ -889,9 +892,6 @@ export default function DashboardAdminPage() {
                       <p className="text-2xl font-bold text-gray-900">
                         {stat.value}
                       </p>
-                      <p className="text-sm text-green-600 font-medium">
-                        {stat.change}
-                      </p>
                     </div>
                     <div className="p-3 rounded-lg bg-gray-50">
                       <IconComponent className={`w-6 h-6 ${stat.color}`} />
@@ -916,8 +916,8 @@ export default function DashboardAdminPage() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
-                        ? "border-blue-600 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                       }`}
                   >
                     {tab.label}
@@ -1212,11 +1212,16 @@ export default function DashboardAdminPage() {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {filteredPackages.map((pkg) => (
-                          <tr key={pkg._id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {pkg.title}
+                          <tr key={pkg._id} className="group hover:bg-gray-50">
+                            <td
+                              className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                              onClick={() => handlePackageClick(pkg._id)}
+                              title="Klik untuk melihat detail paket"
+                            >
+                              <div className="hover:text-blue-600 transition-colors">
+                                <div className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline flex items-center">
+                                  <span className="mr-2">{pkg.title}</span>
+                                  <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   {pkg.totalQuestions} questions •{" "}
@@ -1265,8 +1270,8 @@ export default function DashboardAdminPage() {
                                 <div className="flex items-center space-x-2">
                                   <span
                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${pkg.isPublished
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-yellow-100 text-yellow-800"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
                                       }`}
                                   >
                                     {pkg.isPublished ? "Terpublikasi" : "Draft"}
@@ -1389,21 +1394,7 @@ export default function DashboardAdminPage() {
               {/* Revenue Tab */}
               {activeTab === "revenue" && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Total Admin Revenue */}
-                    <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-emerald-100 text-sm font-medium">Total Pendapatan Admin</h4>
-                          <p className="text-3xl font-bold">{formatCurrency(adminRevenue?.totalAdminRevenue || 0)}</p>
-                          <p className="text-emerald-100 text-sm mt-1">30% dari setiap transaksi</p>
-                        </div>
-                        <div className="bg-white bg-opacity-20 rounded-full p-3">
-                          <DollarSign className="w-8 h-8" />
-                        </div>
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Total Transactions */}
                     <div className="bg-white border border-gray-200 rounded-xl p-6">
                       <div className="flex items-center justify-between">
@@ -1455,7 +1446,7 @@ export default function DashboardAdminPage() {
                                 Total Harga
                               </th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Bagian Admin (30%)
+                                Bagian Platform (30%)
                               </th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Tanggal
@@ -1463,7 +1454,9 @@ export default function DashboardAdminPage() {
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
-                            {adminRevenue.packageBreakdown.map((item: any, index: number) => (
+                            {adminRevenue.packageBreakdown
+                              .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                              .map((item: any, index: number) => (
                               <tr key={index} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="text-sm font-medium text-gray-900">

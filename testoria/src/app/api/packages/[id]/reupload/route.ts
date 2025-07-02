@@ -38,9 +38,13 @@ export async function GET(
             return NextResponse.json({ message: "Package not found" }, { status: 404 });
         }
 
-        // Check if user has permission (owner only)
-        if (pkg.creatorId.toString() !== userId) {
-            return NextResponse.json({ message: "Forbidden - You can only access your own packages" }, { status: 403 });
+        // Check if user has permission (owner or admin)
+        const userRole = request.headers.get('x-user-role');
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ message: "Forbidden - You can only access your own packages or you must be an admin" }, { status: 403 });
         }
 
         // Check PDF accessibility
@@ -127,9 +131,13 @@ export async function PATCH(
             return NextResponse.json({ message: "Package not found" }, { status: 404 });
         }
 
-        // Check if user has permission (owner only)
-        if (pkg.creatorId.toString() !== userId) {
-            return NextResponse.json({ message: "Forbidden - You can only update your own packages" }, { status: 403 });
+        // Check if user has permission (owner or admin)
+        const userRole = request.headers.get('x-user-role');
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ message: "Forbidden - You can only update your own packages or you must be an admin" }, { status: 403 });
         }
 
         const formData = await request.formData();
