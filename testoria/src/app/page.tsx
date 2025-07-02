@@ -1,8 +1,11 @@
 import NavbarLanding from "@/components/NavbarLanding";
+import DebugPanel from "@/components/DebugPanel";
 import Image from "next/image";
 import Link from "next/link";
 import PackageCard from "@/components/PackageCard";
 import { PackageResponse } from "@/types/package";
+// Import debug utility for development
+import "@/utils/debugAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -184,12 +187,12 @@ export default async function Home() {
             {packages
               ?.slice(0, 6)
               .map((pkg) => <PackageCard key={pkg._id} package={pkg} />) || (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-500 text-lg">
-                  Belum ada paket try out tersedia.
-                </p>
-              </div>
-            )}
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-500 text-lg">
+                    Belum ada paket try out tersedia.
+                  </p>
+                </div>
+              )}
           </div>
         </div>
       </section>
@@ -224,6 +227,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Debug Panel for Development */}
+      <DebugPanel />
     </>
   );
 }
