@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Package,
   Upload,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import toast, { Toaster } from "react-hot-toast";
+import { PackageResponse } from "@/types/package";
 
 // Types
 interface CreatorProfile {
@@ -373,31 +375,50 @@ export default function DashboardCreatorPage() {
   // Calculate average rating from all creator's packages
   const calculateAverageRating = async (creatorId: string) => {
     try {
-      // console.log("⭐ Calculating average rating for creator:", creatorId);
-      
+      console.log("⭐ Calculating average rating for creator:", creatorId);
+
+      // Validate creatorId first
+      if (!creatorId || typeof creatorId !== "string") {
+        console.warn("⚠️ Invalid creatorId provided:", creatorId);
+        return 0;
+      }
+
       // Fetch all packages for this creator from the packages API
-      const response = await fetch(`/api/packages?creatorId=${creatorId}`, {
+      const url = `/api/packages?creatorId=${encodeURIComponent(creatorId)}`;
+      console.log("🔗 Fetching from URL:", url);
+
+      const response = await fetch(url, {
+        method: "GET",
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
-        console.warn("⚠️ Failed to fetch creator packages for rating calculation");
+        console.warn(
+          "⚠️ Failed to fetch creator packages for rating calculation:",
+          response.status,
+          response.statusText
+        );
         return 0;
       }
 
       const data = await response.json();
-      
+
       if (!data.success || !data.data || data.data.length === 0) {
         console.log("📦 No packages found for rating calculation");
         return 0;
       }
 
       const packages = data.data;
-      console.log(`📊 Found ${packages.length} packages for rating calculation`);
+      console.log(
+        `📊 Found ${packages.length} packages for rating calculation`
+      );
 
       // Filter packages that have ratings and calculate average
-      const packagesWithRatings = packages.filter((pkg: any) => 
-        pkg.averageRating && pkg.averageRating > 0
+      const packagesWithRatings = packages.filter(
+        (pkg: PackageResponse) => pkg.averageRating && pkg.averageRating > 0
       );
 
       if (packagesWithRatings.length === 0) {
@@ -405,14 +426,19 @@ export default function DashboardCreatorPage() {
         return 0;
       }
 
-      const totalRating = packagesWithRatings.reduce((sum: number, pkg: any) => 
-        sum + (pkg.averageRating || 0), 0
+      const totalRating = packagesWithRatings.reduce(
+        (sum: number, pkg: PackageResponse) => sum + (pkg.averageRating || 0),
+        0
       );
-      
+
       const averageRating = totalRating / packagesWithRatings.length;
-      
-      console.log(`⭐ Calculated average rating: ${averageRating.toFixed(2)} from ${packagesWithRatings.length} rated packages`);
-      
+
+      console.log(
+        `⭐ Calculated average rating: ${averageRating.toFixed(2)} from ${
+          packagesWithRatings.length
+        } rated packages`
+      );
+
       return Math.round(averageRating * 10) / 10; // Round to 1 decimal place
     } catch (error) {
       console.error("❌ Error calculating average rating:", error);
@@ -501,10 +527,18 @@ export default function DashboardCreatorPage() {
       const publishedPackages = fetchedPackages.filter(
         (pkg: Package) => pkg.isPublished
       );
-      
+
       // Calculate average rating from all creator's packages
       console.log("⭐ Starting calculation of average rating...");
-      const avgRating = await calculateAverageRating(authData.data.userId);
+      const creatorUserId = authData.data.userId;
+      console.log("🆔 Creator User ID:", creatorUserId);
+
+      let avgRating = 0;
+      if (creatorUserId) {
+        avgRating = await calculateAverageRating(creatorUserId);
+      } else {
+        console.warn("⚠️ No user ID available for rating calculation");
+      }
       console.log("🎯 Final average rating:", avgRating);
 
       // Calculate total unique students across all packages
@@ -601,7 +635,10 @@ export default function DashboardCreatorPage() {
     {
       label: "Rata-rata Rating",
       value: creatorProfile?.rating ? `${creatorProfile.rating}/5.0` : "0/5.0",
-      change: (creatorProfile?.rating && creatorProfile.rating > 0) ? `⭐ ${creatorProfile.rating} bintang` : "Belum ada rating",
+      change:
+        creatorProfile?.rating && creatorProfile.rating > 0
+          ? `⭐ ${creatorProfile.rating} bintang`
+          : "Belum ada rating",
       icon: Star,
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
@@ -1395,12 +1432,14 @@ export default function DashboardCreatorPage() {
                                               <td className="px-4 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                   {customer.profile?.avatar ? (
-                                                    <img
+                                                    <Image
                                                       src={
                                                         customer.profile.avatar
                                                       }
                                                       alt={customer.user.name}
-                                                      className="h-8 w-8 rounded-full object-cover mr-3"
+                                                      width={32}
+                                                      height={32}
+                                                      className="rounded-full object-cover mr-3"
                                                     />
                                                   ) : (
                                                     <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center mr-3">
