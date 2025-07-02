@@ -18,8 +18,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 
+// Rating interface
+interface Rating {
+  userId: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Extended interface for package with details
-interface PackageWithDetails extends PackageResponse {
+interface PackageWithDetails extends Omit<PackageResponse, 'ratings'> {
   category?: {
     name: string;
     _id: string;
@@ -39,6 +47,7 @@ interface PackageWithDetails extends PackageResponse {
   };
   categoryName?: string;
   creatorName?: string;
+  ratings?: Rating[]; // Override with proper Rating objects
 }
 
 export default function PackagePageDetail({
@@ -189,9 +198,12 @@ export default function PackagePageDetail({
                   {packageData.title}
                 </h1>
 
-                <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                  {packageData.description}
-                </p>
+                <div 
+                  className="text-xl text-gray-600 mb-8 leading-relaxed prose prose-xl max-w-none prose-p:text-gray-600 prose-p:text-xl prose-p:leading-relaxed prose-p:m-0 prose-strong:text-gray-700 prose-em:text-gray-600"
+                  dangerouslySetInnerHTML={{
+                    __html: packageData.description || ""
+                  }}
+                />
 
                 {/* Package Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -309,9 +321,9 @@ export default function PackagePageDetail({
                       {packageData.ratings && packageData.ratings.length > 0 ? (
                         <div className="space-y-3">
                           {packageData.ratings.map(
-                            (rating: number, index: number) => (
+                            (ratingObj: Rating, index: number) => (
                               <div
-                                key={index}
+                                key={ratingObj.userId || index}
                                 className="border border-gray-100 rounded-lg bg-gray-50 px-4 py-3 flex items-center gap-3"
                               >
                                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -327,7 +339,7 @@ export default function PackagePageDetail({
                                         <span
                                           key={star}
                                           className={`text-sm ${
-                                            star <= rating
+                                            star <= ratingObj.rating
                                               ? "text-yellow-400"
                                               : "text-gray-300"
                                           }`}
@@ -337,8 +349,11 @@ export default function PackagePageDetail({
                                       ))}
                                     </div>
                                     <span className="text-xs text-gray-600">
-                                      {rating}/5
+                                      {ratingObj.rating}/5
                                     </span>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {new Date(ratingObj.createdAt).toLocaleDateString('id-ID')}
                                   </div>
                                 </div>
                               </div>

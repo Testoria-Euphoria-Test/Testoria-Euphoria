@@ -39,7 +39,7 @@ interface CreatorProfile {
 interface StatCard {
   label: string;
   value: string;
-  change: string;
+  change?: string;
   icon: any;
   color: string;
   bgColor: string;
@@ -97,11 +97,6 @@ export default function DashboardCreatorPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [reuploadFile, setReuploadFile] = useState<File | null>(null);
 
-  // AI Processing states
-  const [processingPackageId, setProcessingPackageId] = useState<string | null>(
-    null
-  );
-
   // Load creator data on component mount
   useEffect(() => {
     loadCreatorData();
@@ -110,8 +105,8 @@ export default function DashboardCreatorPage() {
   // Auto-fetch customers when earnings tab is active and packages are loaded
   useEffect(() => {
     if (activeTab === "earnings" && packages.length > 0 && !loading) {
-      // Auto-fetch customers for the first 3 packages to show in the preview
-      packages.slice(0, 3).forEach((pkg) => {
+      // Auto-fetch customers for ALL packages to show them immediately
+      packages.forEach((pkg) => {
         if (!customers[pkg._id] && !loadingCustomers[pkg._id]) {
           fetchCustomers(pkg._id);
         }
@@ -583,28 +578,10 @@ export default function DashboardCreatorPage() {
     }).format(amount);
   };
 
-  // Function to strip HTML tags and return clean text
-  const stripHtmlTags = (html: string) => {
-    if (!html) return "";
-
-    // Create a temporary div element to parse HTML
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
-
-    // Get the text content without HTML tags
-    const cleanText = tempDiv.textContent || tempDiv.innerText || "";
-
-    // Limit to reasonable length for display
-    return cleanText.length > 150
-      ? cleanText.substring(0, 150) + "..."
-      : cleanText;
-  };
-
   const stats: StatCard[] = [
     {
       label: "Total Paket",
       value: creatorProfile?.totalPackages.toString() || "0",
-      change: "+2 bulan ini",
       icon: Package,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
@@ -615,7 +592,6 @@ export default function DashboardCreatorPage() {
       value: loadingTotalStudents
         ? "..."
         : creatorProfile?.totalStudents.toLocaleString() || "0",
-      change: loadingTotalStudents ? "Memperbarui..." : "+15% bulan ini",
       icon: Users,
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -624,9 +600,7 @@ export default function DashboardCreatorPage() {
     },
     {
       label: "Total Pendapatan",
-
       value: formatCurrency(earnings?.totalEarnings || 0),
-      change: `${earnings?.totalSales || 0} penjualan`,
       icon: DollarSign,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
@@ -635,10 +609,6 @@ export default function DashboardCreatorPage() {
     {
       label: "Rata-rata Rating",
       value: creatorProfile?.rating ? `${creatorProfile.rating}/5.0` : "0/5.0",
-      change:
-        creatorProfile?.rating && creatorProfile.rating > 0
-          ? `⭐ ${creatorProfile.rating} bintang`
-          : "Belum ada rating",
       icon: Star,
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
@@ -793,42 +763,6 @@ export default function DashboardCreatorPage() {
     }
   };
 
-  // AI Processing handlers
-  const handleProcessAIAndGenerateQuestions = async (pkg: Package) => {
-    setProcessingPackageId(pkg._id);
-    try {
-      // Generate questions from processed content
-      const questionsResponse = await fetch("/api/questions", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ packageId: pkg._id }),
-      });
-
-      if (!questionsResponse.ok) {
-        const errorData = await questionsResponse.json();
-        throw new Error(errorData.message || "Failed to generate questions");
-      }
-
-      const questionsResult = await questionsResponse.json();
-
-      toast.success(
-        `Questions generated successfully! Created ${questionsResult.questionsCreated} questions`
-      );
-
-      // Reload packages to get updated content
-      await loadCreatorData();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to generate questions";
-      toast.error(errorMessage);
-    } finally {
-      setProcessingPackageId(null);
-    }
-  };
-
   return (
     <div>
       <Navbar />
@@ -867,7 +801,6 @@ export default function DashboardCreatorPage() {
                       <p className="text-2xl font-bold text-gray-900 mb-1">
                         {stat.value}
                       </p>
-                      <p className="text-xs text-gray-500">{stat.change}</p>
                     </div>
                     <div
                       className={`p-3 rounded-xl ${stat.bgColor} ${stat.borderColor} border`}
@@ -1013,9 +946,12 @@ export default function DashboardCreatorPage() {
                                   {pkg.isPublished ? "Terpublikasi" : "Draft"}
                                 </span>
                               </div>
-                              <p className="text-gray-600 mb-4 leading-relaxed">
-                                {stripHtmlTags(pkg.description)}
-                              </p>
+                              <div 
+                                className="text-gray-600 mb-4 leading-relaxed prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-ul:text-gray-600 prose-ol:text-gray-600"
+                                dangerouslySetInnerHTML={{ 
+                                  __html: pkg.description || ''
+                                }}
+                              />
 
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="bg-white p-3 rounded-lg border">
@@ -1072,44 +1008,10 @@ export default function DashboardCreatorPage() {
                                     AI Diproses
                                   </span>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-                                  <span className="text-xs text-gray-600">
-                                    Soal Dibuat
-                                  </span>
-                                </div>
                               </div>
                             </div>
 
                             <div className="flex items-center space-x-2 ml-6">
-                              {/* Generate Questions Button */}
-                              <button
-                                onClick={() =>
-                                  handleProcessAIAndGenerateQuestions(pkg)
-                                }
-                                disabled={processingPackageId === pkg._id}
-                                className="text-purple-600 hover:text-purple-900 p-2 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Generate Questions"
-                              >
-                                {processingPackageId === pkg._id ? (
-                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
-                                ) : (
-                                  <svg
-                                    className="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                                    />
-                                  </svg>
-                                )}
-                              </button>
-
                               {/* Reupload PDF Button */}
                               <button
                                 onClick={() => handleReuploadPDF(pkg)}
@@ -1171,49 +1073,8 @@ export default function DashboardCreatorPage() {
                     </button>
                   </div>
 
-                  {/* Balance Summary */}
-                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-emerald-100 text-sm font-medium">
-                          Saldo Tersedia
-                        </h4>
-                        <p className="text-3xl font-bold">
-                          {formatCurrency(
-                            earnings?.totalEarnings || balance || 0
-                          )}
-                        </p>
-                        <p className="text-emerald-100 text-sm mt-1">
-                          Dapat ditarik kapan saja
-                        </p>
-                      </div>
-                      <div className="bg-white bg-opacity-20 rounded-full p-3">
-                        <Wallet className="w-8 h-8" />
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Earnings Overview */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white border border-gray-200 rounded-xl p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-gray-500 text-sm font-medium">
-                            Total Pendapatan
-                          </h4>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {formatCurrency(earnings?.totalEarnings || 0)}
-                          </p>
-                          <p className="text-gray-400 text-xs mt-1">
-                            Dari {earnings?.totalSales || 0} penjualan
-                          </p>
-                        </div>
-                        <div className="bg-purple-50 rounded-full p-3">
-                          <DollarSign className="w-6 h-6 text-purple-600" />
-                        </div>
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white border border-gray-200 rounded-xl p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1258,9 +1119,6 @@ export default function DashboardCreatorPage() {
                       <h4 className="text-lg font-semibold text-gray-900">
                         Penjualan & Pelanggan per Paket
                       </h4>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Detail penjualan dan daftar pelanggan untuk setiap paket
-                      </p>
                     </div>
 
                     {packages.length === 0 ? (
@@ -1317,14 +1175,12 @@ export default function DashboardCreatorPage() {
                                   {isLoadingCustomers ? (
                                     <>
                                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                      Loading...
+                                      Refreshing...
                                     </>
                                   ) : (
                                     <>
                                       <Users className="w-4 h-4 mr-2" />
-                                      {packageCustomers.length > 0
-                                        ? "Refresh"
-                                        : "Load Customers"}
+                                      Refresh Customers
                                     </>
                                   )}
                                 </button>
@@ -1505,10 +1361,7 @@ export default function DashboardCreatorPage() {
                                   <p className="text-sm text-gray-500">
                                     {isLoadingCustomers
                                       ? "Loading customers..."
-                                      : packageCustomers.length === 0 &&
-                                        customers[pkg._id]
-                                      ? "Belum ada pelanggan untuk paket ini"
-                                      : 'Klik "Load Customers" untuk melihat pelanggan'}
+                                      : "Belum ada pelanggan untuk paket ini"}
                                   </p>
                                 </div>
                               )}

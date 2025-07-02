@@ -132,6 +132,13 @@ export default function DashboardCustomerPage() {
     fetchCategories();
   }, []);
 
+  // Helper function to strip HTML tags for search
+  const stripHtmlTags = (html: string) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  };
+
   // ✅ Improved filtering logic - API sudah memfilter published packages
   const filteredPackages = packages.filter((pkg) => {
     console.log("Filtering package:", {
@@ -140,11 +147,14 @@ export default function DashboardCustomerPage() {
       selectedCategory,
     });
 
+    const searchTermLower = searchTerm.toLowerCase();
+    const descriptionText = stripHtmlTags(pkg.description || '').toLowerCase();
+
     const matchesSearch =
-      pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.title.toLowerCase().includes(searchTermLower) ||
       (pkg.creatorName &&
-        pkg.creatorName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      pkg.description.toLowerCase().includes(searchTerm.toLowerCase());
+        pkg.creatorName.toLowerCase().includes(searchTermLower)) ||
+      descriptionText.includes(searchTermLower);
 
     const matchesCategory = (() => {
       // If "all" is selected, show all packages
