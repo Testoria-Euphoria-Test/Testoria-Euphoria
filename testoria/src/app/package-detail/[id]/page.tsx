@@ -898,7 +898,7 @@ export default function PackageDetailPage() {
                     ) : (
                       <Target className="w-4 h-4" />
                     )}
-                    <span>{isProcessing ? 'Memproses...' : 'Proses AI & Generate Soal'}</span>
+                    <span>{isProcessing ? 'Memproses...' : 'Generate Soal'}</span>
                   </button>
                 )}
 
@@ -1272,7 +1272,12 @@ export default function PackageDetailPage() {
                   <CheckCircle2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada soal</h3>
                   <p className="text-gray-600 mb-4">
-                    {packageData.contents && packageData.contents.length > 0
+                    {packageData.contents && packageData.contents.length >
+
+
+
+
+                      0
                       ? "Gunakan proses AI untuk membuat soal secara otomatis atau tambahkan secara manual"
                       : "Upload dan proses PDF terlebih dahulu, lalu buat soal"}
                   </p>
@@ -1284,7 +1289,7 @@ export default function PackageDetailPage() {
                           disabled={isProcessing}
                           className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
                         >
-                          Proses AI & Generate Soal
+                          Generate Soal
                         </button>
                       )}
                       <button
@@ -1814,8 +1819,8 @@ export default function PackageDetailPage() {
                   <label
                     htmlFor={`question-image-upload-${currentQuestionForImage}`}
                     className={`flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${isUploadingQuestionImage
-                        ? 'opacity-50 cursor-not-allowed border-gray-300 bg-gray-50'
-                        : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                      ? 'opacity-50 cursor-not-allowed border-gray-300 bg-gray-50'
+                      : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
                       }`}
                   >
                     {isUploadingQuestionImage ? (

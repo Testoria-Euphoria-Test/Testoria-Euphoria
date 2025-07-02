@@ -451,23 +451,7 @@ export default function DashboardCreatorPage() {
   const handleProcessAIAndGenerateQuestions = async (pkg: Package) => {
     setProcessingPackageId(pkg._id);
     try {
-      // Step 1: Process AI content from PDFs
-      const processResponse = await fetch(`/api/packages/${pkg._id}/process`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!processResponse.ok) {
-        const errorData = await processResponse.json();
-        throw new Error(errorData.message || 'Failed to process AI');
-      }
-
-      const processResult = await processResponse.json();
-      
-      // Step 2: Generate questions from processed content
+      // Generate questions from processed content
       const questionsResponse = await fetch('/api/questions', {
         method: 'POST',
         credentials: 'include',
@@ -484,13 +468,13 @@ export default function DashboardCreatorPage() {
 
       const questionsResult = await questionsResponse.json();
       
-      toast.success(`AI processing completed! Found ${processResult.data.totalQuestions} content items and generated ${questionsResult.questionsCreated} questions`);
+      toast.success(`Questions generated successfully! Created ${questionsResult.questionsCreated} questions`);
       
       // Reload packages to get updated content
       await loadCreatorData();
       
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to process AI and generate questions';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate questions';
       toast.error(errorMessage);
     } finally {
       setProcessingPackageId(null);
@@ -703,12 +687,12 @@ export default function DashboardCreatorPage() {
                             </div>
 
                             <div className="flex items-center space-x-2 ml-6">
-                              {/* AI Processing & Generate Questions Button */}
+                              {/* Generate Questions Button */}
                               <button
                                 onClick={() => handleProcessAIAndGenerateQuestions(pkg)}
                                 disabled={processingPackageId === pkg._id}
                                 className="text-purple-600 hover:text-purple-900 p-2 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Proses AI & Generate Soal"
+                                title="Generate Questions"
                               >
                                 {processingPackageId === pkg._id ? (
                                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
