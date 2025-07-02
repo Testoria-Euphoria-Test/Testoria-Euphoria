@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {  BookOpen, Star, Heart, Link2 } from "lucide-react";
+import { BookOpen, Star } from "lucide-react";
 import ButtonPayment from "./ButtonPayment";
 import { PackageResponse } from "@/types/package";
 import { useState, useEffect } from "react";
@@ -13,7 +13,6 @@ interface PackageCardProps {
 
 export default function PackageCard({ package: pkg }: PackageCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
   // Get images array, fallback to empty array if not available
@@ -47,17 +46,6 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
     }).format(price);
   };
 
-  const formatDuration = (duration: number) => {
-    if (duration >= 60) {
-      const hours = Math.floor(duration / 60);
-      const minutes = duration % 60;
-      return minutes > 0 ? `${hours}j ${minutes}m` : `${hours}j`;
-    }
-    return `${duration}m`;
-  };
-
-  const questionCount = pkg.contents?.length || 50;
-
   const handleImageLoad = () => {
     setImageError(false);
   };
@@ -66,10 +54,7 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
     setImageError(true);
   };
 
-  //buatkan logic jika package isPublished adlah true, maka tampilkan namun jika false, maka paket tidak ditampilkan
-  if (!pkg.isPublished) {
-    return null;
-  }
+
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-1 flex flex-col h-full">
@@ -123,10 +108,7 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
 
         {/* Description (max 20 words) */}
         <p className="text-gray-500 text-sm mb-2 line-clamp-2">
-          {pkg.description
-            .split(" ")
-            .slice(0, 7)
-            .join(" ")}
+          {pkg.description.split(" ").slice(0, 7).join(" ")}
           {pkg.description.split(" ").length > 20 ? "..." : ""}
         </p>
 
@@ -137,7 +119,9 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
         <div className="flex justify-between text-xs text-gray-500 mb-2 mt-4">
           <div>
             <span className="font-semibold text-blue-900">Soal :</span>
-            <div className="text-blue-900 font-bold">{pkg.contents.length} butir </div>
+            <div className="text-blue-900 font-bold">
+              {pkg.contents.length} butir{" "}
+            </div>
           </div>
           <div>
             <span className="font-semibold text-blue-900">Durasi :</span>
@@ -145,7 +129,9 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
           </div>
           <div>
             <span className="font-semibold text-blue-900">Creator :</span>
-            <div className="text-blue-900 font-bold">{pkg.creatorName}</div>
+            <div className="text-blue-900 font-bold">
+              {pkg.creatorName}
+            </div>
           </div>
         </div>
 
@@ -164,4 +150,3 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
     </div>
   );
 }
-

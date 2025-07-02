@@ -54,7 +54,7 @@ export default function Navbar({ showUserActions = true }: NavbarProps) {
           )}
           {showUserActions ? (
             <div className="flex items-center space-x-2">
-              {userRole !== "admin" && <ButtonProfile />}
+              {userRole === "creator" && <ButtonProfile />}
               <ButtonLogout />
             </div>
           ) : (
