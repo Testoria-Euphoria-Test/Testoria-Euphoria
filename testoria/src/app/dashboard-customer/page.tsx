@@ -57,7 +57,6 @@ export default function DashboardCustomerPage() {
 
         const data = await response.json();
 
-        
         if (data.success) {
           console.log("Setting packages:", data.data?.length, "packages");
           setPackages(data.data);
@@ -107,8 +106,11 @@ export default function DashboardCustomerPage() {
         // ✅ Validate and filter valid categories
         const validCategories = categories
           .filter(Boolean) // Remove null/undefined
-          .filter((cat: any) => cat._id && cat.name) // Must have _id and name
-          .map((cat: any) => ({
+          .filter((cat: unknown): cat is Category => {
+            const category = cat as Partial<Category>;
+            return Boolean(category._id && category.name);
+          }) // Must have _id and name
+          .map((cat: Category) => ({
             _id: String(cat._id),
             name: String(cat.name),
           })); // Ensure strings
@@ -129,7 +131,6 @@ export default function DashboardCustomerPage() {
 
     fetchCategories();
   }, []);
-
 
   // ✅ Improved filtering logic - API sudah memfilter published packages
   const filteredPackages = packages.filter((pkg) => {
@@ -212,14 +213,21 @@ export default function DashboardCustomerPage() {
 
   if (loading) {
     return (
-      <div>
+      <div className="min-h-screen bg-[#f7fafd]">
         <Navbar />
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 via-white to-indigo-200">
-          <div className="flex flex-col items-center gap-6">
-            <div className="w-16 h-16 border-4 border-blue-400 border-t-blue-600 rounded-full animate-spin"></div>
-            <span className="text-blue-700 font-semibold text-lg tracking-wide">
-              Memuat paket...
-            </span>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            {/* Simple Loading Icon */}
+            <div className="w-16 h-16 bg-[#1e3a8a] rounded-lg flex items-center justify-center mx-auto mb-8 shadow-sm">
+              <Package className="w-8 h-8 text-white" />
+            </div>
+            {/* Loading Spinner */}
+            <div className="w-8 h-8 border-2 border-[#e0e7ef] border-t-[#1e3a8a] rounded-full animate-spin mx-auto mb-6"></div>
+            {/* Loading Text */}
+            <h2 className="text-xl font-semibold text-[#1e3a8a] mb-2">
+              Memuat Dashboard
+            </h2>
+            <p className="text-[#64748b]">Sedang menyiapkan paket tryout...</p>
           </div>
         </div>
       </div>
@@ -228,21 +236,31 @@ export default function DashboardCustomerPage() {
 
   if (error) {
     return (
-      <div>
+      <div className="min-h-screen bg-[#f7fafd]">
         <Navbar />
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-100 via-white to-orange-100">
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl px-8 py-10 flex flex-col items-center border border-red-200">
-            <Package className="w-12 h-12 text-red-500 mb-4 animate-bounce" />
-            <h2 className="text-2xl font-bold text-red-600 mb-2">
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-[#1e3a8a] rounded-lg flex items-center justify-center mx-auto mb-6">
+              <Package className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-xl font-semibold text-[#1e3a8a] mb-3">
               Terjadi Kesalahan
             </h2>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-400 text-white rounded-xl hover:from-red-600 hover:to-orange-500 transition-all duration-300 shadow"
-            >
-              Coba Lagi
-            </button>
+            <p className="text-[#64748b] mb-8 leading-relaxed">{error}</p>
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full px-6 py-3 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#223e96] transition-colors duration-200 font-medium"
+              >
+                Muat Ulang Halaman
+              </button>
+              <button
+                onClick={() => window.history.back()}
+                className="w-full px-6 py-3 bg-[#e0e7ef] hover:bg-[#c7d2fe] text-[#1e3a8a] rounded-lg transition-colors duration-200 font-medium"
+              >
+                Kembali
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -250,143 +268,218 @@ export default function DashboardCustomerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f7fafd]">
       <Navbar />
-      {/* Navigation Section */}
-      <div className="flex justify-center gap-4 mb-8 mt-4 bg-white">
-        <Link
-          href="/dashboard-customer"
-          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium shadow-sm"
-        >
-          <BookDashedIcon className="w-5 h-5 mr-2" />
-          Dashboard
-        </Link>
-        <Link
-          href="/my-package"
-          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
-        >
-          <BookOpen className="w-5 h-5 mr-2" />
-          My-Paket
-        </Link>
-        <Link
-          href="/payment-history"
-          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
-        >
-          <CreditCard className="w-5 h-5 mr-2" />
-          Riwayat Pembayaran
-        </Link>
-        <Link
-          href="/tryout-history"
-          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
-        >
-          <FileText className="w-5 h-5 mr-2" />
-          Riwayat Tryout
-        </Link>
+
+
+      {/* Navigation Cards Section */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-16 relative z-10 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Link
+            href="/dashboard-customer"
+            className="group bg-white rounded-lg shadow-sm border-2 border-[#1e3a8a] p-6 text-center hover:shadow-md transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-[#1e3a8a] rounded-lg flex items-center justify-center mx-auto mb-3">
+              <BookDashedIcon className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-[#1e3a8a] mb-1">Dashboard</h3>
+            <p className="text-[#64748b] text-sm">Beranda Utama</p>
+          </Link>
+
+          <Link
+            href="/my-package"
+            className="group bg-white rounded-lg shadow-sm border border-[#e0e7ef] p-6 text-center hover:shadow-md hover:border-[#b6c3e6] transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-[#e0e7ef] rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-[#c7d2fe] transition-colors">
+              <BookOpen className="w-6 h-6 text-[#1e3a8a]" />
+            </div>
+            <h3 className="font-semibold text-[#1e3a8a] mb-1">My Paket</h3>
+            <p className="text-[#64748b] text-sm">Paket Saya</p>
+          </Link>
+
+          <Link
+            href="/payment-history"
+            className="group bg-white rounded-lg shadow-sm border border-[#e0e7ef] p-6 text-center hover:shadow-md hover:border-[#b6c3e6] transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-[#e0e7ef] rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-[#c7d2fe] transition-colors">
+              <CreditCard className="w-6 h-6 text-[#1e3a8a]" />
+            </div>
+            <h3 className="font-semibold text-[#1e3a8a] mb-1">Pembayaran</h3>
+            <p className="text-[#64748b] text-sm">Riwayat Transaksi</p>
+          </Link>
+
+          <Link
+            href="/tryout-history"
+            className="group bg-white rounded-lg shadow-sm border border-[#e0e7ef] p-6 text-center hover:shadow-md hover:border-[#b6c3e6] transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-[#e0e7ef] rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-[#c7d2fe] transition-colors">
+              <FileText className="w-6 h-6 text-[#1e3a8a]" />
+            </div>
+            <h3 className="font-semibold text-[#1e3a8a] mb-1">Tryout</h3>
+            <p className="text-[#64748b] text-sm">Riwayat Ujian</p>
+          </Link>
+        </div>
       </div>
 
       {/* Filters Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 ">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <div className="bg-white rounded-lg border border-[#e0e7ef] p-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-[#1e3a8a] mb-2">
+                Jelajahi Paket
+              </h2>
+              <p className="text-[#64748b]">
+                Temukan paket tryout yang sesuai dengan kebutuhan Anda
+              </p>
+            </div>
+            <div className="hidden lg:flex items-center space-x-2 text-sm text-[#64748b] bg-[#f7fafd] px-3 py-2 rounded-lg">
+              <Package className="w-4 h-4" />
+              <span className="font-medium">{packages.length} total paket</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Search */}
-            <div className="relative flex-1">
-              <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 " />
-              <input
-                type="text"
-                placeholder="Search packages..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="text-gray-600 pl-12 pr-4 py-3 w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200  "
-              />
+            <div className="lg:col-span-5">
+              <label className="block text-sm font-medium text-[#1e3a8a] mb-3">
+                Cari Paket
+              </label>
+              <div className="relative">
+                <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[#b6c3e6]" />
+                <input
+                  type="text"
+                  placeholder="Masukkan kata kunci..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-[#e0e7ef] rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] transition-all duration-200 bg-white text-[#1e3a8a] placeholder:text-[#b6c3e6]"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#e0e7ef] hover:bg-[#c7d2fe] rounded-full flex items-center justify-center text-[#64748b] hover:text-[#1e3a8a] transition-colors"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
+
             {/* Category Filter */}
-            <div className="relative min-w-[200px]">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="text-gray-400 w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white appearance-none cursor-pointer pr-10"
-              >
-                {categories.map((category) => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <Filter className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none " />
+            <div className="lg:col-span-4">
+              <label className="block text-sm font-medium text-[#1e3a8a] mb-3">
+                Kategori
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-3 border border-[#e0e7ef] rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] transition-all duration-200 bg-white appearance-none cursor-pointer text-[#1e3a8a]"
+                >
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <Filter className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-[#b6c3e6] pointer-events-none" />
+              </div>
             </div>
+
             {/* Sort */}
-            <div className="min-w-[180px]">
+            <div className="lg:col-span-3">
+              <label className="block text-sm font-medium text-[#1e3a8a] mb-3">
+                Urutkan
+              </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="text-gray-400 w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                className="w-full px-4 py-3 border border-[#e0e7ef] rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] transition-all duration-200 bg-white text-[#1e3a8a]"
               >
-                <option value="popular">Most Popular</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="title">Title A-Z</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
+                <option value="popular">Terpopuler</option>
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+                <option value="title">Nama A-Z</option>
+                <option value="price-low">Harga: Rendah ke Tinggi</option>
+                <option value="price-high">Harga: Tinggi ke Rendah</option>
               </select>
             </div>
           </div>
 
           {/* Active filters display */}
           {(searchTerm || selectedCategory !== "all") && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {searchTerm && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                  Search: "{searchTerm}"
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="ml-2 hover:text-blue-600 font-bold"
-                  >
-                    ×
-                  </button>
+            <div className="mt-8 pt-6 border-t border-[#e0e7ef]">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm font-medium text-[#1e3a8a]">
+                  Filter aktif:
                 </span>
-              )}
-              {selectedCategory !== "all" && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                  Category: {getSelectedCategoryName()}
-                  <button
-                    onClick={() => setSelectedCategory("all")}
-                    className="ml-2 hover:text-green-600 font-bold"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
+                {searchTerm && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-[#e0e7ef] text-[#1e3a8a] border border-[#b6c3e6]">
+                    Pencarian: "{searchTerm}"
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="ml-2 w-4 h-4 bg-[#b6c3e6] hover:bg-[#1e3a8a] rounded-full flex items-center justify-center text-white hover:text-white transition-colors text-xs font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+                {selectedCategory !== "all" && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-[#e0e7ef] text-[#1e3a8a] border border-[#b6c3e6]">
+                    Kategori: {getSelectedCategoryName()}
+                    <button
+                      onClick={() => setSelectedCategory("all")}
+                      className="ml-2 w-4 h-4 bg-[#b6c3e6] hover:bg-[#1e3a8a] rounded-full flex items-center justify-center text-white hover:text-white transition-colors text-xs font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
       </section>
 
       {/* Results Summary */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <p className="text-gray-600">
-            Showing{" "}
-            <span className="font-semibold text-gray-900">
-              {sortedPackages.length}
-            </span>{" "}
-            packages
-            {selectedCategory !== "all" && (
-              <span>
-                {" "}
-                in{" "}
-                <span className="font-semibold">
-                  {getSelectedCategoryName()}
-                </span>
-              </span>
-            )}
-          </p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="flex items-center justify-between bg-white rounded-lg p-6 border border-[#e0e7ef]">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-[#1e3a8a] rounded-lg flex items-center justify-center">
+              <Package className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-[#64748b]">Total paket ditemukan</p>
+              <p className="text-2xl font-bold text-[#1e3a8a]">
+                {sortedPackages.length}
+                {selectedCategory !== "all" && (
+                  <span className="text-lg font-medium text-[#64748b] ml-2">
+                    dalam {getSelectedCategoryName()}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {(searchTerm || selectedCategory !== "all") && (
+            <button
+              onClick={() => {
+                setSelectedCategory("all");
+                setSearchTerm("");
+              }}
+              className="px-4 py-2 bg-[#e0e7ef] hover:bg-[#c7d2fe] text-[#1e3a8a] rounded-lg transition-colors duration-200 text-sm font-medium"
+            >
+              Reset Filter
+            </button>
+          )}
         </div>
       </section>
 
       {/* Packages Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {sortedPackages.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {sortedPackages.map((pkg, index) => {
               console.log(
                 "Rendering package:",
@@ -397,9 +490,9 @@ export default function DashboardCustomerPage() {
               return (
                 <div
                   key={pkg._id}
-                  className="animate-fadeInUp h-full"
+                  className="animate-slideInUp opacity-0"
                   style={{
-                    animationDelay: `${index * 0.15}s`,
+                    animationDelay: `${index * 0.1}s`,
                     animationFillMode: "forwards",
                   }}
                 >
@@ -410,18 +503,18 @@ export default function DashboardCustomerPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Package className="w-12 h-12 text-gray-400" />
+            <div className="w-16 h-16 bg-[#e0e7ef] rounded-lg flex items-center justify-center mx-auto mb-6">
+              <Package className="w-8 h-8 text-[#b6c3e6]" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3 className="text-2xl font-bold text-[#1e3a8a] mb-4">
               {searchTerm || selectedCategory !== "all"
-                ? "No packages found"
-                : "No packages available"}
+                ? "Tidak ada paket ditemukan"
+                : "Belum ada paket tersedia"}
             </h3>
-            <p className="text-gray-600 max-w-md mx-auto mb-6">
+            <p className="text-[#64748b] max-w-md mx-auto mb-8 leading-relaxed">
               {searchTerm || selectedCategory !== "all"
-                ? "Try adjusting your search or filters to find what you're looking for."
-                : "There are no packages available at the moment. Please check back later."}
+                ? "Coba sesuaikan pencarian atau filter Anda untuk menemukan apa yang Anda cari."
+                : "Saat ini belum ada paket yang tersedia. Silakan periksa kembali nanti."}
             </p>
             {(searchTerm || selectedCategory !== "all") && (
               <button
@@ -429,30 +522,36 @@ export default function DashboardCustomerPage() {
                   setSelectedCategory("all");
                   setSearchTerm("");
                 }}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium"
+                className="px-8 py-3 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#223e96] transition-colors duration-200 font-medium"
               >
-                Clear All Filters
+                Hapus Semua Filter
               </button>
             )}
           </div>
         )}
       </section>
-      {/* Enhanced animations */}
-      <style jsx>{`fadeInUp {
-        @keyframes fadeInUp {
-          from {ity: 0;
-            opacity: 0;translateY(30px) scale(0.95);
-            transform: translateY(30px) scale(0.95);
-          }o {
-          to {acity: 1;
-            opacity: 1;translateY(0) scale(1);
-            transform: translateY(0) scale(1);
+      {/* Enhanced animations and styles */}
+      <style jsx global>{`
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
           }
-        }animate-fadeInUp {
-        .animate-fadeInUp {Up 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-          animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-        }/style>
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slideInUp {
+          animation: slideInUp 0.4s ease-out;
+        }
+        /* Remove all gradients and primary colors except blue */
+        body {
+          background: #f7fafd !important;
+        }
       `}</style>
     </div>
   );
 }
+

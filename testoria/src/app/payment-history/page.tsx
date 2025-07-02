@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  CreditCard,
-  ArrowLeft,
-  BookOpen,
-  FileText,
-  BookDashedIcon,
-} from "lucide-react";
+import { CreditCard, BookOpen, FileText, BookDashedIcon } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -76,13 +70,13 @@ export default function PaymentHistoryPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
-        return "bg-gradient-to-r from-green-500 to-green-600 text-white";
+        return "bg-green-100 text-green-700";
       case "pending":
-        return "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white";
+        return "bg-yellow-100 text-yellow-700";
       case "failed":
-        return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+        return "bg-red-100 text-red-700";
       default:
-        return "bg-gradient-to-r from-gray-500 to-gray-600 text-white";
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -103,9 +97,16 @@ export default function PaymentHistoryPage() {
     return (
       <div>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-2"
+              style={{
+                borderColor: "#1e3a8a",
+                borderTopColor: "transparent",
+                margin: "0 auto",
+              }}
+            ></div>
             <p className="mt-4 text-gray-600">Memuat riwayat pembayaran...</p>
           </div>
         </div>
@@ -117,13 +118,28 @@ export default function PaymentHistoryPage() {
     return (
       <div>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Kesalahan</h2>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center max-w-md bg-white rounded-2xl p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Kesalahan</h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchPaymentHistory}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className="px-6 py-3"
+              style={{
+                backgroundColor: "#1e3a8a",
+                color: "#fff",
+                borderRadius: "9999px",
+                fontWeight: 500,
+                transition: "background 0.2s",
+              }}
+              onMouseOver={e =>
+                ((e.target as HTMLButtonElement).style.backgroundColor =
+                  "#243c5a")
+              }
+              onMouseOut={e =>
+                ((e.target as HTMLButtonElement).style.backgroundColor =
+                  "#1e3a8a")
+              }
             >
               Coba Lagi
             </button>
@@ -134,154 +150,211 @@ export default function PaymentHistoryPage() {
   }
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* Navigation Section */}
-      <div className="flex justify-center gap-4 mb-8 mt-4 bg-white">
-        <Link
-          href="/dashboard-customer"
-          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
-        >
-          <BookDashedIcon className="w-5 h-5 mr-2" />
-          Dashboard
-        </Link>
-        <Link
-          href="/my-package"
-          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
-        >
-          <BookOpen className="w-5 h-5 mr-2" />
-          My-Paket
-        </Link>
-        <Link
-          href="/payment-history"
-          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium shadow-sm"
-        >
-          <CreditCard className="w-5 h-5 mr-2" />
-          Riwayat Pembayaran
-        </Link>
-        <Link
-          href="/tryout-history"
-          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium border border-gray-200 shadow-sm"
-        >
-          <FileText className="w-5 h-5 mr-2" />
-          Riwayat Tryout
-        </Link>
+      {/* Navigation Cards Section */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 relative z-10 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Link
+            href="/dashboard-customer"
+            className="group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:border-gray-300 transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-gray-200 transition-colors">
+              <BookDashedIcon className="w-6 h-6 text-gray-700" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Dashboard</h3>
+            <p className="text-gray-600 text-sm">Beranda Utama</p>
+          </Link>
+
+          <Link
+            href="/my-package"
+            className="group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:border-gray-300 transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-gray-200 transition-colors">
+              <BookOpen className="w-6 h-6 text-gray-700" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">My Paket</h3>
+            <p className="text-gray-600 text-sm">Paket Saya</p>
+          </Link>
+
+          <Link
+            href="/payment-history"
+            className="group bg-white rounded-lg shadow-sm border-2 border-gray-900 p-6 text-center hover:shadow-md transition-all duration-200"
+          >
+            <div
+              className="w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3"
+              style={{ backgroundColor: "#1e3a8a" }}
+            >
+              <CreditCard className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Pembayaran</h3>
+            <p className="text-gray-600 text-sm">Riwayat Transaksi</p>
+          </Link>
+
+          <Link
+            href="/tryout-history"
+            className="group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:border-gray-300 transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-gray-200 transition-colors">
+              <FileText className="w-6 h-6 text-gray-700" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Tryout</h3>
+            <p className="text-gray-600 text-sm">Riwayat Ujian</p>
+          </Link>
+        </div>
       </div>
 
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Link
-              href="/dashboard-customer"
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Kembali ke Dashboard
-            </Link>
+      {/* Content Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        {/* Section Header */}
+        <div className="mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: "#1e3a8a" }}
+                >
+                  <CreditCard className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                    Riwayat Pembayaran
+                  </h2>
+                  <p className="text-gray-600">
+                    Lacak semua transaksi pembayaran dan riwayat pembelian Anda
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Riwayat Pembayaran
-                  </h1>
-                  <p className="text-gray-600">
-                    Lacak semua transaksi pembayaran dan riwayat pembelian Anda.
-                  </p>
-                </div>
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {paymentHistory.length} transaksi
-                </span>
+        {/* Payment History Container */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Riwayat Pembayaran
+            </h1>
+            <p className="text-gray-600">
+              Lacak semua transaksi pembayaran dan riwayat pembelian Anda
+            </p>
+            <div className="mt-4">
+              <span
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                style={{
+                  backgroundColor: "#e0e7ff",
+                  color: "#1e3a8a",
+                }}
+              >
+                {paymentHistory.length} transaksi
+              </span>
+            </div>
+          </div>
+
+          {paymentHistory.length === 0 ? (
+            <div className="text-center py-16">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: "#e0e7ff" }}
+              >
+                <CreditCard className="w-8 h-8" style={{ color: "#1e3a8a" }} />
               </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Tidak Ada Riwayat Pembayaran
+              </h3>
+              <p className="text-gray-500 max-w-sm mx-auto mb-6">
+                Anda belum melakukan pembayaran apapun. Mulai dengan membeli
+                paket untuk melihat riwayat pembayaran Anda di sini.
+              </p>
+              <Link
+                href="/dashboard-customer"
+                className="inline-flex items-center px-6 py-3 font-medium rounded-full"
+                style={{
+                  backgroundColor: "#1e3a8a",
+                  color: "#fff",
+                  transition: "background 0.2s",
+                }}
+                onMouseOver={e =>
+                  ((e.target as HTMLAnchorElement).style.backgroundColor =
+                    "#243c5a")
+                }
+                onMouseOut={e =>
+                  ((e.target as HTMLAnchorElement).style.backgroundColor =
+                    "#1e3a8a")
+                }
+              >
+                Jelajahi Paket
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {paymentHistory.map((payment) => (
+                <div
+                  key={payment._id}
+                  className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: "#e0e7ff" }}
+                        >
+                          <CreditCard
+                            className="w-5 h-5"
+                            style={{ color: "#1e3a8a" }}
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            Pembelian Paket
+                          </h4>
+                          <span
+                            className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${getStatusBadge(
+                              payment.status
+                            )}`}
+                          >
+                            {getStatusText(payment.status)}
+                          </span>
+                        </div>
+                      </div>
 
-              {paymentHistory.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <CreditCard className="w-12 h-12 text-gray-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    Tidak Ada Riwayat Pembayaran
-                  </h3>
-                  <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                    Anda belum melakukan pembayaran apapun. Mulai dengan membeli
-                    paket untuk melihat riwayat pembayaran Anda di sini.
-                  </p>
-                  <Link
-                    href="/dashboard-customer"
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
-                  >
-                    Jelajahi Paket
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {paymentHistory.map((payment) => (
-                    <div
-                      key={payment._id}
-                      className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-3">
-                            <CreditCard className="w-5 h-5 text-gray-400" />
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              Pembelian Paket
-                            </h4>
-                            <span
-                              className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${getStatusBadge(
-                                payment.status
-                              )}`}
-                            >
-                              {getStatusText(payment.status)}
-                            </span>
-                          </div>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">
+                          {payment.package?.title}
+                        </h3>
+                      </div>
 
-                          <div className="mb-4">
-                            <span className="text-gray-500 font-medium text-sm">
-                              Paket:
-                            </span>
-                            <h3 className="text-xl font-bold text-blue-600 mt-1">
-                              {payment.package?.title}
-                            </h3>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Jumlah:
-                              </span>
-                              <p className="font-bold text-gray-900">
-                                {formatCurrency(payment.amount)}
-                              </p>
-                            </div>
-                            <div></div>
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Tanggal:
-                              </span>
-                              <p className="font-semibold text-gray-900">
-                                {payment.paymentDate
-                                  ? formatDateTime(payment.paymentDate)
-                                  : payment.status === "pending"
-                                  ? "Menunggu pembayaran"
-                                  : "Belum dibayar"}
-                              </p>
-                            </div>
-                          </div>
+                      <div className="flex flex-wrap gap-6 text-sm">
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Jumlah:
+                          </span>
+                          <p className="font-bold text-gray-900">
+                            {formatCurrency(payment.amount)}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 font-medium">
+                            Tanggal:
+                          </span>
+                          <p className="font-medium text-gray-700">
+                            {payment.paymentDate
+                              ? formatDateTime(payment.paymentDate)
+                              : payment.status === "pending"
+                              ? "Menunggu pembayaran"
+                              : "Belum dibayar"}
+                          </p>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
