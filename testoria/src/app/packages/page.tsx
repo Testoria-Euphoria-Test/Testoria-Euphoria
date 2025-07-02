@@ -11,6 +11,16 @@ interface Category {
   name: string;
 }
 
+// Mock data
+const mockCategories: Category[] = [
+  { _id: "all", name: "Semua Kategori" },
+  { _id: "cat1", name: "UTBK" },
+  { _id: "cat2", name: "CPNS" },
+  { _id: "cat3", name: "SNBT" },
+  { _id: "cat4", name: "Kedinasan" },
+  { _id: "cat5", name: "Olimpiade" },
+];
+
 export default function PackagePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -21,130 +31,60 @@ export default function PackagePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [packages, setPackages] = useState<PackageResponse[]>([]);
-  const [categories, setCategories] = useState<Category[]>([
-    { _id: "all", name: "Semua Kategori" },
-  ]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPackages = async () => {
       try {
         setLoading(true);
 
-        // Fetch packages and categories in parallel
-        const [packagesResponse, categoriesResponse] = await Promise.all([
-          fetch("/api/packages?published=true&withDetails=true", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          }),
-          fetch("/api/categories", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          }),
-        ]);
+        const response = await fetch("/api/packages?published=true", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
 
-        // Handle packages response
-        if (!packagesResponse.ok) {
+        if (!response.ok) {
           throw new Error("Failed to fetch packages");
         }
-        const packagesData = await packagesResponse.json();
-        if (packagesData.success) {
-          setPackages(packagesData.data || []);
-        } else {
-          throw new Error(packagesData.message || "Failed to load packages");
-        }
 
-        // Handle categories response
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json();
-          if (categoriesData.success && categoriesData.data) {
-            console.log("📋 Categories loaded:", categoriesData.data);
-            setCategories([
-              { _id: "all", name: "Semua Kategori" },
-              ...categoriesData.data,
-            ]);
-          } else {
-            console.warn("Categories API returned no data");
-          }
+        const data = await response.json();
+
+        if (data.success) {
+          setPackages(data.data || []);
         } else {
-          console.warn(
-            "Failed to fetch categories:",
-            categoriesResponse.status
-          );
-          // Keep default categories if API fails
+          throw new Error(data.message || "Failed to load packages");
         }
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error("Error fetching packages:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchPackages();
   }, []);
 
   // Filter and sort packages
   const filteredAndSortedPackages = useMemo(() => {
-    console.log("🔍 Filtering packages with search term:", searchTerm);
-    console.log("📦 Total packages:", packages.length);
-
-    const filtered = packages.filter((pkg) => {
-      const searchTermLower = searchTerm.toLowerCase().trim();
-
-      // Skip filtering if no search term
-      if (!searchTermLower) {
-        const matchesCategory =
-          selectedCategory === "all" ||
-          pkg.categoryId === selectedCategory ||
-          (pkg.categoryName &&
-            pkg.categoryName
-              .toLowerCase()
-              .includes(selectedCategory.toLowerCase()));
-        const matchesLevel = selectedLevel === "all";
-        return matchesCategory && matchesLevel;
-      }
-
+    let filtered = packages.filter((pkg) => {
       const matchesSearch =
-        pkg.title.toLowerCase().includes(searchTermLower) ||
-        (pkg.description &&
-          pkg.description.toLowerCase().includes(searchTermLower)) ||
-        (pkg.creatorName &&
-          pkg.creatorName.toLowerCase().includes(searchTermLower)) ||
-        (pkg.categoryName &&
-          pkg.categoryName.toLowerCase().includes(searchTermLower));
+        pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pkg.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (pkg.creatorId &&
+          pkg.creatorId.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesCategory =
-        selectedCategory === "all" ||
-        pkg.categoryId === selectedCategory ||
-        (pkg.categoryName &&
-          pkg.categoryName
-            .toLowerCase()
-            .includes(selectedCategory.toLowerCase()));
+        selectedCategory === "all" || pkg.categoryId === selectedCategory;
 
-      // Level filter (currently not implemented in data structure)
-      const matchesLevel = selectedLevel === "all";
+      // Level filter (dummy, since level not in data)
+      const matchesLevel =
+        selectedLevel === "all" || (pkg.level && pkg.level === selectedLevel);
 
-      const result = matchesSearch && matchesCategory && matchesLevel;
-
-      if (searchTermLower && result) {
-        console.log(
-          "✅ Package matched:",
-          pkg.title,
-          "by creator:",
-          pkg.creatorName
-        );
-      }
-
-      return result;
+      return matchesSearch && matchesCategory && matchesLevel;
     });
-
-    console.log("🎯 Filtered packages count:", filtered.length);
 
     // Sort packages
     const sorted = [...filtered].sort((a, b) => {
@@ -178,7 +118,7 @@ export default function PackagePage() {
                 <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Cari paket, creator, kategori, atau topik..."
+                  placeholder="Cari paket, pembuat, atau topik..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-gray-900 shadow-sm "
@@ -204,18 +144,13 @@ export default function PackagePage() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  disabled={loading}
-                  className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-white text-gray-400"
                 >
-                  {loading ? (
-                    <option value="all">Memuat kategori...</option>
-                  ) : (
-                    categories.map((category: Category) => (
-                      <option key={category._id} value={category._id}>
-                        {category.name}
-                      </option>
-                    ))
-                  )}
+                  {mockCategories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
 
                 {/* Sort */}
@@ -258,89 +193,17 @@ export default function PackagePage() {
             </div>
           </div>
 
-          {/* Search Results Summary */}
-          {!loading && !error && packages.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  {searchTerm ? (
-                    <span>
-                      Menampilkan{" "}
-                      <strong>{filteredAndSortedPackages.length}</strong> dari{" "}
-                      <strong>{packages.length}</strong> paket untuk pencarian{" "}
-                      <em>&ldquo;{searchTerm}&rdquo;</em>
-                    </span>
-                  ) : (
-                    <span>
-                      Menampilkan{" "}
-                      <strong>{filteredAndSortedPackages.length}</strong> paket
-                      tersedia
-                    </span>
-                  )}
-                </div>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                  >
-                    Hapus pencarian
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Package Grid/List */}
-          {loading ? (
-            /* Loading State */
-            <div className="text-center py-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-6"></div>
-              <h3 className="text-xl font-medium text-gray-900 mb-2">
-                Memuat paket...
-              </h3>
-              <p className="text-gray-600">Mohon tunggu sebentar</p>
-            </div>
-          ) : error ? (
-            /* Error State */
-            <div className="text-center py-16">
-              <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Filter className="w-12 h-12 text-red-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                Gagal memuat paket
-              </h3>
-              <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                {error}
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold"
-              >
-                Coba Lagi
-              </button>
-            </div>
-          ) : filteredAndSortedPackages.length > 0 ? (
-            <div className="grid grid-cols-3 gap-6">
+          {filteredAndSortedPackages.length > 0 ? (
+            <div
+              className="grid grid-cols-3 gap-6"
+            >
               {filteredAndSortedPackages.map((pkg) => (
                 <PackageCard key={pkg._id} package={pkg} />
               ))}
             </div>
-          ) : packages.length === 0 ? (
-            /* No Packages Available */
-            <div className="text-center py-16">
-              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Filter className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                Belum ada paket tersedia
-              </h3>
-              <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                Saat ini belum ada paket tryout yang tersedia. Silakan cek
-                kembali nanti.
-              </p>
-            </div>
           ) : (
-            /* Filtered Results Empty */
+            /* Empty State */
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Filter className="w-12 h-12 text-gray-400" />
@@ -349,8 +212,8 @@ export default function PackagePage() {
                 Paket tidak ditemukan
               </h3>
               <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                Tidak ada paket yang sesuai dengan pencarian &ldquo;{searchTerm}
-                &rdquo; atau filter yang dipilih.
+                Coba ubah kata kunci pencarian atau filter untuk menemukan paket
+                yang sesuai.
               </p>
               <button
                 onClick={() => {

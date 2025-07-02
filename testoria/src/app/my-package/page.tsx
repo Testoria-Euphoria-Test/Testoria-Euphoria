@@ -5,44 +5,90 @@ import Navbar from "@/components/Navbar";
 import { BookDashedIcon, BookOpen, CreditCard, FileText } from "lucide-react";
 import Link from "next/link";
 
+// Custom theme color
+const themeColor = "bg-[#1e3a8a]";
+const themeText = "text-[#1e3a8a]";
+const themeBorder = "border-[#1e3a8a]";
+
 export default function MyPackagePage() {
   return (
-    <div className="bg-white min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="min-h-screen bg-white">
-        {/* Navigation Section */}
-        <div className="flex justify-center gap-4 mb-8 mt-4 bg-white ">
+
+      {/* Navigation Cards Section */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8  mb-16 relative z-10 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Link
             href="/dashboard-customer"
-            className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg  transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+            className={`group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:${themeBorder} hover:border-2 transition-all duration-200`}
           >
-            <BookDashedIcon className="w-5 h-5 mr-2" />
-            Dashboard
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-[#e0e7ff] transition-colors">
+              <BookDashedIcon className={themeText + " w-6 h-6"} />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Dashboard</h3>
+            <p className="text-gray-600 text-sm">Beranda Utama</p>
           </Link>
+
           <Link
             href="/my-package"
-            className="inline-flex items-center px-6 py-3  bg-blue-600 text-white rounded-lg  transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+            className={`group bg-white rounded-lg shadow-sm border-2 ${themeBorder} p-6 text-center hover:shadow-md transition-all duration-200`}
           >
-            <BookOpen className="w-5 h-5 mr-2" />
-            My-Paket
+            <div className={`w-12 h-12 ${themeColor} rounded-lg flex items-center justify-center mx-auto mb-3`}>
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">My Paket</h3>
+            <p className="text-gray-600 text-sm">Paket Saya</p>
           </Link>
+
           <Link
             href="/payment-history"
-            className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg  transition-all duration-300 font-medium shadow-sm"
+            className={`group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:${themeBorder} hover:border-2 transition-all duration-200`}
           >
-            <CreditCard className="w-5 h-5 mr-2" />
-            Riwayat Pembayaran
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-[#e0e7ff] transition-colors">
+              <CreditCard className={themeText + " w-6 h-6"} />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Pembayaran</h3>
+            <p className="text-gray-600 text-sm">Riwayat Transaksi</p>
           </Link>
+
           <Link
             href="/tryout-history"
-            className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg  transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+            className={`group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:${themeBorder} hover:border-2 transition-all duration-200`}
           >
-            <FileText className="w-5 h-5 mr-2" />
-            Riwayat Tryout
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-[#e0e7ff] transition-colors">
+              <FileText className={themeText + " w-6 h-6"} />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Tryout</h3>
+            <p className="text-gray-600 text-sm">Riwayat Ujian</p>
           </Link>
         </div>
+      </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Content Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        {/* Section Header */}
+        <div className="mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className={`w-12 h-12 ${themeColor} rounded-lg flex items-center justify-center`}>
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                    Paket Tryout Saya
+                  </h2>
+                  <p className="text-gray-600">
+                    Kelola dan mulai tryout dari paket yang Anda miliki
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MyPackage Component Container */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <MyPackage />
         </div>
       </div>

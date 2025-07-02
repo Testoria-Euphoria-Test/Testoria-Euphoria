@@ -1,17 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  FileText,
-  ArrowLeft,
-  BookDashedIcon,
-  BookOpen,
-  CreditCard,
-} from "lucide-react";
+import { FileText, BookDashedIcon, BookOpen, CreditCard } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import { QuestionType } from "@/types/question";
-import { UserAnswerType } from "@/types/userAnswer";
 import { ResultType } from "@/types/result";
 
 interface TryoutHistory {
@@ -25,18 +17,8 @@ interface TryoutHistory {
   duration: number;
 }
 
-interface TryoutDetails {
-  questions: QuestionType[];
-  userAnswers: UserAnswerType[];
-  isLoading: boolean;
-  isExpanded: boolean;
-}
-
 export default function TryoutHistoryPage() {
   const [tryoutHistory, setTryoutHistory] = useState<TryoutHistory[]>([]);
-  const [tryoutDetails, setTryoutDetails] = useState<
-    Record<string, TryoutDetails>
-  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -235,22 +217,6 @@ export default function TryoutHistoryPage() {
     });
   };
 
-  const toggleTryoutDetails = (packageId: string) => {
-    const details = tryoutDetails[packageId];
-
-    if (!details) {
-      fetchTryoutDetails(packageId);
-    }
-
-    setTryoutDetails((prev) => ({
-      ...prev,
-      [packageId]: {
-        ...prev[packageId],
-        isExpanded: !prev[packageId]?.isExpanded,
-      },
-    }));
-  };
-
   const getUserAnswerForQuestion = (
     questionId: string,
     packageId: string
@@ -261,6 +227,15 @@ export default function TryoutHistoryPage() {
       (answer) => answer.questionId === questionId
     );
   };
+
+  // ✅ Add safe number formatting
+  const safeNumber = (value: unknown, fallback: number = 0): number => {
+    const num = Number(value);
+    return isNaN(num) ? fallback : num;
+  };
+
+  // ✅ Add safe array length
+  const historyCount = Array.isArray(tryoutHistory) ? tryoutHistory.length : 0;
 
   const fetchTryoutHistory = useCallback(async () => {
     try {
@@ -410,22 +385,13 @@ export default function TryoutHistoryPage() {
     return "text-red-600";
   };
 
-  // ✅ Add safe number formatting
-  const safeNumber = (value: unknown, fallback: number = 0): number => {
-    const num = Number(value);
-    return isNaN(num) ? fallback : num;
-  };
-
-  // ✅ Add safe array length
-  const historyCount = Array.isArray(tryoutHistory) ? tryoutHistory.length : 0;
-
   if (loading) {
     return (
       <div>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#1e3a8a] border-t-transparent mx-auto"></div>
             <p className="mt-4 text-gray-600">Memuat riwayat tryout...</p>
           </div>
         </div>
@@ -437,13 +403,13 @@ export default function TryoutHistoryPage() {
     return (
       <div>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Kesalahan</h2>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center max-w-md bg-white rounded-2xl p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Kesalahan</h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchTryoutHistory}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90 transition-colors rounded-full font-medium"
             >
               Coba Lagi
             </button>
@@ -456,159 +422,194 @@ export default function TryoutHistoryPage() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="min-h-screen bg-white">
-        {/* Navigation Section */}
-        <div className="flex justify-center gap-4 mb-8 mt-4 bg-white ">
+
+      {/* Navigation Cards Section */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 relative z-10 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Link
             href="/dashboard-customer"
-            className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg ho transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+            className="group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:border-gray-300 transition-all duration-200"
           >
-            <BookDashedIcon className="w-5 h-5 mr-2" />
-            Dashboard
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-gray-200 transition-colors">
+              <BookDashedIcon className="w-6 h-6 text-gray-700" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Dashboard</h3>
+            <p className="text-gray-600 text-sm">Beranda Utama</p>
           </Link>
+
           <Link
             href="/my-package"
-            className="inline-flex items-center px-6 py-3  bg-white text-gray-700 rounded-lg  transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+            className="group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:border-gray-300 transition-all duration-200"
           >
-            <BookOpen className="w-5 h-5 mr-2" />
-            My-Paket
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-gray-200 transition-colors">
+              <BookOpen className="w-6 h-6 text-gray-700" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">My Paket</h3>
+            <p className="text-gray-600 text-sm">Paket Saya</p>
           </Link>
+
           <Link
             href="/payment-history"
-            className="inline-flex items-center px-6 py-3 bg-white text-gray-700 rounded-lg  transition-all duration-300 font-medium shadow-sm"
+            className="group bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md hover:border-gray-300 transition-all duration-200"
           >
-            <CreditCard className="w-5 h-5 mr-2" />
-            Riwayat Pembayaran
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-gray-200 transition-colors">
+              <CreditCard className="w-6 h-6 text-gray-700" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Pembayaran</h3>
+            <p className="text-gray-600 text-sm">Riwayat Transaksi</p>
           </Link>
+
           <Link
             href="/tryout-history"
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg  transition-all duration-300 font-medium border border-gray-200 shadow-sm"
+            className="group bg-white rounded-lg shadow-sm border-2 border-gray-900 p-6 text-center hover:shadow-md transition-all duration-200"
           >
-            <FileText className="w-5 h-5 mr-2" />
-            Riwayat Tryout
+            <div className="w-12 h-12 bg-blue-950 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Tryout</h3>
+            <p className="text-gray-600 text-sm">Riwayat Ujian</p>
           </Link>
         </div>
+      </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+      {/* Content Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        {/* Section Header */}
+        <div className="mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-950 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
                     Riwayat Tryout
-                  </h1>
+                  </h2>
                   <p className="text-gray-600">
                     Tinjau performa tes Anda dan pantau perkembangan Anda dari
-                    waktu ke waktu.
+                    waktu ke waktu
                   </p>
                 </div>
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {historyCount} percobaan
-                </span>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {historyCount === 0 ? (
-                <div className="text-center py-16">
-                  <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <FileText className="w-12 h-12 text-gray-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    Tidak Ada Riwayat Tryout
-                  </h3>
-                  <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-                    Anda belum menyelesaikan tryout apapun. Mulai latihan untuk
-                    melihat hasil Anda di sini.
-                  </p>
-                  <Link
-                    href="/dashboard-customer"
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
+        {/* Tryout History Container */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Riwayat Tryout
+            </h1>
+            <p className="text-gray-600">
+              Tinjau performa tes Anda dan pantau perkembangan Anda dari waktu
+              ke waktu
+            </p>
+            <div className="mt-4">
+              <span className="inline-flex items-center bg-[#1e3a8a]/10 text-[#1e3a8a] px-3 py-1 rounded-full text-sm font-medium">
+                {historyCount} percobaan
+              </span>
+            </div>
+          </div>
+
+          {historyCount === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-[#1e3a8a]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-8 h-8 text-[#1e3a8a]" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Tidak Ada Riwayat Tryout
+              </h3>
+              <p className="text-gray-500 max-w-sm mx-auto mb-6">
+                Anda belum menyelesaikan tryout apapun. Mulai latihan untuk
+                melihat hasil Anda di sini.
+              </p>
+              <Link
+                href="/dashboard-customer"
+                className="inline-flex items-center px-6 py-3 bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90 transition-colors font-medium rounded-full"
+              >
+                Jelajahi Paket
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tryoutHistory.map((tryout) => {
+                return (
+                  <div
+                    key={tryout._id}
+                    className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors"
                   >
-                    Jelajahi Paket
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {tryoutHistory.map((tryout) => {
-                    const details = tryoutDetails[tryout.packageId];
-                    const isExpanded = details?.isExpanded || false;
-                    const isLoadingDetails = details?.isLoading || false;
-
-                    return (
-                      <div
-                        key={tryout._id}
-                        className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200"
-                      >
-                        {/* Main tryout summary */}
-                        <div className="p-6">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <FileText className="w-5 h-5 text-gray-400" />
-                                <h4 className="text-lg font-semibold text-gray-900">
-                                  {tryout.packageTitle ||
-                                    "Paket Tidak Diketahui"}
-                                </h4>
-                                <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-                                  Nilai: {safeNumber(tryout.score)}%
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                <div>
-                                  <span className="text-gray-500 font-medium">
-                                    Nilai:
-                                  </span>
-                                  <p
-                                    className={`font-bold text-xl md:text-2xl ${getScoreColor(
-                                      tryout.score
-                                    )}`}
-                                  >
-                                    {safeNumber(tryout.score)}%
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-gray-500 font-medium">
-                                    Jawaban Benar:
-                                  </span>
-                                  <p className="font-semibold text-gray-900">
-                                    {safeNumber(tryout.correctAnswers)}/
-                                    {safeNumber(tryout.totalQuestions)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-gray-500 font-medium">
-                                    Durasi:
-                                  </span>
-                                  <p className="font-semibold text-gray-900">
-                                    {safeNumber(tryout.duration)} menit
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-gray-500 font-medium">
-                                    Selesai:
-                                  </span>
-                                  <p className="font-semibold text-gray-900 text-xs sm:text-sm">
-                                    {formatDateTime(tryout.completedAt)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() =>
-                                (window.location.href = `/packages/${tryout.packageId}/results`)
-                              }
-                              className="self-start sm:ml-4 flex items-center space-x-2 px-3 py-2 text-sm  hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors bg-blue-600 text-white"
+                    {/* Main tryout summary */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <div className="w-10 h-10 bg-[#1e3a8a]/10 rounded-full flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-[#1e3a8a]" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900">
+                              {tryout.packageTitle || "Paket Tidak Diketahui"}
+                            </h4>
+                            <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a]">
+                              Nilai: {safeNumber(tryout.score)}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500 font-medium">
+                              Nilai:
+                            </span>
+                            <p
+                              className={`font-bold text-lg ${getScoreColor(
+                                tryout.score
+                              )}`}
                             >
-                              <div>Lihat Detail</div>
-                            </button>
+                              {safeNumber(tryout.score)}%
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 font-medium">
+                              Jawaban Benar:
+                            </span>
+                            <p className="font-semibold text-gray-900">
+                              {safeNumber(tryout.correctAnswers)}/
+                              {safeNumber(tryout.totalQuestions)}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 font-medium">
+                              Durasi:
+                            </span>
+                            <p className="font-semibold text-gray-900">
+                              {safeNumber(tryout.duration)} menit
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 font-medium">
+                              Selesai:
+                            </span>
+                            <p className="font-medium text-gray-700 text-xs sm:text-sm">
+                              {formatDateTime(tryout.completedAt)}
+                            </p>
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <button
+                        onClick={() =>
+                          (window.location.href = `/packages/${tryout.packageId}/results`)
+                        }
+                        className="self-start sm:ml-4 px-4 py-2 text-sm bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90 rounded-full transition-colors font-medium"
+                      >
+                        Lihat Detail
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
