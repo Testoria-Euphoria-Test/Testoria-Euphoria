@@ -68,6 +68,8 @@ export default function DashboardCreatorPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(0);
   const [earnings, setEarnings] = useState<any>(null);
+  const [customers, setCustomers] = useState<{ [packageId: string]: any[] }>({});
+  const [loadingCustomers, setLoadingCustomers] = useState<{ [packageId: string]: boolean }>({});
 
   // Modal states  
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -84,11 +86,23 @@ export default function DashboardCreatorPage() {
     loadCreatorData();
   }, []);
 
+  // Auto-fetch customers when earnings tab is active and packages are loaded
+  useEffect(() => {
+    if (activeTab === "earnings" && packages.length > 0 && !loading) {
+      // Auto-fetch customers for the first 3 packages to show in the preview
+      packages.slice(0, 3).forEach(pkg => {
+        if (!customers[pkg._id] && !loadingCustomers[pkg._id]) {
+          fetchCustomers(pkg._id);
+        }
+      });
+    }
+  }, [activeTab, packages.length, loading]);
+
   // Sync balance with earnings when earnings data changes
   useEffect(() => {
     if (earnings && earnings.totalEarnings > 0 && balance === 0) {
       setBalance(earnings.totalEarnings);
-      setCreatorProfile(prev => prev ? {...prev, balance: earnings.totalEarnings} : null);
+      setCreatorProfile(prev => prev ? { ...prev, balance: earnings.totalEarnings } : null);
     }
   }, [earnings, balance]);
 
@@ -96,21 +110,21 @@ export default function DashboardCreatorPage() {
   const refreshAllData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch both balance and earnings
       await Promise.all([
         fetchBalance(),
         fetchEarnings()
       ]);
-      
+
       // If balance is still 0 but we have earnings, sync them
       setTimeout(() => {
         if (balance === 0 && earnings && earnings.totalEarnings > 0) {
           setBalance(earnings.totalEarnings);
-          setCreatorProfile(prev => prev ? {...prev, balance: earnings.totalEarnings} : null);
+          setCreatorProfile(prev => prev ? { ...prev, balance: earnings.totalEarnings } : null);
         }
       }, 500);
-      
+
       toast.success('Data refreshed successfully');
     } catch (error) {
       console.error('Failed to refresh data:', error);
@@ -135,9 +149,9 @@ export default function DashboardCreatorPage() {
         const data = await response.json();
         const currentBalance = data.data.balance || 0;
         setBalance(currentBalance);
-        
+
         // Update creator profile with balance
-        setCreatorProfile(prev => prev ? {...prev, balance: currentBalance} : null);
+        setCreatorProfile(prev => prev ? { ...prev, balance: currentBalance } : null);
       }
     } catch (error) {
       console.error('Failed to fetch balance:', error);
@@ -158,11 +172,11 @@ export default function DashboardCreatorPage() {
       if (response.ok) {
         const data = await response.json();
         setEarnings(data.data);
-        
+
         // Update creator profile with total earnings
         const totalEarnings = data.data.totalEarnings || 0;
-        setCreatorProfile(prev => prev ? {...prev, totalEarnings} : null);
-        
+        setCreatorProfile(prev => prev ? { ...prev, totalEarnings } : null);
+
         // Update balance if it's not already set (balance should reflect available withdrawn amount)
         // Note: earnings are cumulative, balance is what's available to withdraw
         if (balance === 0 && totalEarnings > 0) {
@@ -171,6 +185,61 @@ export default function DashboardCreatorPage() {
       }
     } catch (error) {
       console.error('Failed to fetch earnings:', error);
+    }
+  };
+
+  const fetchCustomers = async (packageId: string, forceRefresh = false) => {
+    if ((customers[packageId] || loadingCustomers[packageId]) && !forceRefresh) {
+      return; // Already loaded or loading, unless force refresh
+    }
+
+    console.log('Fetching customers for package:', packageId);
+    setLoadingCustomers(prev => ({ ...prev, [packageId]: true }));
+
+    try {
+      const response = await fetch(`/api/payments/customers/${packageId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log('Customer fetch response status:', response.status);
+      console.log('Customer fetch response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Customer data received:', data);
+        setCustomers(prev => ({ ...prev, [packageId]: data.data }));
+        // Only show success toast if there are customers to show
+        if (data.data.length > 0) {
+          toast.success(`Loaded ${data.data.length} customers for this package`);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to fetch customers:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+
+        let errorMessage = 'Failed to fetch customers';
+        if (response.status === 403) {
+          errorMessage = 'You are not authorized to view customers for this package';
+        } else if (response.status === 404) {
+          errorMessage = 'Package not found';
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      toast.error(`Error fetching customers: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoadingCustomers(prev => ({ ...prev, [packageId]: false }));
     }
   };
 
@@ -197,10 +266,10 @@ export default function DashboardCreatorPage() {
       }
 
       const authData = await authResponse.json();
-      
+
       // Set user role from auth response
       setUserRole(authData.data.userRole || 'creator');
-      
+
       // Fetch creator's packages
       const packagesResponse = await fetch('/api/packages/my-packages', {
         method: 'GET',
@@ -216,7 +285,7 @@ export default function DashboardCreatorPage() {
           setLoading(false);
           return;
         }
-        
+
         // Try to get error details from response
         let errorMessage = 'Failed to fetch packages';
         try {
@@ -225,12 +294,12 @@ export default function DashboardCreatorPage() {
         } catch (e) {
           // If we can't parse the error response, use the default message
         }
-        
+
         throw new Error(`API Error ${packagesResponse.status}: ${errorMessage}`);
       }
 
       const packagesData = await packagesResponse.json();
-      
+
       if (!packagesData.success) {
         throw new Error(packagesData.message || 'API returned unsuccessful response');
       }
@@ -324,7 +393,7 @@ export default function DashboardCreatorPage() {
 
   const navigationTabs = [
     { id: "packages", label: "Paket Saya", icon: Package },
-    { id: "earnings", label: "Pendapatan", icon: DollarSign },
+    { id: "earnings", label: "Pendapatan & Pelanggan", icon: DollarSign },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -377,7 +446,7 @@ export default function DashboardCreatorPage() {
 
   const confirmReupload = async () => {
     if (!selectedPackage || !reuploadFile) return;
-    
+
     setIsProcessing(true);
     try {
       const formData = new FormData();
@@ -395,14 +464,14 @@ export default function DashboardCreatorPage() {
       }
 
       const result = await response.json();
-      
+
       // Update package in state if needed
-      setPackages(prev => prev.map(pkg => 
-        pkg._id === selectedPackage._id 
+      setPackages(prev => prev.map(pkg =>
+        pkg._id === selectedPackage._id
           ? { ...pkg, sourcePdf: [result.data.newPdfUrl], pdfImages: result.data.pdfImagesGenerated, updatedAt: new Date() }
           : pkg
       ));
-      
+
       toast.success(`PDF reuploaded successfully! Generated ${result.data.pdfImagesGenerated} page images.`);
       setShowReuploadModal(false);
       setSelectedPackage(null);
@@ -417,7 +486,7 @@ export default function DashboardCreatorPage() {
 
   const confirmDelete = async () => {
     if (!selectedPackage) return;
-    
+
     setIsProcessing(true);
     try {
       const response = await fetch(`/api/packages/${selectedPackage._id}`, {
@@ -435,7 +504,7 @@ export default function DashboardCreatorPage() {
 
       // Remove package from state
       setPackages(prev => prev.filter(pkg => pkg._id !== selectedPackage._id));
-      
+
       toast.success('Package deleted successfully');
       setShowDeleteModal(false);
       setSelectedPackage(null);
@@ -467,12 +536,12 @@ export default function DashboardCreatorPage() {
       }
 
       const questionsResult = await questionsResponse.json();
-      
+
       toast.success(`Questions generated successfully! Created ${questionsResult.questionsCreated} questions`);
-      
+
       // Reload packages to get updated content
       await loadCreatorData();
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate questions';
       toast.error(errorMessage);
@@ -527,11 +596,10 @@ export default function DashboardCreatorPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap transition-colors ${
-                        activeTab === tab.id
-                          ? "border-blue-600 text-blue-600 bg-blue-50"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50"
-                      }`}
+                      className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap transition-colors ${activeTab === tab.id
+                        ? "border-blue-600 text-blue-600 bg-blue-50"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                        }`}
                     >
                       <IconComponent className="w-4 h-4 mr-2" />
                       {tab.label}
@@ -563,7 +631,7 @@ export default function DashboardCreatorPage() {
                     <div className="ml-3">
                       <h3 className="text-sm font-medium text-red-800">Error loading data</h3>
                       <p className="text-sm text-red-700 mt-1">{error}</p>
-                      <button 
+                      <button
                         onClick={loadCreatorData}
                         className="mt-2 text-sm bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 transition-colors"
                       >
@@ -586,7 +654,7 @@ export default function DashboardCreatorPage() {
                         Kelola dan pantau paket edukasi Anda
                       </p>
                     </div>
-                    <button 
+                    <button
                       onClick={handleCreatePackage}
                       className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 flex items-center transition-colors"
                     >
@@ -600,7 +668,7 @@ export default function DashboardCreatorPage() {
                       <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada paket</h3>
                       <p className="text-gray-600 mb-4">Mulai buat paket edukasi pertamamu</p>
-                      <button 
+                      <button
                         onClick={handleCreatePackage}
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                       >
@@ -608,7 +676,7 @@ export default function DashboardCreatorPage() {
                       </button>
                     </div>
                   )}
-                  
+
                   {packages.length > 0 && (
                     <div className="grid gap-6">
                       {packages.map((pkg) => (
@@ -741,10 +809,10 @@ export default function DashboardCreatorPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        Analisis Pendapatan
+                        Analisis Pendapatan & Pelanggan
                       </h3>
                       <p className="text-gray-600">
-                        Detail pendapatan dari penjualan paket tryout Anda.
+                        Detail pendapatan dari penjualan paket tryout dan daftar pelanggan Anda.
                       </p>
                     </div>
                     <button
@@ -791,7 +859,7 @@ export default function DashboardCreatorPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white border border-gray-200 rounded-xl p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -812,8 +880,8 @@ export default function DashboardCreatorPage() {
                           <h4 className="text-gray-500 text-sm font-medium">Rata-rata per Paket</h4>
                           <p className="text-2xl font-bold text-gray-900">
                             {formatCurrency(
-                              earnings?.totalSales > 0 
-                                ? (earnings?.totalEarnings || 0) / earnings.totalSales 
+                              earnings?.totalSales > 0
+                                ? (earnings?.totalEarnings || 0) / earnings.totalSales
                                 : 0
                             )}
                           </p>
@@ -825,64 +893,214 @@ export default function DashboardCreatorPage() {
                     </div>
                   </div>
 
-                  {/* Package Sales Details */}
-                  {earnings && earnings.packageSales && earnings.packageSales.length > 0 && (
-                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                      <div className="px-6 py-4 border-b border-gray-200">
-                        <h4 className="text-lg font-semibold text-gray-900">Penjualan per Paket</h4>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Nama Paket
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Jumlah Terjual
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Total Pendapatan
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Penjualan Terakhir
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {earnings.packageSales.map((sale: any, index: number) => (
-                              <tr key={sale.packageId || index} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {sale.packageTitle}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-gray-900">{sale.totalSales}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-green-600">
-                                    {formatCurrency(sale.totalEarnings)}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-gray-500">
-                                    {sale.latestSale 
-                                      ? new Date(sale.latestSale).toLocaleDateString('id-ID')
-                                      : '-'
-                                    }
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                  {/* Package Sales with Customer Details */}
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                      <h4 className="text-lg font-semibold text-gray-900">Penjualan & Pelanggan per Paket</h4>
+                      <p className="text-sm text-gray-500 mt-1">Detail penjualan dan daftar pelanggan untuk setiap paket</p>
                     </div>
-                  )}
+
+                    {packages.length === 0 ? (
+                      <div className="p-12 text-center">
+                        <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h4 className="text-lg font-semibold text-gray-900 mb-2">Belum Ada Paket</h4>
+                        <p className="text-gray-600">Buat paket pertama Anda untuk melihat penjualan dan pelanggan.</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-200">
+                        {packages.map((pkg) => {
+                          // Find sales data for this package
+                          const packageSale = earnings?.packageSales?.find((sale: any) => sale.packageId === pkg._id);
+                          const packageCustomers = customers[pkg._id] || [];
+                          const isLoadingCustomers = loadingCustomers[pkg._id];
+
+                          return (
+                            <div key={pkg._id} className="p-6">
+                              {/* Package Header */}
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3">
+                                    <h5 className="text-lg font-semibold text-gray-900">{pkg.title}</h5>
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(pkg.isPublished ? "published" : "draft")}`}>
+                                      {pkg.isPublished ? "Published" : "Draft"}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {pkg.categoryName} • {formatCurrency(pkg.price)}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => fetchCustomers(pkg._id, true)}
+                                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                                  disabled={isLoadingCustomers}
+                                >
+                                  {isLoadingCustomers ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                      Loading...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Users className="w-4 h-4 mr-2" />
+                                      {packageCustomers.length > 0 ? 'Refresh' : 'Load Customers'}
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+
+                              {/* Sales Stats */}
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                  <div className="flex items-center">
+                                    <DollarSign className="w-5 h-5 text-purple-600 mr-2" />
+                                    <div>
+                                      <p className="text-xs text-purple-600 font-medium">Total Pendapatan</p>
+                                      <p className="text-lg font-bold text-purple-900">
+                                        {formatCurrency(packageSale?.totalEarnings || 0)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                  <div className="flex items-center">
+                                    <Package className="w-5 h-5 text-blue-600 mr-2" />
+                                    <div>
+                                      <p className="text-xs text-blue-600 font-medium">Total Terjual</p>
+                                      <p className="text-lg font-bold text-blue-900">
+                                        {packageSale?.totalSales || 0}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                  <div className="flex items-center">
+                                    <Users className="w-5 h-5 text-green-600 mr-2" />
+                                    <div>
+                                      <p className="text-xs text-green-600 font-medium">Total Pelanggan</p>
+                                      <p className="text-lg font-bold text-green-900">
+                                        {packageCustomers.length}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                  <div className="flex items-center">
+                                    <Star className="w-5 h-5 text-orange-600 mr-2" />
+                                    <div>
+                                      <p className="text-xs text-orange-600 font-medium">Penjualan Terakhir</p>
+                                      <p className="text-sm font-bold text-orange-900">
+                                        {packageSale?.latestSale
+                                          ? new Date(packageSale.latestSale).toLocaleDateString('id-ID', {
+                                            day: 'numeric',
+                                            month: 'short'
+                                          })
+                                          : 'Belum ada'
+                                        }
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Customer List */}
+                              {packageCustomers.length > 0 ? (
+                                <div>
+                                  <h6 className="text-sm font-semibold text-gray-900 mb-3">
+                                    Daftar Pelanggan ({packageCustomers.length})
+                                  </h6>
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                      <thead className="bg-gray-50">
+                                        <tr>
+                                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Pelanggan
+                                          </th>
+                                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Email
+                                          </th>
+                                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Pembayaran
+                                          </th>
+                                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Tanggal
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="bg-white divide-y divide-gray-200">
+                                        {packageCustomers.map((customer: any) => (
+                                          <tr key={customer._id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-4 whitespace-nowrap">
+                                              <div className="flex items-center">
+                                                {customer.profile?.avatar ? (
+                                                  <img
+                                                    src={customer.profile.avatar}
+                                                    alt={customer.user.name}
+                                                    className="h-8 w-8 rounded-full object-cover mr-3"
+                                                  />
+                                                ) : (
+                                                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center mr-3">
+                                                    <span className="text-white font-medium text-sm">
+                                                      {customer.user.name.charAt(0).toUpperCase()}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                                <div>
+                                                  <p className="text-sm font-medium text-gray-900">
+                                                    {customer.profile?.fullName || customer.user.name}
+                                                  </p>
+                                                  {customer.profile?.phone && (
+                                                    <p className="text-xs text-gray-500">
+                                                      {customer.profile.phone}
+                                                    </p>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </td>
+                                            <td className="px-4 py-4 whitespace-nowrap">
+                                              <p className="text-sm text-gray-900">{customer.user.email}</p>
+                                            </td>
+                                            <td className="px-4 py-4 whitespace-nowrap">
+                                              <p className="text-sm font-semibold text-green-600">
+                                                {formatCurrency(customer.amount)}
+                                              </p>
+                                            </td>
+                                            <td className="px-4 py-4 whitespace-nowrap">
+                                              <p className="text-sm text-gray-900">
+                                                {new Date(customer.paymentDate || customer.createdAt).toLocaleDateString('id-ID', {
+                                                  year: 'numeric',
+                                                  month: 'short',
+                                                  day: 'numeric'
+                                                })}
+                                              </p>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                  <p className="text-sm text-gray-500">
+                                    {isLoadingCustomers ? 'Loading customers...' :
+                                      packageCustomers.length === 0 && customers[pkg._id] ? 'Belum ada pelanggan untuk paket ini' :
+                                        'Klik "Load Customers" untuk melihat pelanggan'}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                   {/* No earnings message */}
-                  {(!earnings || !earnings.packageSales || earnings.packageSales.length === 0) && (
+                  {(!earnings || !earnings.packageSales || earnings.packageSales.length === 0) && packages.length > 0 && (
                     <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
                       <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                       <h4 className="text-xl font-semibold text-gray-900 mb-2">
