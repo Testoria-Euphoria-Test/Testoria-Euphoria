@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import "@/utils/debugAuth"; // Load debug utilities
 
 interface NavigationGuardProps {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export default function NavigationGuard({ children }: NavigationGuardProps) {

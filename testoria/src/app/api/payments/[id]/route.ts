@@ -3,11 +3,11 @@ import PaymentModel from "@/db/models/PaymentModel";
 
 export async function GET(
     req: NextRequest, 
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
     return new Promise(async (resolve) => {
         try {
-            const id = params.id;
+            const { id } = await params;
             
             // Validate ID format
             if (!id || id.trim() === '') {
