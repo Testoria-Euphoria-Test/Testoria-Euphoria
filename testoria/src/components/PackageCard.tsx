@@ -151,9 +151,10 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
         </div>
 
         {/* Description (max 7 words, cleaned from HTML) */}
-        <p className="text-gray-500 text-sm mb-2 line-clamp-2">
-          {getTruncatedDescription(pkg.description, 7)}
-        </p>
+        <div 
+          className="text-l text-gray-600 mb-8 leading-relaxed wysiwyg-content-view "
+          dangerouslySetInnerHTML={{ __html: pkg.description }}
+        />
 
         {/* Divider */}
         <div className="border-t border-gray-100 my-2 " />
