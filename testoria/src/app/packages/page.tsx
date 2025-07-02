@@ -67,8 +67,13 @@ export default function PackagePage() {
     fetchPackages();
   }, []);
 
-  // Helper function to strip HTML tags for search
+  // Helper function to strip HTML tags for search (SSR-safe)
   const stripHtmlTags = (html: string) => {
+    if (typeof window === 'undefined') {
+      // Server-side: use regex to strip HTML tags
+      return html.replace(/<[^>]*>/g, '');
+    }
+    // Client-side: use DOM method
     const div = document.createElement('div');
     div.innerHTML = html;
     return div.textContent || div.innerText || '';

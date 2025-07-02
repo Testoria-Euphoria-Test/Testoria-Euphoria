@@ -372,9 +372,11 @@ export default function PackagePageDetail({
                                       </span>
                                     </div>
                                   </div>
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {new Date(ratingObj.createdAt).toLocaleDateString('id-ID')}
-                                  </div>
+                                  {typeof rating === "object" && rating.createdAt && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {new Date(rating.createdAt).toLocaleDateString('id-ID')}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             }

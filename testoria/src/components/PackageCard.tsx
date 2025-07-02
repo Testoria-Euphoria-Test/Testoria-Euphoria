@@ -99,12 +99,10 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
           <span className="text-l font-bold text-blue-900 p-2 bg-blue-100 rounded-2xl">
             {formatPrice(pkg.price)}
           </span>
-          {pkg.averageRating && pkg.averageRating > 0 && (
-            <span className="flex items-center gap-1 ml-2 bg-blue-50 px-2 py-1 rounded-full text-blue-900 text-xs font-semibold">
-              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              {pkg.averageRating.toFixed(1)}
-            </span>
-          )}
+          <span className="flex items-center gap-1 ml-2 bg-blue-50 px-2 py-1 rounded-full text-blue-900 text-xs font-semibold">
+            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+            {pkg.averageRating ? pkg.averageRating.toFixed(1) : "0.0"}
+          </span>
         </div>
 
         {/* Description (preserving WYSIWYG formatting) */}
