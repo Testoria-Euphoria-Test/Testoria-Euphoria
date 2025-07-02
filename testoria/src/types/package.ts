@@ -106,5 +106,7 @@ export interface PackageResponse {
   createdAt: Date;
   updatedAt?: Date;
   ratings?: number[];
-  averageRating?: number
+  averageRating?: number;
+  categoryName?: string; // Populated from category collection
+  creatorName?: string; // Populated from user collection
 }

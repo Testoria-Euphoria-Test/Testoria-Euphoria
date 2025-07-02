@@ -46,7 +46,9 @@ export default function PackagePageDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [packageData, setPackageData] = useState<PackageWithDetails | null>(null);
+  const [packageData, setPackageData] = useState<PackageWithDetails | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [id, setId] = useState<string>("");
@@ -81,15 +83,15 @@ export default function PackagePageDetail({
     const fetchData = async () => {
       try {
         // Check auth status
-        const authResponse = await fetch('/api/auth/check', {
-          method: 'GET',
-          credentials: 'include',
+        const authResponse = await fetch("/api/auth/check", {
+          method: "GET",
+          credentials: "include",
         });
 
         setIsLoggedIn(authResponse.ok);
 
         // Fetch package data
-        const uri = `http://localhost:3000/api/packages/${id}?withDetails=true`;
+        const uri = `/api/packages/${id}?withDetails=true`;
         const response = await fetch(uri);
         const result = await response.json();
         setPackageData(result.data);
@@ -153,12 +155,12 @@ export default function PackagePageDetail({
   const totalQuestions = packageData.contents?.length || 0;
 
   return (
-    <div>
+    <div className="bg-white">
       <Navbar showUserActions={isLoggedIn} />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 bg-white">
             <Link
               href={isLoggedIn ? "/dashboard-customer" : "/"}
               className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
@@ -169,120 +171,221 @@ export default function PackagePageDetail({
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Package Header */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* Hero Section */}
+        <div className="bg-white text-black py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+              <div className="lg:col-span-2">
                 <div className="mb-4">
                   {(packageData.category?.name || packageData.categoryName) && (
-                    <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                      <Tag className="w-4 h-4 mr-1" />
+                    <span className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+                      <Tag className="w-4 h-4 mr-2" />
                       {packageData.category?.name || packageData.categoryName}
                     </span>
                   )}
                 </div>
 
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
                   {packageData.title}
                 </h1>
 
-                <p className="text-gray-600 text-lg leading-relaxed">
+                <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                   {packageData.description}
                 </p>
-              </div>
 
-              {/* Package Stats */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-blue-600" />
-                  Informasi Paket
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Total Questions */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                {/* Package Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center mb-2">
-                      <BookOpen className="w-5 h-5 text-green-600 mr-2" />
-                      <h3 className="font-semibold text-green-900">
+                      <BookOpen className="w-5 h-5 mr-2 text-blue-600" />
+                      <span className="font-semibold text-gray-700">
                         Total Soal
-                      </h3>
-                    </div>
-                    <div className="text-2xl font-bold text-green-700">
-                      {totalQuestions}
-                    </div>
-                    <div className="text-sm text-green-600">
-                      Soal tersedia
-                    </div>
-                  </div>
-
-                  {/* Duration */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-center mb-2">
-                      <Clock className="w-5 h-5 text-blue-600 mr-2" />
-                      <h3 className="font-semibold text-blue-900">Durasi</h3>
-                    </div>
-                    <div className="text-2xl font-bold text-blue-700">
-                      {formatDuration(packageData.duration)}
-                    </div>
-                    <div className="text-sm text-blue-600">Batas waktu</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Creator Profile */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <User className="w-5 h-5 mr-2 text-purple-600" />
-                  Profil Creator
-                </h2>
-
-                <div className="flex items-start space-x-4">
-                  {/* Creator Avatar */}
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-
-                  {/* Creator Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {packageData.creator?.name ||
-                          packageData.creatorName ||
-                          "Pembuat Tidak Diketahui"}
-                      </h3>
-                      <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                        {packageData.creator?.role || "Pembuat"}
                       </span>
                     </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {totalQuestions}
+                    </div>
+                  </div>
 
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Mail className="w-4 h-4 mr-2" />
-                        <span>
-                          {packageData.creator?.email || "Email tidak tersedia"}
-                        </span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Award className="w-4 h-4 mr-2" />
-                        <span>
-                          Peran: {packageData.creator?.role || "Creator"}
-                        </span>
-                      </div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <Clock className="w-5 h-5 mr-2 text-blue-600" />
+                      <span className="font-semibold text-gray-700">
+                        Durasi
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {formatDuration(packageData.duration)}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <Award className="w-5 h-5 mr-2 text-blue-600" />
+                      <span className="font-semibold text-gray-700">
+                        Rating
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {packageData.averageRating
+                        ? `${packageData.averageRating.toFixed(1)}/5.0`
+                        : "Belum ada"}
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+                {/* Main Content */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Left Column - Creator Profile */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                      <h2 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                        <User className="w-5 h-5 mr-2 text-gray-500" />
+                        Profil Creator
+                      </h2>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24">
-                {/* Purchase Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="flex flex-col items-center text-center">
+                        {/* Creator Avatar */}
+                        <div className="w-20 h-20 mb-4 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                          {packageData.creatorProfile?.photoUrl ? (
+                            <img
+                              src={packageData.creatorProfile.photoUrl}
+                              alt="Creator"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-10 h-10 text-gray-400" />
+                          )}
+                        </div>
+
+                        <h3 className="text-base font-semibold text-gray-900 mb-1">
+                          {packageData.creator?.name || packageData.creatorName}
+                        </h3>
+
+                        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full mb-3">
+                          {packageData.creator?.role || "creator"}
+                        </span>
+
+                        {packageData.creator?.email && (
+                          <div className="flex items-center text-gray-500 text-sm">
+                            <Mail className="w-4 h-4 mr-2" />
+                            {packageData.creator.email}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Column - Ratings & Reviews */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                      <h2 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                        <Award className="w-5 h-5 mr-2 text-yellow-500" />
+                        Rating & Ulasan
+                      </h2>
+
+                      {/* Rating Overview */}
+                      <div className="text-center mb-6">
+                        <div className="text-4xl font-bold text-yellow-500 mb-2">
+                          {packageData.averageRating
+                            ? packageData.averageRating.toFixed(1)
+                            : "0.0"}
+                        </div>
+                        <div className="flex justify-center mb-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span
+                              key={star}
+                              className={`text-lg ${
+                                star <= (packageData.averageRating || 0)
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-500">dari 5.0</p>
+                      </div>
+
+                      {/* Individual Ratings or Empty State */}
+                      {packageData.ratings && packageData.ratings.length > 0 ? (
+                        <div className="space-y-3">
+                          {packageData.ratings.map(
+                            (rating: number, index: number) => (
+                              <div
+                                key={index}
+                                className="border border-gray-100 rounded-lg bg-gray-50 px-4 py-3 flex items-center gap-3"
+                              >
+                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <User className="w-4 h-4 text-blue-500" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm text-gray-900 mb-1">
+                                    Pengguna {index + 1}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex">
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <span
+                                          key={star}
+                                          className={`text-sm ${
+                                            star <= rating
+                                              ? "text-yellow-400"
+                                              : "text-gray-300"
+                                          }`}
+                                        >
+                                          ★
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <span className="text-xs text-gray-600">
+                                      {rating}/5
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <h3 className="text-base font-medium text-gray-600 mb-1">
+                            Belum Ada Ulasan...
+                          </h3>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Toaster position="top-right" />
+                </div>
+              </div>
+
+              {/* Quick Action Card */}
+              <div>
+                {/* Package Cover Image - Moved above Quick Action Card */}
+                {packageData.images && (
+                  <div
+                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6"
+                    style={{ height: 500 }}
+                  >
+                    <div className="aspect-video rounded-lg overflow-hidden w-full h-full flex items-center justify-center">
+                      <img
+                        src={
+                          Array.isArray(packageData.images)
+                            ? packageData.images[0]
+                            : packageData.images
+                        }
+                        alt="Cover Paket"
+                        className="w-full h-full object-cover"
+                        style={{
+                          maxHeight: "100%",
+                          maxWidth: "100%",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="bg-white rounded-2xl shadow-xl p-6">
                   <div className="text-center mb-6">
-                    <div className="text-3xl font-bold text-gray-900 mb-2">
+                    <div className="text-4xl font-bold text-gray-900 mb-2">
                       {formatPrice(packageData.price)}
                     </div>
                     <p className="text-gray-600">
@@ -294,70 +397,33 @@ export default function PackagePageDetail({
 
                   <button
                     onClick={handleEnroll}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-semibold text-sm hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center mb-4"
+                    className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center mb-4 shadow-lg"
                   >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    {packageData.price === 0 ? "Mulai Gratis" : "Daftar Sekarang"}
+                    {packageData.price === 0
+                      ? "Mulai Gratis"
+                      : "Beli Paket"}
                   </button>
 
-                  {(packageData.creatorProfile?._id || packageData.creator?._id) && (
+                  {(packageData.creatorProfile?._id ||
+                    packageData.creator?._id) && (
                     <Link
-                      href={packageData.creatorProfile?._id 
-                        ? `/profile/${packageData.creatorProfile._id}` 
-                        : `/profile/user/${packageData.creator?._id}`}
-                      className="w-full bg-gray-100 text-gray-800 py-3 px-4 rounded-lg font-semibold text-sm hover:bg-gray-200 transition-all duration-200 flex items-center justify-center"
+                      href={
+                        packageData.creatorProfile?._id
+                          ? `/profile/${packageData.creatorProfile._id}`
+                          : `/profile/user/${packageData.creator?._id}`
+                      }
+                      className="w-full bg-gray-100 text-gray-800 py-3 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300 flex items-center justify-center"
                     >
                       <User className="w-4 h-4 mr-2" />
                       Detail Creator
                     </Link>
                   )}
-
-                  <div className="border-t border-gray-200 pt-4 mt-2">
-                    <h4 className="font-semibold text-gray-900 mb-3">
-                      Detail Paket
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Soal</span>
-                        <span className="font-medium">{totalQuestions}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Durasi</span>
-                        <span className="font-medium">
-                          {formatDuration(packageData.duration)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Kategori</span>
-                        <span className="font-medium">
-                          {packageData.category?.name || packageData.categoryName || "Tidak dikategorikan"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Harga</span>
-                        <span className="font-medium">
-                          {formatPrice(packageData.price)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category Info */}
-                <div className="bg-gray-100 rounded-xl p-4 mt-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Kategori</h4>
-                  <p className="text-sm text-gray-600">
-                    {packageData.category?.name || packageData.categoryName || "Tidak ada kategori"}
-                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Toast notifications */}
-      <Toaster position="top-right" />
     </div>
   );
 }

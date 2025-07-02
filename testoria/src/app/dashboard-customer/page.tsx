@@ -43,7 +43,7 @@ export default function DashboardCustomerPage() {
       try {
         setLoading(true);
 
-        const response = await fetch("/api/packages", {
+        const response = await fetch("/api/packages?published=true", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -57,8 +57,10 @@ export default function DashboardCustomerPage() {
 
         const data = await response.json();
 
+        
         if (data.success) {
-          setPackages(data.data || []);
+          console.log("Setting packages:", data.data?.length, "packages");
+          setPackages(data.data);
         } else {
           throw new Error(data.message || "Failed to load packages");
         }
@@ -128,42 +130,14 @@ export default function DashboardCustomerPage() {
     fetchCategories();
   }, []);
 
-  const navigationItems = [
-    {
-      id: "browse",
-      label: "Telusuri Paket",
-      icon: Package,
-      type: "tab",
-    },
-    {
-      id: "my-packages",
-      label: "Paket Saya",
-      icon: BookOpen,
-      type: "button",
-      href: "/my-package",
-    },
-    {
-      id: "payment-history",
-      label: "Riwayat Pembayaran",
-      icon: CreditCard,
-      type: "button",
-      href: "/payment-history",
-    },
-    {
-      id: "tryout-history",
-      label: "Riwayat Tryout",
-      icon: FileText,
-      type: "button",
-      href: "/tryout-history",
-    },
-  ];
 
-  // ✅ Improved filtering logic - include isPublished filter
+  // ✅ Improved filtering logic - API sudah memfilter published packages
   const filteredPackages = packages.filter((pkg) => {
-    // First check if package is published
-    if (!pkg.isPublished) {
-      return false;
-    }
+    console.log("Filtering package:", {
+      title: pkg.title,
+      categoryId: pkg.categoryId,
+      selectedCategory,
+    });
 
     const matchesSearch =
       pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -198,6 +172,13 @@ export default function DashboardCustomerPage() {
 
       return false;
     })();
+
+    console.log("Filter results:", {
+      title: pkg.title,
+      matchesSearch,
+      matchesCategory,
+      final: matchesSearch && matchesCategory,
+    });
 
     return matchesSearch && matchesCategory;
   });
@@ -406,18 +387,26 @@ export default function DashboardCustomerPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {sortedPackages.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {sortedPackages.map((packageItem, index) => (
-              <div
-                key={packageItem._id}
-                className="animate-fadeInUp opacity-0 transition-all duration-500 ease-out transform translate-y-10 h-full"
-                style={{
-                  animationDelay: `${index * 0.15}s`,
-                  animationFillMode: "forwards",
-                }}
-              >
-                <PackageCard package={packageItem} />
-              </div>
-            ))}
+            {sortedPackages.map((pkg, index) => {
+              console.log(
+                "Rendering package:",
+                pkg.title,
+                "isPublished:",
+                pkg.isPublished
+              );
+              return (
+                <div
+                  key={pkg._id}
+                  className="animate-fadeInUp h-full"
+                  style={{
+                    animationDelay: `${index * 0.15}s`,
+                    animationFillMode: "forwards",
+                  }}
+                >
+                  <PackageCard package={pkg} />
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20">
@@ -438,18 +427,16 @@ export default function DashboardCustomerPage() {
               <button
                 onClick={() => {
                   setSelectedCategory("all");
-                  setSelectedCategory("all");
                   setSearchTerm("");
-                }}assName="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium"
+                }}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium"
-              > Clear All Filters
+              >
                 Clear All Filters
               </button>
-            )}v>
+            )}
           </div>
-        )}ction>
+        )}
       </section>
-      {/* Enhanced animations */}
       {/* Enhanced animations */}
       <style jsx>{`fadeInUp {
         @keyframes fadeInUp {
