@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   Package,
@@ -73,6 +74,7 @@ interface AdminStats {
 }
 
 export default function DashboardAdminPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
@@ -337,6 +339,11 @@ export default function DashboardAdminPage() {
       console.error('Error updating package status:', err);
       toast.error('Failed to update package status');
     }
+  };
+
+  // Handle package click to navigate to detail page
+  const handlePackageClick = (packageId: string) => {
+    router.push(`/package-detail/${packageId}`);
   };
 
   // Handle user role/status update
@@ -724,7 +731,7 @@ export default function DashboardAdminPage() {
       color: "text-green-600",
     },
     {
-      label: "Admin Revenue (30%)",
+      label: "Platform Revenue (30%)",
       value: formatCurrency(adminRevenue?.totalAdminRevenue || 0),
       change: `${adminRevenue?.totalTransactions || 0} transaksi`,
       icon: DollarSign,
@@ -916,8 +923,8 @@ export default function DashboardAdminPage() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
-                        ? "border-blue-600 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                       }`}
                   >
                     {tab.label}
@@ -1212,11 +1219,16 @@ export default function DashboardAdminPage() {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {filteredPackages.map((pkg) => (
-                          <tr key={pkg._id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {pkg.title}
+                          <tr key={pkg._id} className="group hover:bg-gray-50">
+                            <td 
+                              className="px-6 py-4 whitespace-nowrap cursor-pointer" 
+                              onClick={() => handlePackageClick(pkg._id)}
+                              title="Klik untuk melihat detail paket"
+                            >
+                              <div className="hover:text-blue-600 transition-colors">
+                                <div className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline flex items-center">
+                                  <span className="mr-2">{pkg.title}</span>
+                                  <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   {pkg.totalQuestions} questions •{" "}
@@ -1265,8 +1277,8 @@ export default function DashboardAdminPage() {
                                 <div className="flex items-center space-x-2">
                                   <span
                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${pkg.isPublished
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-yellow-100 text-yellow-800"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
                                       }`}
                                   >
                                     {pkg.isPublished ? "Terpublikasi" : "Draft"}

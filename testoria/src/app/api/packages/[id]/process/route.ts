@@ -52,8 +52,13 @@ export async function PATCH(
         }
 
         // Check if user has permission (owner or admin)
-        if (pkg.creatorId.toString() !== userId) {
-            return NextResponse.json({ message: "Forbidden - You can only process your own packages" }, { status: 403 });
+        // Get user role to check admin access
+        const userRole = request.headers.get('x-user-role');
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ message: "Forbidden - You can only process your own packages or you must be an admin" }, { status: 403 });
         }
 
         // Check if package has source PDF

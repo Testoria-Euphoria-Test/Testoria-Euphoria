@@ -56,7 +56,15 @@ export default function ProfileCreator({
         setIsLoggedIn(authResponse.ok);
 
         // Fetch profile data
-        const data = await fetch(`http://localhost:3000/api/profiles/${id}`);
+        const data = await fetch(`/api/profiles/${id}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (!data.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
+        
         const res = await data.json();
 
         if (!res.success || !res.data) {
@@ -133,6 +141,23 @@ export default function ProfileCreator({
       return email.substring(0, 2).toUpperCase();
     }
     return "CR";
+  };
+
+  // Helper function to validate if string is a valid URL
+  const isValidUrl = (string: string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  // Helper function to validate if string is a valid image URL
+  const isValidImageUrl = (url: string) => {
+    if (!isValidUrl(url)) return false;
+    // Check if it's a valid image URL (http/https)
+    return url.startsWith('http://') || url.startsWith('https://');
   };
 
   return (
@@ -292,14 +317,17 @@ export default function ProfileCreator({
 
               {/* Certificates */}
               {profileData?.certificates &&
-                profileData.certificates.length > 0 && (
+                profileData.certificates.length > 0 &&
+                profileData.certificates.filter(cert => isValidImageUrl(cert)).length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <Award className="w-5 h-5 text-green-600 mr-2" />
-                      Sertifikat ({profileData.certificates.length})
+                      Sertifikat ({profileData.certificates.filter(cert => isValidImageUrl(cert)).length})
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
-                      {profileData.certificates.map((cert, index) => (
+                      {profileData.certificates
+                        .filter(cert => isValidImageUrl(cert)) // Only show valid URLs
+                        .map((cert, index) => (
                         <div
                           key={index}
                           className="group bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer"
@@ -365,7 +393,8 @@ export default function ProfileCreator({
               {/* Jika tidak ada education atau certificates */}
               {!profileData?.education &&
                 (!profileData?.certificates ||
-                  profileData.certificates.length === 0) && (
+                  profileData.certificates.length === 0 ||
+                  profileData.certificates.filter(cert => isValidImageUrl(cert)).length === 0) && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                       <GraduationCap className="w-8 h-8 text-gray-400" />

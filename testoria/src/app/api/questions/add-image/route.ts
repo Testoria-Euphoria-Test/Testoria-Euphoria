@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import QuestionModel from '@/db/models/QuestionModel';
+import { database } from '@/db/config/mongodb';
+import { ObjectId } from 'mongodb';
 
 export async function POST(request: NextRequest) {
     try {
+        // Get user info from middleware headers (requires auth)
+        const userId = request.headers.get('x-user-id');
+        const userRole = request.headers.get('x-user-role');
+
+        if (!userId) {
+            return NextResponse.json(
+                { success: false, message: 'Authentication required' },
+                { status: 401 }
+            );
+        }
+
         const body = await request.json();
         const { questionId, imageUrl } = body;
 
@@ -29,6 +42,29 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { success: false, message: 'Question not found' },
                 { status: 404 }
+            );
+        }
+
+        // Get package to verify ownership
+        const pkg = await database.collection("packages").findOne({
+            _id: new ObjectId(question.packageId)
+        });
+
+        if (!pkg) {
+            return NextResponse.json(
+                { success: false, message: 'Package not found' },
+                { status: 404 }
+            );
+        }
+
+        // Check if user owns the package (creator) or is admin
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json(
+                { success: false, message: 'Unauthorized: You can only modify questions for your own packages or you must be an admin' },
+                { status: 403 }
             );
         }
 
@@ -74,6 +110,17 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
     try {
+        // Get user info from middleware headers (requires auth)
+        const userId = request.headers.get('x-user-id');
+        const userRole = request.headers.get('x-user-role');
+
+        if (!userId) {
+            return NextResponse.json(
+                { success: false, message: 'Authentication required' },
+                { status: 401 }
+            );
+        }
+
         const body = await request.json();
         const { questionId, imageUrl } = body;
 
@@ -90,6 +137,29 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json(
                 { success: false, message: 'Question not found' },
                 { status: 404 }
+            );
+        }
+
+        // Get package to verify ownership
+        const pkg = await database.collection("packages").findOne({
+            _id: new ObjectId(question.packageId)
+        });
+
+        if (!pkg) {
+            return NextResponse.json(
+                { success: false, message: 'Package not found' },
+                { status: 404 }
+            );
+        }
+
+        // Check if user owns the package (creator) or is admin
+        const isOwner = pkg.creatorId.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json(
+                { success: false, message: 'Unauthorized: You can only modify questions for your own packages or you must be an admin' },
+                { status: 403 }
             );
         }
 

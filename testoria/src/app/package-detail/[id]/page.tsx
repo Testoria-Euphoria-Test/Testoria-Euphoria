@@ -91,6 +91,7 @@ export default function PackageDetailPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Edit states
   const [isEditingPackage, setIsEditingPackage] = useState(false);
@@ -167,7 +168,11 @@ export default function PackageDetailPage() {
       });
 
       if (!authResponse.ok) {
-        throw new Error("Autentikasi diperlukan");
+        // Instead of throwing an error, redirect to login page for unauthenticated users
+        setIsRedirecting(true);
+        setLoading(false);
+        router.push("/login");
+        return;
       }
 
       const authData = await authResponse.json();
@@ -223,8 +228,21 @@ export default function PackageDetailPage() {
         setQuestions(questionsResult.questions || []);
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to load package data";
+      let errorMessage = "Failed to load package data";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        // If it's an object, try to extract a meaningful error message
+        if ('message' in err && typeof err.message === 'string') {
+          errorMessage = err.message;
+        } else {
+          errorMessage = "An error occurred while loading package data";
+        }
+      }
+      
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -893,6 +911,18 @@ export default function PackageDetailPage() {
     }).format(amount);
   };
 
+  if (isRedirecting) {
+    return (
+      <div>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600">Mengalihkan ke halaman login...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div>
@@ -916,7 +946,7 @@ export default function PackageDetailPage() {
               Gagal Memuat Paket
             </h2>
             <p className="text-gray-600 mb-4">
-              {error || "Paket tidak ditemukan"}
+              {typeof error === 'string' ? error : "Paket tidak ditemukan"}
             </p>
             <button
               onClick={() => router.back()}
@@ -1418,14 +1448,20 @@ export default function PackageDetailPage() {
                       Dibuat
                     </h4>
                     <p className="text-gray-900">
-                      {new Date(packageData.createdAt).toLocaleDateString(
-                        "id-ID",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }
-                      )}
+                      {packageData?.createdAt ? 
+                        new Date(
+                          typeof packageData.createdAt === 'string' || typeof packageData.createdAt === 'number' 
+                            ? packageData.createdAt 
+                            : packageData.createdAt.toString()
+                        ).toLocaleDateString(
+                          "id-ID",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        ) : "Tanggal tidak tersedia"
+                      }
                     </p>
                   </div>
                 </div>
