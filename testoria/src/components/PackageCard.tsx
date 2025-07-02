@@ -25,49 +25,6 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
     ratings: pkg.ratings,
   });
 
-  // Function to extract plain text from HTML content
-  const getPlainTextFromHtml = (htmlString: string) => {
-    if (!htmlString) return "";
-
-    // Check if we're in the browser environment
-    if (typeof window === "undefined") {
-      // Server-side: use regex to strip HTML tags
-      return htmlString
-        .replace(/<[^>]*>/g, "")
-        .replace(/&[^;]+;/g, "")
-        .trim();
-    }
-
-    // Client-side: use DOM methods
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = htmlString;
-
-    // Get text content and clean it up
-    const textContent = tempDiv.textContent || tempDiv.innerText || "";
-    return textContent.trim();
-  };
-
-  // Function to get truncated description
-  const getTruncatedDescription = (
-    description: string,
-    wordLimit: number = 7
-  ) => {
-    const plainText = getPlainTextFromHtml(description);
-
-    // Handle empty description
-    if (!plainText || plainText.length === 0) {
-      return "Tidak ada deskripsi tersedia";
-    }
-
-    const words = plainText.split(" ").filter((word) => word.length > 0);
-
-    if (words.length <= wordLimit) {
-      return plainText;
-    }
-
-    return words.slice(0, wordLimit).join(" ") + "...";
-  };
-
   // Auto-slide functionality
   useEffect(() => {
     if (!hasImages || images.length <= 1) return;
@@ -150,10 +107,12 @@ export default function PackageCard({ package: pkg }: PackageCardProps) {
           )}
         </div>
 
-        {/* Description (max 7 words, cleaned from HTML) */}
+        {/* Description (preserving WYSIWYG formatting) */}
         <div 
-          className="text-l text-gray-600 mb-8 leading-relaxed wysiwyg-content-view "
-          dangerouslySetInnerHTML={{ __html: pkg.description }}
+          className="text-gray-500 text-sm mb-2 line-clamp-2 prose prose-sm max-w-none prose-p:text-gray-500 prose-p:text-sm prose-p:m-0 prose-p:leading-tight prose-strong:text-gray-600 prose-em:text-gray-500"
+          dangerouslySetInnerHTML={{ 
+            __html: pkg.description || "Tidak ada deskripsi tersedia" 
+          }}
         />
 
         {/* Divider */}

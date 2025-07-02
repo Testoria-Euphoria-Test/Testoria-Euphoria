@@ -229,7 +229,7 @@ export default function PackageDetailPage() {
       }
     } catch (err) {
       let errorMessage = "Failed to load package data";
-      
+
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (typeof err === 'string') {
@@ -242,7 +242,7 @@ export default function PackageDetailPage() {
           errorMessage = "An error occurred while loading package data";
         }
       }
-      
+
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -865,9 +865,9 @@ export default function PackageDetailPage() {
         prev.map((q) =>
           q._id === questionId
             ? {
-                ...q,
-                images: (q.images || []).filter((url) => url !== imageUrl),
-              }
+              ...q,
+              images: (q.images || []).filter((url) => url !== imageUrl),
+            }
             : q
         )
       );
@@ -998,7 +998,7 @@ export default function PackageDetailPage() {
                     <span>
                       {isProcessing
                         ? "Memproses..."
-                        : "Proses AI & Generate Soal"}
+                        : "Generate Soal"}
                     </span>
                   </button>
                 )}
@@ -1114,9 +1114,8 @@ export default function PackageDetailPage() {
 
                         {/* Upload Image Area */}
                         <div
-                          className={`flex gap-2 ${
-                            isDragOver ? "opacity-75" : ""
-                          }`}
+                          className={`flex gap-2 ${isDragOver ? "opacity-75" : ""
+                            }`}
                           onDragOver={handleDragOver}
                           onDragLeave={handleDragLeave}
                           onDrop={handleDrop}
@@ -1131,13 +1130,12 @@ export default function PackageDetailPage() {
                           />
                           <label
                             htmlFor="package-image-upload"
-                            className={`flex-1 flex items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${
-                              isUploadingPackageImage
-                                ? "opacity-50 cursor-not-allowed border-gray-300 bg-gray-50"
-                                : isDragOver
+                            className={`flex-1 flex items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${isUploadingPackageImage
+                              ? "opacity-50 cursor-not-allowed border-gray-300 bg-gray-50"
+                              : isDragOver
                                 ? "border-blue-500 bg-blue-50"
                                 : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
-                            }`}
+                              }`}
                           >
                             {isUploadingPackageImage ? (
                               <div className="flex flex-col items-center space-y-3">
@@ -1156,19 +1154,17 @@ export default function PackageDetailPage() {
                             ) : (
                               <div className="flex flex-col items-center space-y-2">
                                 <Upload
-                                  className={`w-6 h-6 ${
-                                    isDragOver
-                                      ? "text-blue-500"
-                                      : "text-gray-400"
-                                  }`}
+                                  className={`w-6 h-6 ${isDragOver
+                                    ? "text-blue-500"
+                                    : "text-gray-400"
+                                    }`}
                                 />
                                 <div className="text-center">
                                   <span
-                                    className={`text-sm font-medium ${
-                                      isDragOver
-                                        ? "text-blue-600"
-                                        : "text-gray-600"
-                                    }`}
+                                    className={`text-sm font-medium ${isDragOver
+                                      ? "text-blue-600"
+                                      : "text-gray-600"
+                                      }`}
                                   >
                                     Click to upload or drag & drop
                                   </span>
@@ -1185,7 +1181,7 @@ export default function PackageDetailPage() {
 
                         {/* Images List */}
                         {editPackageData.images &&
-                        editPackageData.images.length > 0 ? (
+                          editPackageData.images.length > 0 ? (
                           <div className="space-y-2">
                             <p className="text-sm font-medium text-gray-700">
                               Added Images ({editPackageData.images.length}):
@@ -1448,10 +1444,10 @@ export default function PackageDetailPage() {
                       Dibuat
                     </h4>
                     <p className="text-gray-900">
-                      {packageData?.createdAt ? 
+                      {packageData?.createdAt ?
                         new Date(
-                          typeof packageData.createdAt === 'string' || typeof packageData.createdAt === 'number' 
-                            ? packageData.createdAt 
+                          typeof packageData.createdAt === 'string' || typeof packageData.createdAt === 'number'
+                            ? packageData.createdAt
                             : packageData.createdAt.toString()
                         ).toLocaleDateString(
                           "id-ID",
@@ -1516,7 +1512,7 @@ export default function PackageDetailPage() {
                             disabled={isProcessing}
                             className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
                           >
-                            Proses AI & Generate Soal
+                            Generate Soal
                           </button>
                         )}
                       <button
@@ -1838,7 +1834,7 @@ export default function PackageDetailPage() {
                                 </div>
 
                                 {question.images &&
-                                question.images.length > 0 ? (
+                                  question.images.length > 0 ? (
                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {question.images.map(
                                       (imageUrl, imgIndex) => (
@@ -1848,9 +1844,8 @@ export default function PackageDetailPage() {
                                         >
                                           <img
                                             src={imageUrl}
-                                            alt={`Question image ${
-                                              imgIndex + 1
-                                            }`}
+                                            alt={`Question image ${imgIndex + 1
+                                              }`}
                                             className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80"
                                             onClick={() => viewImage(imageUrl)}
                                           />
@@ -1914,52 +1909,47 @@ export default function PackageDetailPage() {
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                                 <div
-                                  className={`p-3 rounded-lg border ${
-                                    question.correctAnswer === "A"
-                                      ? "bg-green-50 border-green-200"
-                                      : "bg-gray-50 border-gray-200"
-                                  }`}
+                                  className={`p-3 rounded-lg border ${question.correctAnswer === "A"
+                                    ? "bg-green-50 border-green-200"
+                                    : "bg-gray-50 border-gray-200"
+                                    }`}
                                 >
                                   <span className="font-semibold">A:</span>{" "}
                                   {question.optionA}
                                 </div>
                                 <div
-                                  className={`p-3 rounded-lg border ${
-                                    question.correctAnswer === "B"
-                                      ? "bg-green-50 border-green-200"
-                                      : "bg-gray-50 border-gray-200"
-                                  }`}
+                                  className={`p-3 rounded-lg border ${question.correctAnswer === "B"
+                                    ? "bg-green-50 border-green-200"
+                                    : "bg-gray-50 border-gray-200"
+                                    }`}
                                 >
                                   <span className="font-semibold">B:</span>{" "}
                                   {question.optionB}
                                 </div>
                                 <div
-                                  className={`p-3 rounded-lg border ${
-                                    question.correctAnswer === "C"
-                                      ? "bg-green-50 border-green-200"
-                                      : "bg-gray-50 border-gray-200"
-                                  }`}
+                                  className={`p-3 rounded-lg border ${question.correctAnswer === "C"
+                                    ? "bg-green-50 border-green-200"
+                                    : "bg-gray-50 border-gray-200"
+                                    }`}
                                 >
                                   <span className="font-semibold">C:</span>{" "}
                                   {question.optionC}
                                 </div>
                                 <div
-                                  className={`p-3 rounded-lg border ${
-                                    question.correctAnswer === "D"
-                                      ? "bg-green-50 border-green-200"
-                                      : "bg-gray-50 border-gray-200"
-                                  }`}
+                                  className={`p-3 rounded-lg border ${question.correctAnswer === "D"
+                                    ? "bg-green-50 border-green-200"
+                                    : "bg-gray-50 border-gray-200"
+                                    }`}
                                 >
                                   <span className="font-semibold">D:</span>{" "}
                                   {question.optionD}
                                 </div>
                                 {question.optionE && (
                                   <div
-                                    className={`p-3 rounded-lg border ${
-                                      question.correctAnswer === "E"
-                                        ? "bg-green-50 border-green-200"
-                                        : "bg-gray-50 border-gray-200"
-                                    }`}
+                                    className={`p-3 rounded-lg border ${question.correctAnswer === "E"
+                                      ? "bg-green-50 border-green-200"
+                                      : "bg-gray-50 border-gray-200"
+                                      }`}
                                   >
                                     <span className="font-semibold">E:</span>{" "}
                                     {question.optionE}
@@ -2282,11 +2272,10 @@ export default function PackageDetailPage() {
                   />
                   <label
                     htmlFor={`question-image-upload-${currentQuestionForImage}`}
-                    className={`flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${
-                      isUploadingQuestionImage
-                        ? "opacity-50 cursor-not-allowed border-gray-300 bg-gray-50"
-                        : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
-                    }`}
+                    className={`flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${isUploadingQuestionImage
+                      ? "opacity-50 cursor-not-allowed border-gray-300 bg-gray-50"
+                      : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+                      }`}
                   >
                     {isUploadingQuestionImage ? (
                       <div className="flex flex-col items-center space-y-3">

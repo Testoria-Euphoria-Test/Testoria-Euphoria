@@ -19,8 +19,16 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import ButtonPayment from "@/components/ButtonPayment";
 
+// Rating interface
+interface Rating {
+  userId: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Extended interface for package with details
-interface PackageWithDetails extends PackageResponse {
+interface PackageWithDetails extends Omit<PackageResponse, 'ratings'> {
   category?: {
     name: string;
     _id: string;
@@ -40,6 +48,7 @@ interface PackageWithDetails extends PackageResponse {
   };
   categoryName?: string;
   creatorName?: string;
+
   ratings?: Array<{
     rating: number;
     userName?: string;
@@ -196,10 +205,12 @@ export default function PackagePageDetail({
                 <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
                   {packageData.title}
                 </h1>
-
-                <div
-                  className="text-xl text-gray-600 mb-8 leading-relaxed wysiwyg-content-view"
-                  dangerouslySetInnerHTML={{ __html: packageData.description }}
+                
+                <div 
+                  className="text-xl text-gray-600 mb-8 leading-relaxed prose prose-xl max-w-none prose-p:text-gray-600 prose-p:text-xl prose-p:leading-relaxed prose-p:m-0 prose-strong:text-gray-700 prose-em:text-gray-600"
+                  dangerouslySetInnerHTML={{
+                    __html: packageData.description || ""
+                  }}
                 />
 
                 {/* Package Stats */}
@@ -360,6 +371,9 @@ export default function PackagePageDetail({
                                         {ratingValue}/5
                                       </span>
                                     </div>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {new Date(ratingObj.createdAt).toLocaleDateString('id-ID')}
                                   </div>
                                 </div>
                               );

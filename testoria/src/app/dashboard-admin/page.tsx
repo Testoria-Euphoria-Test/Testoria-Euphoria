@@ -105,8 +105,8 @@ export default function DashboardAdminPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isViewingUser, setIsViewingUser] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [editUserForm, setEditUserForm] = useState<{ name: string; email: string; role: "admin" | "customer" | "creator"; status: "active" | "inactive" }>({
-    name: "", email: "", role: "customer", status: "active"
+  const [editUserForm, setEditUserForm] = useState<{ name: string; email: string; role: "admin" | "customer" | "creator" }>({
+    name: "", email: "", role: "customer"
   });
 
   // Filter state for users
@@ -602,8 +602,7 @@ export default function DashboardAdminPage() {
     setEditUserForm({
       name: user.name,
       email: user.email,
-      role: user.role,
-      status: user.status || 'active'
+      role: user.role
     });
   };
 
@@ -630,7 +629,7 @@ export default function DashboardAdminPage() {
 
       // Reset editing state
       setEditingUserId(null);
-      setEditUserForm({ name: "", email: "", role: "customer", status: "active" });
+      setEditUserForm({ name: "", email: "", role: "customer" });
       toast.success('Pengguna berhasil diperbarui');
     } catch (err) {
       console.error('Error updating user:', err);
@@ -641,14 +640,13 @@ export default function DashboardAdminPage() {
   // Handle cancel edit
   const handleCancelEditUser = () => {
     setEditingUserId(null);
-    setEditUserForm({ name: "", email: "", role: "customer", status: "active" });
+    setEditUserForm({ name: "", email: "", role: "customer" });
   };
 
   // Clear all filters
   const clearFilters = () => {
     setSearchTerm("");
     setRoleFilter("all");
-    setStatusFilter("all");
     setPackageCategoryFilter("all");
     setPackageStatusFilter("all");
   };
@@ -657,7 +655,6 @@ export default function DashboardAdminPage() {
   const clearUserFilters = () => {
     setSearchTerm("");
     setRoleFilter("all");
-    setStatusFilter("all");
   };
 
   // Clear package filters only
@@ -735,26 +732,14 @@ export default function DashboardAdminPage() {
       color: "text-emerald-600",
     },
     {
-      label: "Active Creators",
-      value: stats.activeCreators.toString(),
+      label: "Total Creator",
+      value: stats.users.filter((u: any) => u.role === 'creator').length.toString(),
       icon: BarChart3,
       color: "text-purple-600",
     },
   ] : [];
 
-  const getStatusBadge = (status: string) => {
-    const statusClasses = {
-      active: "bg-green-100 text-green-800",
-      inactive: "bg-red-100 text-red-800",
-      published: "bg-green-100 text-green-800",
-      draft: "bg-yellow-100 text-yellow-800",
-      pending: "bg-blue-100 text-blue-800",
-    };
-    return (
-      statusClasses[status as keyof typeof statusClasses] ||
-      "bg-gray-100 text-gray-800"
-    );
-  };
+
 
   const getRoleBadge = (role: string) => {
     const roleClasses = {
@@ -793,11 +778,8 @@ export default function DashboardAdminPage() {
     // Role filter
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
-    // Status filter
-    const matchesStatus = statusFilter === "all" || (user.status || "active") === statusFilter;
-
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+    return matchesSearch && matchesRole;
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Since we're doing server-side filtering, we can just use the packages directly
   // Client-side filtering is kept as fallback for immediate UI response
@@ -877,7 +859,7 @@ export default function DashboardAdminPage() {
               const labelMap: Record<string, string> = {
                 "Total Users": "Total Pengguna",
                 "Total Packages": "Total Paket",
-                "Active Creators": "Creator Aktif",
+                "Total Creator": "Total Creator",
               };
               return (
                 <div
@@ -959,23 +941,9 @@ export default function DashboardAdminPage() {
                         </select>
                       </div>
 
-                      {/* Status Filter */}
-                      <div className="flex items-center space-x-2">
-                        <select
-                          value={statusFilter}
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-600"
-                        >
-                          <option value="all">Semua Status</option>
-                          <option value="active">Active</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
-                      </div>
-
                       {/* Clear Filters Button */}
                       {(searchTerm ||
-                        roleFilter !== "all" ||
-                        statusFilter !== "all") && (
+                        roleFilter !== "all") && (
                           <button
                             onClick={clearUserFilters}
                             className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -992,17 +960,21 @@ export default function DashboardAdminPage() {
                         pengguna
                       </span>
                       <div className="flex items-center space-x-2">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                          Active:{" "}
+                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                          Admin:{" "}
                           {
                             users.filter(
-                              (u) => (u.status || "active") === "active"
+                              (u) => u.role === "admin"
                             ).length
                           }
                         </span>
-                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                          Inactive:{" "}
-                          {users.filter((u) => u.status === "inactive").length}
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          Creator:{" "}
+                          {users.filter((u) => u.role === "creator").length}
+                        </span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                          Customer:{" "}
+                          {users.filter((u) => u.role === "customer").length}
                         </span>
                       </div>
                     </div>
@@ -1021,9 +993,6 @@ export default function DashboardAdminPage() {
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Tanggal Bergabung
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Aksi
@@ -1056,15 +1025,6 @@ export default function DashboardAdminPage() {
                               {new Date(user.createdAt).toLocaleDateString(
                                 "id-ID"
                               )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              <span
-                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                                  user.status || "active"
-                                )}`}
-                              >
-                                {user.status || "active"}
-                              </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex items-center space-x-2">
@@ -1716,20 +1676,6 @@ export default function DashboardAdminPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Status
-                    </label>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                        selectedUser.status || "active"
-                      )}`}
-                    >
-                      {selectedUser.status === "inactive"
-                        ? "Inactive"
-                        : "Active"}
-                    </span>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
                       Bergabung
                     </label>
                     <p className="mt-1 text-sm text-gray-900">
@@ -1841,24 +1787,6 @@ export default function DashboardAdminPage() {
                         <option value="customer">Customer</option>
                         <option value="creator">Creator</option>
                         <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <select
-                        value={editUserForm.status}
-                        onChange={(e) =>
-                          setEditUserForm((prev) => ({
-                            ...prev,
-                            status: e.target.value as "active" | "inactive",
-                          }))
-                        }
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
                       </select>
                     </div>
                   </div>

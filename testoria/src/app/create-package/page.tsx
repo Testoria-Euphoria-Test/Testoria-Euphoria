@@ -19,6 +19,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import WysiwygEditor from "@/components/WysiwygEditor";
 import toast, { Toaster } from 'react-hot-toast';
 
 interface Category {
@@ -83,11 +84,18 @@ export default function CreatePackagePage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: name === 'duration' || name === 'price' ? Number(value) : value
+    }));
+  };
+
+  const handleDescriptionChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      description: value
     }));
   };
 
@@ -324,14 +332,11 @@ export default function CreatePackagePage() {
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                     Deskripsi
                   </label>
-                  <textarea
-                    id="description"
-                    name="description"
+                  <WysiwygEditor
                     value={formData.description}
-                    onChange={handleInputChange}
-                    rows={4}
-                    placeholder="Jelaskan secara detail apa yang akan dipelajari siswa"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={handleDescriptionChange}
+                    placeholder="Jelaskan secara detail apa yang akan dipelajari siswa..."
+                    className="min-h-[120px]"
                   />
                 </div>
 

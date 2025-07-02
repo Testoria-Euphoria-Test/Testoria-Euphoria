@@ -238,11 +238,13 @@ export default function MyPackage() {
                   </div>
                 </div>
 
-                {/* Description */}
-                <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">
-                  {packageData.description ||
-                    "Tidak ada deskripsi tersedia untuk paket ini."}
-                </p>
+                {/* Description - preserving WYSIWYG formatting */}
+                <div 
+                  className="text-gray-600 text-sm line-clamp-3 leading-relaxed prose prose-sm max-w-none prose-p:text-gray-600 prose-p:text-sm prose-p:leading-relaxed prose-p:m-0 prose-strong:text-gray-700 prose-em:text-gray-600"
+                  dangerouslySetInnerHTML={{
+                    __html: packageData.description || "Tidak ada deskripsi tersedia untuk paket ini."
+                  }}
+                />
               </div>
 
               {/* Action Section */}

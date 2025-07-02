@@ -143,8 +143,6 @@ Format output yang HARUS diikuti:
 **EVALUASI PERFORMA:**
 [Penilaian objektif 2-3 kalimat berdasarkan skor ${score}%]
 
-**ANALISIS JAWABAN:**
-
 **Yang Dikuasai:**
 [Jika skor rendah (<30%), batasi maksimal 2 poin dan fokus pada aspek paling mendasar yang benar. Jika tidak ada/sangat sedikit jawaban benar, tulis: "Berdasarkan hasil tes, belum ada area yang dapat dikatakan dikuasai dengan baik."]
 
@@ -155,9 +153,9 @@ Format output yang HARUS diikuti:
 [3-4 strategi konkret dengan langkah pembelajaran yang spesifik]
 
 **MOTIVASI & LANGKAH SELANJUTNYA:**
-[Motivasi realistis + checklist minimal 2 poin dengan format:
-□ [Aksi konkret 1]
-□ [Aksi konkret 2]
+[Motivasi realistis minimal 2 poin dengan format:
+[Aksi konkret 1]
+[Aksi konkret 2]
 Tambahkan kalimat motivasi tambahan setelah checklist]
 
 PEDOMAN SKOR:

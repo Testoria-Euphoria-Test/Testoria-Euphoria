@@ -67,21 +67,30 @@ export default function PackagePage() {
     fetchPackages();
   }, []);
 
+  // Helper function to strip HTML tags for search
+  const stripHtmlTags = (html: string) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  };
+
   // Filter and sort packages
   const filteredAndSortedPackages = useMemo(() => {
     let filtered = packages.filter((pkg) => {
+      const searchTermLower = searchTerm.toLowerCase();
+      const descriptionText = stripHtmlTags(pkg.description || '').toLowerCase();
+      
       const matchesSearch =
-        pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pkg.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pkg.title.toLowerCase().includes(searchTermLower) ||
+        descriptionText.includes(searchTermLower) ||
         (pkg.creatorId &&
-          pkg.creatorId.toLowerCase().includes(searchTerm.toLowerCase()));
+          pkg.creatorId.toLowerCase().includes(searchTermLower));
 
       const matchesCategory =
         selectedCategory === "all" || pkg.categoryId === selectedCategory;
 
-      // Level filter (dummy, since level not in data)
-      const matchesLevel =
-        selectedLevel === "all" || (pkg.level && pkg.level === selectedLevel);
+      // Level filter would need to be implemented when level data is available
+      const matchesLevel = selectedLevel === "all"; // Simplified since level is not in PackageResponse
 
       return matchesSearch && matchesCategory && matchesLevel;
     });
