@@ -17,6 +17,7 @@ import Navbar from "@/components/Navbar";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
+import ButtonPayment from "@/components/ButtonPayment";
 
 // Extended interface for package with details
 interface PackageWithDetails extends PackageResponse {
@@ -39,6 +40,13 @@ interface PackageWithDetails extends PackageResponse {
   };
   categoryName?: string;
   creatorName?: string;
+  ratings?: Array<{
+    rating: number;
+    userName?: string;
+    userId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }>;
 }
 
 export default function PackagePageDetail({
@@ -189,9 +197,10 @@ export default function PackagePageDetail({
                   {packageData.title}
                 </h1>
 
-                <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                  {packageData.description}
-                </p>
+                <div
+                  className="text-xl text-gray-600 mb-8 leading-relaxed wysiwyg-content-view"
+                  dangerouslySetInnerHTML={{ __html: packageData.description }}
+                />
 
                 {/* Package Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -309,40 +318,52 @@ export default function PackagePageDetail({
                       {packageData.ratings && packageData.ratings.length > 0 ? (
                         <div className="space-y-3">
                           {packageData.ratings.map(
-                            (rating: number, index: number) => (
-                              <div
-                                key={index}
-                                className="border border-gray-100 rounded-lg bg-gray-50 px-4 py-3 flex items-center gap-3"
-                              >
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <User className="w-4 h-4 text-blue-500" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="font-medium text-sm text-gray-900 mb-1">
-                                    Pengguna {index + 1}
+                            (rating: any, index: number) => {
+                              // Handle rating object or number
+                              const ratingValue =
+                                typeof rating === "object"
+                                  ? rating.rating
+                                  : rating;
+                              const userName =
+                                typeof rating === "object"
+                                  ? rating.userName
+                                  : `Pengguna ${index + 1}`;
+
+                              return (
+                                <div
+                                  key={index}
+                                  className="border border-gray-100 rounded-lg bg-gray-50 px-4 py-3 flex items-center gap-3"
+                                >
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <User className="w-4 h-4 text-blue-500" />
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex">
-                                      {[1, 2, 3, 4, 5].map((star) => (
-                                        <span
-                                          key={star}
-                                          className={`text-sm ${
-                                            star <= rating
-                                              ? "text-yellow-400"
-                                              : "text-gray-300"
-                                          }`}
-                                        >
-                                          ★
-                                        </span>
-                                      ))}
+                                  <div className="flex-1">
+                                    <div className="font-medium text-sm text-gray-900 mb-1">
+                                      {userName}
                                     </div>
-                                    <span className="text-xs text-gray-600">
-                                      {rating}/5
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                          <span
+                                            key={star}
+                                            className={`text-sm ${
+                                              star <= ratingValue
+                                                ? "text-yellow-400"
+                                                : "text-gray-300"
+                                            }`}
+                                          >
+                                            ★
+                                          </span>
+                                        ))}
+                                      </div>
+                                      <span className="text-xs text-gray-600">
+                                        {ratingValue}/5
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )
+                              );
+                            }
                           )}
                         </div>
                       ) : (
@@ -395,14 +416,12 @@ export default function PackagePageDetail({
                     </p>
                   </div>
 
-                  <button
-                    onClick={handleEnroll}
-                    className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center mb-4 shadow-lg"
-                  >
-                    {packageData.price === 0
-                      ? "Mulai Gratis"
-                      : "Beli Paket"}
-                  </button>
+                  <div className="mb-4">
+                    <ButtonPayment
+                      packageId={packageData._id}
+                      packagePrice={packageData.price}
+                    />
+                  </div>
 
                   {(packageData.creatorProfile?._id ||
                     packageData.creator?._id) && (
